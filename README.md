@@ -22,61 +22,57 @@ To install on a plain ruby installation, follow these steps:
 
 Make sure a proper ruby environment with gem is setup. Check with:
 
-```ruby -v
-gem -v````
+    ruby -v
+    gem -v
 
 Install asciidoctor
 
-```gem install asciidoctor asciidoctor/extensions asciidoctor-pdf```
+    gem install asciidoctor asciidoctor/extensions asciidoctor-pdf
 
 Download the ruby grafana reporter and unpack to a folder of your choice, e.g.
 `ruby-grafana-reporter`.
 
 To check if all dependencies are setup properly, run
 
-```ruby ruby-grafana-reporter/bin/ruby-grafana-reporter.rb -h```
+    ruby ruby-grafana-reporter/bin/ruby-grafana-reporter.rb -h
 
 ### Initial Configuration
 
 Create a first configuration file, named e.g. `myconfig` with the following
 content:
 
-```grafana-reporter:
-  templates-folder: templates
-  reports-folder: reports
-
-grafana:
-  default:
-    host: <<url to your grafana host, e.g. https://localhost:3000>>
-    api_key: <<api key to be used by the reporter>>
-    datasources: # mandatory, if the api_key has only viewer rights, optional otherwise
-      "<<data source name in grafana>>": <<data source id in grafana>>
-
-default-document-attributes:
-  imagesdir: .
-```
+    grafana-reporter:
+      templates-folder: templates
+      reports-folder: reports
+    
+    grafana:
+      default:
+        host: <<url to your grafana host, e.g. https://localhost:3000>>
+        api_key: <<api key to be used by the reporter>>
+        datasources: # mandatory, if the api_key has only viewer rights, optional otherwise
+          "<<data source name in grafana>>": <<data source id in grafana>>
+    
+    default-document-attributes:
+      imagesdir: .
 
 Check out if the configuration is valid and your grafana instance can be accessed
 properly:
 
-```ruby myconfig --test default```
+    ruby myconfig --test default
 
 ### Example render
 
 Create a first asciidoctor template file in your `templates-folder`, e.g.
 `myfirsttemplate.adoc` with the following content:
 
-```= First Ruby Grafana Reporter Example
-
-include::grafana_help[]
-
-include::grafana_environment[]
-```
+    = First Ruby Grafana Reporter Example
+    
+    include::grafana_help[]
+    include::grafana_environment[]
 
 Now you're ready to go! Let's check it out:
 
-```ruby ruby-grafana-reporter/bin/ruby-grafana-reporter.rb myconfig --template
-myfirsttemplate.adoc --output myfirstrender.pdf```
+    ruby ruby-grafana-reporter/bin/ruby-grafana-reporter.rb myconfig --template myfirsttemplate.adoc --output myfirstrender.pdf
 
 You should now find a PDF document named `myfirstrender.pdf` which includes a detailed
 help page on how to use the ruby grafana reporter functions in asciidoctor, as well
@@ -127,3 +123,4 @@ If this project saves you as much time as I hope it does, and if you'd like to
 support my work, feel free donate, even a cup of coffee is appreciated :)
 
 [![paypal](https://www.paypalobjects.com/en_US/i/btn/btn_donateCC_LG.gif)](35LH6JNLPHPHQ)
+
