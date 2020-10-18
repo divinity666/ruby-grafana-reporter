@@ -122,5 +122,5 @@ Inspired by [Izak Marai's grafana reporter](https://github.com/IzakMarais/report
 If this project saves you as much time as I hope it does, and if you'd like to
 support my work, feel free donate, even a cup of coffee is appreciated :)
 
-[![paypal](https://www.paypalobjects.com/en_US/i/btn/btn_donateCC_LG.gif)](35LH6JNLPHPHQ)
+[![paypal](https://www.paypalobjects.com/en_US/i/btn/btn_donateCC_LG.gif)](https://www.paypal.com/donate?hosted_button_id=35LH6JNLPHPHQ)
 
