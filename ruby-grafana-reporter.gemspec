@@ -15,7 +15,7 @@ Gem::Specification.new do |s|
   s.version     = GRAFANA_REPORTER_VERSION.join(".")
   s.date        = GRAFANA_REPORTER_RELEASE_DATE
   s.summary     = "Reporter Service for Grafana"
-  s.description = <<~END
+  s.description = <<~DONE
     The reporter provides reporting capabilities for Grafana. It is based on
     (but not limited to) asciidoctor report templates, which can dynamically
     integrate Grafana panels, queries, images etc. to create dynamic PDF
@@ -24,7 +24,7 @@ Gem::Specification.new do |s|
 
     The reporter can run standalone or as a webservice. It is built to
     integrate without further dependencies with the asciidoctor docker image.
-  END
+  DONE
   s.author      = "Christian Kohlmeyer"
   s.email       = 'kohly@gmx.de'
   s.files       = folders.collect { |folder| Dir[File.join(__dir__, "lib", *folder, '*.rb')].sort}.flatten << "LICENSE" << "README.md"
@@ -35,4 +35,15 @@ Gem::Specification.new do |s|
     "source_code_uri" => "https://github.com/divinity666/ruby-grafana-reporter",
     "bug_tracker_uri" => "https://github.com/divinity666/ruby-grafana-reporter/issues"
   }
+  s.post_install_message = 'You may want to start your journey with "GrafanaReporter::Application::Application.new.configure_and_run".'
+
+  s.requirements << 'asciidoctor'
+  s.requirements << 'asciidoctor-pdf'
+  s.requirements << 'zip'
+
+  s.bindir = 'bin'
+
+  s.add_runtime_dependency 'asciidoctor'
+  s.add_runtime_dependency 'asciidoctor-pdf'
+  s.add_runtime_dependency 'zip'
 end
