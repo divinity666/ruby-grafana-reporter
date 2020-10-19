@@ -14,13 +14,25 @@ Gem::Specification.new do |s|
   s.name        = 'ruby-grafana-reporter'
   s.version     = GRAFANA_REPORTER_VERSION.join(".")
   s.date        = GRAFANA_REPORTER_RELEASE_DATE
-  s.summary     = "(Asciidoctor) Reporter Service for Grafana"
-  s.description = "The reporter provides a full extension setup for the famous Asciidoctor and can perfectly integrate in a docker environment. It can be used as to convert single documents or run as a service.
+  s.summary     = "Reporter Service for Grafana"
+  s.description = <<~END
+    The reporter provides reporting capabilities for Grafana. It is based on
+    (but not limited to) asciidoctor report templates, which can dynamically
+    integrate Grafana panels, queries, images etc. to create dynamic PDF
+    reports on the fly. The report may also be returned in any other format
+    that asciidoctor supports.
 
-As a result of the reporter, you receive PDF documents or any other format that is supported by Asciidoctor."
-  s.authors     = ["Christian Kohlmeyer"]
+    The reporter can run standalone or as a webservice. It is built to
+    integrate without further dependencies with the asciidoctor docker image.
+  END
+  s.author      = "Christian Kohlmeyer"
   s.email       = 'kohly@gmx.de'
   s.files       = folders.collect { |folder| Dir[File.join(__dir__, "lib", *folder, '*.rb')].sort}.flatten << "LICENSE" << "README.md"
   s.homepage    = 'https://github.com/divinity666/ruby-grafana-reporter'
   s.license     = 'MIT'
+
+  s.metadata = {
+    "source_code_uri" => "https://github.com/divinity666/ruby-grafana-reporter",
+    "bug_tracker_uri" => "https://github.com/divinity666/ruby-grafana-reporter/issues"
+  }
 end

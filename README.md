@@ -7,18 +7,20 @@ Did you ever want to create (professional) reports based on Grafana dashboards?
 I did so in order to being able to automatically get monthly reports of my
 home's energy usage. That's how it started.
 
-The reporter provides a full extension setup for the famous
-[Asciidoctor](https://github.com/asciidoctor/asciidoctor) and can perfectly
-integrate in a docker environment.
+The reporter provides reporting capabilities for Grafana. It is based on
+(but not limited to) [asciidoctor](https://github.com/asciidoctor/asciidoctor)
+report templates, which can dynamically integrate Grafana panels, queries,
+images etc. to create dynamic PDF reports on the fly.
 
-As a result of the reporter, you receive PDF documents or any other format that
-is supported by [Asciidoctor](https://github.com/asciidoctor/asciidoctor).
+The report may also be returned in any other format that asciidoctor supports.
+
+The reporter can run standalone or as a webservice. It is built to
+integrate without further dependencies with the asciidoctor docker image.
 
 ## Documentation
 
 Find the complete
-[API documentation](https://rubydoc.info/github/divinity666/ruby-grafana-reporter)
-at this link.
+[API documentation](https://rubydoc.info/gems/ruby-grafana-reporter) here.
 
 ## Installing
 
