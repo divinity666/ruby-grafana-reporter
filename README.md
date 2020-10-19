@@ -1,3 +1,5 @@
+[![MIT License](https://img.shields.io/github/license/divinity666/ruby-grafana-reporter.svg?style=flat-square)](https://github.com/divinity666/ruby-grafana-reporter/blob/main/LICENSE)
+
 # Ruby Grafana Reporter
 (Asciidoctor) Reporter Service for Grafana
 
@@ -5,38 +7,79 @@ Did you ever want to create (professional) reports based on Grafana dashboards?
 I did so in order to being able to automatically get monthly reports of my
 home's energy usage. That's how it started.
 
-The reporter provides a full extension setup for the famous Asciidoctor and can
-perfectly integrate in a docker environment.
+The reporter provides a full extension setup for the famous
+[Asciidoctor](https://github.com/asciidoctor/asciidoctor) and can perfectly
+integrate in a docker environment.
 
 As a result of the reporter, you receive PDF documents or any other format that
-is supported by Asciidoctor.
+is supported by [Asciidoctor](https://github.com/asciidoctor/asciidoctor).
 
-## Installing / Getting started
+## Documentation
 
-Essentially there are two ways of using it: either on top of a vanilla ruby
-installation, or as an addon to the asciidoctor docker image. For the second
-case, there is no need to install further dependencies, as it is designed to
-work without any modifications there.
+Find the complete
+[API documentation](https://rubydoc.info/github/divinity666/ruby-grafana-reporter)
+at this link.
+
+## Installing
+
+There exist several ways of installing the reporter. All of them have in
+common, that they require a working ruby environment. Check with the following
+commands, that the tools are setup and run properly:
+
+   ruby -v
+   gem -v
+
+Download the ruby grafana reporter to a folder of your choice.
+
+You may want to use the single file application as well. BTW, you may build
+your own single file application by calling
+
+    ruby bin/get_single_file_application.rb
+
+### Barebone ruby installation
 
 To install on a plain ruby installation, follow these steps:
 
-Make sure a proper ruby environment with gem is setup. Check with:
-
-    ruby -v
-    gem -v
-
 Install asciidoctor
 
-    gem install asciidoctor asciidoctor/extensions asciidoctor-pdf
+    gem install asciidoctor asciidoctor-pdf zip
 
-Download the ruby grafana reporter and unpack to a folder of your choice, e.g.
-`ruby-grafana-reporter`.
+or simply use
 
-To check if all dependencies are setup properly, run
+    bundle install
 
-    ruby ruby-grafana-reporter/bin/ruby-grafana-reporter.rb -h
+To check if all dependencies are setup properly, run the following command
+in that folder:
 
-### Initial Configuration
+    ruby bin/ruby-grafana-reporter.rb -h
+
+### GEM installation
+
+To install as a gem, simply run:
+
+    gem install ruby-grafana-reporter
+
+To see if it works properly, you may run:
+
+    irb
+    require 'ruby-grafana-reporter'
+    GrafanaReporter::Application::Application.new.configure_and_run
+
+The gem installation might mainly be interesting, if you would like to use the
+reporter as a library and include it in other application setups.
+
+### Docker integration
+
+Essentially you need to make the application available within your asciidoctor
+docker container and run the following command
+
+    ruby bin/ruby-grafana-reporter.rb -h
+
+If you are unsure, on how to make it available in the container, you may refer
+to the information in chapter 'Run as a service' for the docker integration
+below.
+
+## Initial Configuration
 
 Create a first configuration file, named e.g. `myconfig` with the following
 content:
@@ -56,11 +99,23 @@ content:
       imagesdir: .
 
 Check out if the configuration is valid and your grafana instance can be accessed
-properly:
+properly.
 
-    ruby myconfig --test default
+### Barebone ruby installation
 
-### Example render
+    ruby bin/ruby-grafana-reporter.rb myconfig --test default
+
+### GEM installation
+
+    require 'ruby-grafana-reporter'
+    GrafanaReporter::Application::Application.new.configure_and_run(["myconfig", "--test", "default"])
+
+### Docker integration
+
+Same as in barebone ruby installation. Make sure you are running the command
+from inside the container, e.g. by using `docker exec`.
+
+## Hello World example
 
 Create a first asciidoctor template file in your `templates-folder`, e.g.
 `myfirsttemplate.adoc` with the following content:
@@ -68,15 +123,84 @@ Create a first asciidoctor template file in your `templates-folder`, e.g.
     = First Ruby Grafana Reporter Example
     
     include::grafana_help[]
+
     include::grafana_environment[]
 
-Now you're ready to go! Let's check it out:
+Now you're ready to go! Let's check it out!
 
-    ruby ruby-grafana-reporter/bin/ruby-grafana-reporter.rb myconfig --template myfirsttemplate.adoc --output myfirstrender.pdf
+### Barebone ruby installation
+
+    ruby bin/ruby-grafana-reporter.rb myconfig --template myfirsttemplate.adoc --output myfirstrender.pdf
 
 You should now find a PDF document named `myfirstrender.pdf` which includes a detailed
 help page on how to use the ruby grafana reporter functions in asciidoctor, as well
 as a list of all environment variables that can be accessed.
+
+### GEM installation
+
+    require 'ruby-grafana-reporter'
+    GrafanaReporter::Application::Application.new.configure_and_run(["myconfig", "--template", "myfirsttemplate.adoc", "--output", "myfirstrender.pdf"])
+
+### Docker integration
+
+Same as in barebone ruby installation. Make sure you are running the command
+from inside the container, e.g. by using `docker exec`.
+
+## Run as a service
+
+Running the reporter as a webservice provides the following URLs
+
+    /render - for rendering a template
+    /overview - for all running or retained renderings
+    /view_report - for viewing the status or receving the result of a specific rendering
+    /cancel_report - for cancelling the rendering of a specific report
+
+### Barebone ruby installation
+
+    ruby bin/ruby-grafana-reporter.rb myconfig
+
+Test your configuration by requesting the following URL in a browser of your
+choice:
+
+    http://<<your-server-url>>:8815/render?var-template=myfirsttemplate.adoc
+
+### GEM installation
+
+    require 'ruby-grafana-reporter'
+    GrafanaReporter::Application::Application.new.configure_and_run(["myconfig"])
+
+Test your configuration by requesting the following URL in a browser of your
+choice:
+
+    http://<<your-server-url>>:8815/render?var-template=myfirsttemplate.adoc
+
+### Docker integration
+
+Assuming you have a `docker-compose` setup running, you may want to add the
+following to your services secion in your `docker-compose.yml`:
+
+    asciidoctor:
+      image: asciidoctor/docker-asciidoctor
+      container_name: asciidoctor
+      hostname: asciidoctor
+      volumes:
+        - /<<an-empty-local-path>>:/documents
+      command:
+        sh /documents/startup.sh
+      restart: unless-stopped
+
+Additionally you need to create a `startup.sh` file in the folder
+`<<an-empty-local-path>>` with the following content:
+
+    cd /documents
+    ruby bin/ruby-grafana-reporter.rb myconfig
+
+After restarting the container, the service should be running.
+
+Test your configuration by requesting the following URL in a browser of your
+choice:
+
+    http://<<your-server-url>>:8815/render?var-template=myfirsttemplate.adoc
 
 ## Features
 
@@ -91,21 +215,19 @@ custom SQL query results as tables, alers, annotations and many more
 
 This is just a collection of things, I am heading for in future, without a schedule.
 
-* Add documentation on how to integrate with asciidoctor docker container
+* Add documentation for configuration file
 * Share (anonymized) rspec tests in this repo
 * Add a simple plugin system to support specific asciidoctor modifications
 * Solve code TODOs
-* Improve this documentation
-* Improve rspec tests
-* Become `rubocop` ready
+* Become [rubocop](https://rubocop.org/) ready
 
 ## Contributing
 
 If you'd like to contribute, please fork the repository and use a feature
 branch. Pull requests are warmly welcome.
 
-Though not yet valid for my code, I'd like to see the project become `rubocop`
-ready :-)
+Though not yet valid for my code, I'd like to see the project become
+[rubocop](https://rubocop.org/) ready :-)
 
 ## Licensing
 

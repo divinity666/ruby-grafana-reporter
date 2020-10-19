@@ -30,4 +30,4 @@ module Kernel
 end
 
 require_relative '/../lib/ruby-grafana-reporter.rb'
-puts [File.read('./LICENSE'), required_contents, 'GrafanaReporter::Application::Application.new.configure_and_run(ARGV)'].join("\n")
+puts [File.read('./LICENSE').gsub(/^/, "# "), required_contents, 'GrafanaReporter::Application::Application.new.configure_and_run(ARGV)'].join("\n")

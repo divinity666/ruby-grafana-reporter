@@ -14,9 +14,7 @@ require 'asciidoctor'
 require 'asciidoctor/extensions'
 require 'asciidoctor-pdf'
 require 'zip'
-
-# Version information
-GRAFANA_REPORTER_VERSION = [0, 1, 5].freeze
+require_relative 'VERSION.rb'
 
 folders = [
   %w[grafana],
