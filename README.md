@@ -286,7 +286,6 @@ custom SQL query results as tables, alers, annotations and many more
 This is just a collection of things, I am heading for in future, without a schedule.
 
 * Add documentation for configuration file
-* Share (anonymized) rspec tests in this repo
 * Add a simple plugin system to support specific asciidoctor modifications
 * Solve code TODOs
 * Become [rubocop](https://rubocop.org/) ready
@@ -298,6 +297,12 @@ branch. Pull requests are warmly welcome.
 
 Though not yet valid for my code, I'd like to see the project become
 [rubocop](https://rubocop.org/) ready :-)
+
+Definitely open spots from my side are:
+
+* This README
+* Clean and properly setup test cases
+* An own webpage for this project
 
 ## Licensing
 
