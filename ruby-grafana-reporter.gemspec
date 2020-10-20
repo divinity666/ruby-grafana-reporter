@@ -49,4 +49,7 @@ Gem::Specification.new do |s|
   s.add_runtime_dependency 'asciidoctor', '~>2'
   s.add_runtime_dependency 'asciidoctor-pdf', '~>1'
   s.add_runtime_dependency 'zip', '~>2'
+
+  s.add_development_dependency 'rspec', '~>3.9'
+  s.add_development_dependency 'webmock', '~>3.9'
 end
