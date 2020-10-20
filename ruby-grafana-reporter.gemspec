@@ -37,13 +37,16 @@ Gem::Specification.new do |s|
   }
   s.post_install_message = 'You may want to start your journey with "GrafanaReporter::Application::Application.new.configure_and_run".'
 
-  s.requirements << 'asciidoctor'
-  s.requirements << 'asciidoctor-pdf'
-  s.requirements << 'zip'
+  s.required_ruby_version = '~>2'
+  s.extra_rdoc_files = ['README.md','LICENSE']
+
+  s.requirements << 'asciidoctor, ~>2'
+  s.requirements << 'asciidoctor-pdf, ~>1'
+  s.requirements << 'zip, ~>2'
 
   s.bindir = 'bin'
 
-  s.add_runtime_dependency 'asciidoctor'
-  s.add_runtime_dependency 'asciidoctor-pdf'
-  s.add_runtime_dependency 'zip'
+  s.add_runtime_dependency 'asciidoctor', '~>2'
+  s.add_runtime_dependency 'asciidoctor-pdf', '~>1'
+  s.add_runtime_dependency 'zip', '~>2'
 end
