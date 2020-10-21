@@ -1,4 +1,3 @@
-# TODO: add test to make sure, the file is always built properly and can be run
 # TODO: build single file application properly
 
 module Kernel

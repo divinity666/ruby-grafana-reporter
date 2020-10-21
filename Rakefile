@@ -5,9 +5,12 @@ task :build do
 
   #build new versions
   require_relative 'lib/VERSION.rb'
-  sh 'gem build'
+  sh 'gem build ruby-grafana-reporter.gemspec'
   require_relative 'bin/get_single_file_application.rb'
   File.write("ruby-grafana-reporter-#{GRAFANA_REPORTER_VERSION.join(".")}.rb", get_result)
+
+  # run single file application to see it is running without issues
+  ruby "ruby-grafana-reporter-#{GRAFANA_REPORTER_VERSION.join(".")}.rb"
 end
 
 task :cleanup do
