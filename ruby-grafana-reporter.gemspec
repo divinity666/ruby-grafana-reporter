@@ -37,21 +37,22 @@ Gem::Specification.new do |s|
   }
   s.post_install_message = 'You may want to start your journey with "GrafanaReporter::Application::Application.new.configure_and_run".'
 
-  s.required_ruby_version = '~>2'
+  s.required_ruby_version = '~>2.5.5'
   s.extra_rdoc_files = ['README.md','LICENSE']
 
-  s.requirements << 'asciidoctor, ~>2'
-  s.requirements << 'asciidoctor-pdf, ~>1'
-  s.requirements << 'zip, ~>2'
+  s.requirements << 'asciidoctor, ~>2.0.10'
+  s.requirements << 'asciidoctor-pdf, ~>1.5.3'
+  s.requirements << 'zip, ~>2.0.2'
 
   s.bindir = 'bin'
 
-  s.add_runtime_dependency 'asciidoctor', '~>2'
-  s.add_runtime_dependency 'asciidoctor-pdf', '~>1'
-  s.add_runtime_dependency 'zip', '~>2'
+  s.add_runtime_dependency 'asciidoctor', '~>2.0.10'
+  s.add_runtime_dependency 'asciidoctor-pdf', '~>1.5.3'
+  s.add_runtime_dependency 'zip', '~>2.0.2'
 
-  s.add_development_dependency 'rake'
-  s.add_development_dependency 'coveralls'
-  s.add_development_dependency 'rspec', '~>3.9'
-  s.add_development_dependency 'webmock', '~>3.9'
+  s.add_development_dependency 'rake', '~>13.0.1'
+  s.add_development_dependency 'simplecov', '~>0.16.1'
+  s.add_development_dependency 'coveralls', '~>0.8.23'
+  s.add_development_dependency 'rspec', '~>3.9.0'
+  s.add_development_dependency 'webmock', '~>3.9.3'
 end
