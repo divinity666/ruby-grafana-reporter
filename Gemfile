@@ -8,10 +8,10 @@ ruby '~>2'
 gem "asciidoctor", '~>2'
 gem "asciidoctor-pdf", '~>1'
 gem "zip", '~>2'
-gem 'rake'
 
-group :test, optional: true do
+#group :test, optional: true do
+  gem 'rake'
   gem 'coveralls', require: false
   gem 'rspec', '~>3.9'
   gem 'webmock', '~>3.9'
-end
+#end
