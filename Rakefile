@@ -1,3 +1,5 @@
+task :default => [:test]
+
 task :build do
   #update version file
   version = File.read("lib/VERSION.rb")
