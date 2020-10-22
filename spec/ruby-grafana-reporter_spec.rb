@@ -1,3 +1,6 @@
+require 'coveralls'
+Coveralls.wear!
+
 require_relative '../lib/ruby-grafana-reporter.rb'
 require 'webmock/rspec'
 
