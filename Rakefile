@@ -20,5 +20,5 @@ task :cleanup do
 end
 
 task :test do
-  sh 'rspec spec/ruby-grafana-reporter_spec.rb'
+  sh 'bundle exec rspec spec/ruby-grafana-reporter_spec.rb'
 end
