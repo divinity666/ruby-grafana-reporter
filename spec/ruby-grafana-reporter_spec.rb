@@ -1,5 +1,12 @@
-require 'coveralls'
-Coveralls.wear!
+if ENV["TRAVIS"]
+  require 'coveralls'
+  Coveralls.wear!
+else
+  require 'simplecov'
+  require 'simplecov-console'
+  SimpleCov.formatter = SimpleCov::Formatter::Console
+  SimpleCov.start
+end
 
 require_relative '../lib/ruby-grafana-reporter.rb'
 require 'webmock/rspec'
