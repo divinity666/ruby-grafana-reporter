@@ -143,7 +143,7 @@ module GrafanaReporter
       params << '--help' if params.empty?
 
       parser = OptionParser.new do |opts|
-        opts.banner = 'Usage: ruby ruby-grafana-reporter.rb CONFIG_FILE [options]'
+        opts.banner = "Usage: ruby #{$0} CONFIG_FILE [options]"
 
         opts.on('-d', '--debug LEVEL', 'Specify detail level: FATAL, ERROR, WARN, INFO, DEBUG.') do |level|
           @logger.level = Object.const_get("::Logger::Severity::#{level}") if level =~ /(?:FATAL|ERROR|WARN|INFO|DEBUG)/

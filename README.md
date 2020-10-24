@@ -1,26 +1,59 @@
-[![MIT License](https://img.shields.io/github/license/divinity666/ruby-grafana-reporter.svg?style=flat-square)](https://github.com/divinity666/ruby-grafana-reporter/blob/main/LICENSE)
+[![MIT License](https://img.shields.io/github/license/divinity666/ruby-grafana-reporter.svg?style=flat-square)](https://github.com/divinity666/ruby-grafana-reporter/blob/master/LICENSE)
+[![Build Status](https://travis-ci.org/divinity666/ruby-grafana-reporter.svg?branch=master)](https://travis-ci.org/github/divinity666/ruby-grafana-reporter?branch=master)
+[![Coverage Status](https://coveralls.io/repos/github/divinity666/ruby-grafana-reporter/badge.svg?branch=master)](https://coveralls.io/github/divinity666/ruby-grafana-reporter?branch=master)
 
 # Ruby Grafana Reporter
-(Asciidoctor) Reporter Service for Grafana
+Reporting Service for Grafana
+
+## Table of Contents
+
+* [About the project](#about-the-project)
+* [Getting started](#getting-started)
+  * [Initial Configuration](#initial-configuration)
+  * [Option 1) "Baremetal" Ruby](#baremetal-ruby)
+  * [Option 2) As a GEM](#as-a-gem)
+  * [Option 3) Docker](#docker)
+  * [Grafana integration](#grafana-integration)
+* [Webservice overview](#webservice-overview)
+* [Features](#features)
+* [Roadmap](#roadmap)
+* [Contributing](#contributing)
+* [Licensing](#licensing)
+* [Acknowledgements](#acknowledgements)
+* [Donations](#donations)
+
+## About the project
 
 Did you ever want to create (professional) reports based on Grafana dashboards?
 I did so in order to being able to automatically get monthly reports of my
 home's energy usage. That's how it started.
 
-The reporter provides a full extension setup for the famous
-[Asciidoctor](https://github.com/asciidoctor/asciidoctor) and can perfectly
-integrate in a docker environment.
+The reporter provides reporting capabilities for Grafana. It is based on
+(but not limited to) [asciidoctor](https://github.com/asciidoctor/asciidoctor)
+report templates, which can dynamically integrate Grafana panels, queries,
+images etc. to create dynamic PDF reports on the fly.
 
-As a result of the reporter, you receive PDF documents or any other format that
-is supported by [Asciidoctor](https://github.com/asciidoctor/asciidoctor).
+The report may also be returned in any other format that asciidoctor supports.
 
-## Documentation
+The reporter can run standalone or as a webservice. It is built to
+integrate without further dependencies with the asciidoctor docker image.
 
-Find the complete
-[API documentation](https://rubydoc.info/github/divinity666/ruby-grafana-reporter)
-at this link.
+The complete
+[API documentation](https://rubydoc.info/gems/ruby-grafana-reporter) can be
+found here.
 
-## Initial Configuration
+## Getting started
+
+There exist several ways of installing the reporter. All of them have in
+common, that they require a working ruby environment. Check with the following
+commands, that the tools are setup and run properly:
+
+    ruby -v
+    gem -v
+
+### Initial Configuration
+
+#### Configuration file
 
 Create a first configuration file, named e.g. `myconfig` with the following
 content:
@@ -39,7 +72,7 @@ content:
     default-document-attributes:
       imagesdir: .
 
-## Hello World example
+#### "Hello World" asciidoctor template
 
 Create a first asciidoctor template file in your `templates-folder`, e.g.
 `myfirsttemplate.adoc` with the following content:
@@ -52,25 +85,12 @@ Create a first asciidoctor template file in your `templates-folder`, e.g.
 
 Now you're ready to go! Let's check it out!
 
-## Getting started
-
-There exist several ways of installing the reporter. All of them have in
-common, that they require a working ruby environment. Check with the following
-commands, that the tools are setup and run properly:
-
-    ruby -v
-    gem -v
-
-Download the ruby grafana reporter to a folder of your choice.
-
-You may want to use the single file application as well. BTW, you may build
-your own single file application by calling
-
-    ruby bin/get_single_file_application.rb
-
 ### "Baremetal" Ruby
 
-To install on a plain ruby installation, follow these steps:
+To install on a plain ruby installation, make sure that the `ruby` command is
+accessible from your command line and then follow these steps:
+
+Download the ruby grafana reporter to a folder of your choice.
 
 Install asciidoctor
 
@@ -83,15 +103,15 @@ or simply use
 To check if all dependencies are setup properly, run the following command
 in that folder:
 
-    ruby bin/ruby-grafana-reporter.rb -h
+    ruby bin/ruby-grafana-reporter -h
 
 Check that your configured grafana instance can be accessed properly:
 
-    ruby bin/ruby-grafana-reporter.rb myconfig --test default
+    ruby bin/ruby-grafana-reporter myconfig --test default
 
 Now you may want to check the conversion of your Hello World example:
 
-    ruby bin/ruby-grafana-reporter.rb myconfig --template myfirsttemplate.adoc --output myfirstrender.pdf
+    ruby bin/ruby-grafana-reporter myconfig --template myfirsttemplate.adoc --output myfirstrender.pdf
 
 You should now find a PDF document named `myfirstrender.pdf` which includes a detailed
 help page on how to use the ruby grafana reporter functions in asciidoctor, as well
@@ -100,7 +120,7 @@ as a list of all environment variables that can be accessed.
 If this has been working properly as well, you might want to run the reporter
 as a webservice. Nothing easier than that. Just call:
 
-    ruby bin/ruby-grafana-reporter.rb myconfig
+    ruby bin/ruby-grafana-reporter myconfig
 
 Test your configuration by requesting the following URL in a browser of your
 choice:
@@ -111,32 +131,26 @@ If this now also serves you the PDF document after a few seconds (remember to
 reload the page), you are done with the reporter service and might want to go
 to step into the integration with grafana.
 
-### GEM installation
+### As a GEM
 
-The gem installation might mainly be interesting, if you would like to use the
-reporter as a library and include it in other application setups. Anyway you
-can also you it identical as in the other examples. Let me show you how:
+Installation as a gem is a simple way, if you don't want to mess with the
+efforts of a barebone installation.
 
 To install as a gem, simply run:
 
     gem install ruby-grafana-reporter
 
-To see if it works properly, you may run the following code (easiest way might
-be to check in `irb`, but you can also create an `.rb` file and run it with
-the preceeding `ruby` command. Here's now the code:
+To see if it works properly, you may run the application:
 
-    require 'ruby-grafana-reporter'
-    GrafanaReporter::Application::Application.new.configure_and_run
+    ruby-grafana-reporter
 
 To check if your configured grafana instance can be accessed properly:
 
-    require 'ruby-grafana-reporter'
-    GrafanaReporter::Application::Application.new.configure_and_run(["myconfig", "--test", "default"])
+    ruby-grafana-reporter myconfig --test default
 
 Now you may want to check the conversion of your Hello World example:
 
-    require 'ruby-grafana-reporter'
-    GrafanaReporter::Application::Application.new.configure_and_run(["myconfig", "--template", "myfirsttemplate.adoc", "--output", "myfirstrender.pdf"])
+    ruby-grafana-reporter myconfig --template myfirsttemplate.adoc --output myfirstrender.pdf
 
 You should now find a PDF document named `myfirstrender.pdf` which includes a detailed
 help page on how to use the ruby grafana reporter functions in asciidoctor, as well
@@ -145,8 +159,7 @@ as a list of all environment variables that can be accessed.
 If this has been working properly as well, you might want to run the reporter
 as a webservice. Nothing easier than that. Just call:
 
-    require 'ruby-grafana-reporter'
-    GrafanaReporter::Application::Application.new.configure_and_run(["myconfig"])
+    ruby-grafana-reporter myconfig
 
 Test your configuration by requesting the following URL in a browser of your
 choice:
@@ -157,7 +170,7 @@ If this now also serves you the PDF document after a few seconds (remember to
 reload the page), you are done with the reporter service and might want to go
 to step into the integration with grafana.
 
-### Docker integration
+### Docker
 
 One of the key features of the reporter is, that it can work seemlessly with
 the official `asciidoctor` docker container without further dependencies.
@@ -173,22 +186,23 @@ following to your services secion in your `docker-compose.yml`:
         - /<<an-empty-local-path>>:/documents
       restart: unless-stopped
 
-After running this container, you have to copy the reporter files (I tend to
-use the single file application there) to your `<<an-empty-local-path>>`.
+After running this container, you have to copy the reporter files. Download the
+ruby grafana reporter to the folder `<<an-empty-local-path>>`. I tend to use
+the single file application there.
 
 To test the setup, you'll have to first step inside the container, e.g. by
 calling `docker exec` with the appropriate parameters. Then you can simply
 run
 
-    ruby bin/ruby-grafana-reporter.rb -h
+    ruby bin/ruby-grafana-reporter -h
 
 Check that your configured grafana instance can be accessed properly:
 
-    ruby bin/ruby-grafana-reporter.rb myconfig --test default
+    ruby bin/ruby-grafana-reporter myconfig --test default
 
 Now you may want to check the conversion of your Hello World example:
 
-    ruby bin/ruby-grafana-reporter.rb myconfig --template myfirsttemplate.adoc --output myfirstrender.pdf
+    ruby bin/ruby-grafana-reporter myconfig --template myfirsttemplate.adoc --output myfirstrender.pdf
 
 You should now find a PDF document named `myfirstrender.pdf` which includes a detailed
 help page on how to use the ruby grafana reporter functions in asciidoctor, as well
@@ -212,7 +226,7 @@ Additionally you need to create a `startup.sh` file in the folder
 `<<an-empty-local-path>>` with the following content:
 
     cd /documents
-    ruby bin/ruby-grafana-reporter.rb myconfig
+    ruby bin/ruby-grafana-reporter myconfig
 
 After restarting the container, the service should be running.
 
@@ -225,16 +239,7 @@ If this now also serves you the PDF document after a few seconds (remember to
 reload the page), you are done with the reporter service and might want to go
 to step into the integration with grafana.
 
-## Webservice
-
-Running the reporter as a webservice provides the following URLs
-
-    /overview - for all running or retained renderings
-    /render - for rendering a template, 'var-template' is the only mandatory GET parameter
-    /view_report - for viewing the status or receving the result of a specific rendering, is automatically called after a successfull /render call
-    /cancel_report - for cancelling the rendering of a specific report, normally not called manually, but on user interaction in the /view_report or /overview URL
-
-## Grafana integration
+### Grafana integration
 
 The key feature of the report is, that it can easily be integrated with grafana
 (I've not even been talking about the features it is providing for that, but
@@ -270,10 +275,21 @@ you should change the link of the 'MyFirstReport' link to
 
 That's it. Let me know your feedback!
 
+## Webservice overview
+
+Running the reporter as a webservice provides the following URLs
+
+    /overview - for all running or retained renderings
+    /render - for rendering a template, 'var-template' is the only mandatory GET parameter
+    /view_report - for viewing the status or receving the result of a specific rendering, is automatically called after a successfull /render call
+    /cancel_report - for cancelling the rendering of a specific report, normally not called manually, but on user interaction in the /view_report or /overview URL
+
 ## Features
 
-* Integrate grafana panel images, grafana panel query results as table or single values,
-custom SQL query results as tables, alers, annotations and many more
+* Build report template including all imaginable grafana content:
+  * panels as images
+  * panel table query or custom query results as real document tables (not images!)
+  * single panel value or custom query single value result integrated in texts
 * Solid as a rock, also in case of template errors (at least it aims to be)
 * Runs standalone or as a webservice
 * Seamlessly integrates with asciidoctor docker container
@@ -283,8 +299,8 @@ custom SQL query results as tables, alers, annotations and many more
 
 This is just a collection of things, I am heading for in future, without a schedule.
 
+* Add documentation of possible asciidoctor calls to grafana
 * Add documentation for configuration file
-* Share (anonymized) rspec tests in this repo
 * Add a simple plugin system to support specific asciidoctor modifications
 * Solve code TODOs
 * Become [rubocop](https://rubocop.org/) ready
@@ -296,6 +312,12 @@ branch. Pull requests are warmly welcome.
 
 Though not yet valid for my code, I'd like to see the project become
 [rubocop](https://rubocop.org/) ready :-)
+
+Definitely open spots from my side are:
+
+* This README
+* Clean and properly setup test cases
+* An own webpage for this project
 
 ## Licensing
 

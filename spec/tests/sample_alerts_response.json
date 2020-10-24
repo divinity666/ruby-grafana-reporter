@@ -1,0 +1,18 @@
+[
+  {
+    "id": 1,
+    "dashboardId": 9,
+    "dashboardUid": "Yv73hjigz",
+    "dashboardSlug": "debugging",
+    "panelId": 12,
+    "name": "Panel Title alert",
+    "state": "ok",
+    "newStateDate": "2020-07-17T14:11:01+02:00",
+    "evalDate": "0001-01-01T00:00:00Z",
+    "evalData": {
+      
+    },
+    "executionError": "",
+    "url": "/d/Yv73hjigz/debugging"
+  }
+]

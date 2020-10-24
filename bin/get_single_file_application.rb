@@ -1,4 +1,3 @@
-# TODO: add test to make sure, the file is always built properly and can be run
 # TODO: build single file application properly
 
 module Kernel
@@ -29,5 +28,7 @@ module Kernel
   end
 end
 
-require_relative '/../lib/ruby-grafana-reporter.rb'
-puts [File.read('./LICENSE').gsub(/^/, "# "), required_contents, 'GrafanaReporter::Application::Application.new.configure_and_run(ARGV)'].join("\n")
+def get_result
+  require_relative '/../lib/ruby-grafana-reporter.rb'
+  [File.read('./LICENSE').gsub(/^/, "# "), required_contents, 'GrafanaReporter::Application::Application.new.configure_and_run(ARGV)'].join("\n")
+end
