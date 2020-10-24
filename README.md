@@ -102,15 +102,15 @@ or simply use
 To check if all dependencies are setup properly, run the following command
 in that folder:
 
-    ruby bin/ruby-grafana-reporter.rb -h
+    ruby bin/ruby-grafana-reporter -h
 
 Check that your configured grafana instance can be accessed properly:
 
-    ruby bin/ruby-grafana-reporter.rb myconfig --test default
+    ruby bin/ruby-grafana-reporter myconfig --test default
 
 Now you may want to check the conversion of your Hello World example:
 
-    ruby bin/ruby-grafana-reporter.rb myconfig --template myfirsttemplate.adoc --output myfirstrender.pdf
+    ruby bin/ruby-grafana-reporter myconfig --template myfirsttemplate.adoc --output myfirstrender.pdf
 
 You should now find a PDF document named `myfirstrender.pdf` which includes a detailed
 help page on how to use the ruby grafana reporter functions in asciidoctor, as well
@@ -119,7 +119,7 @@ as a list of all environment variables that can be accessed.
 If this has been working properly as well, you might want to run the reporter
 as a webservice. Nothing easier than that. Just call:
 
-    ruby bin/ruby-grafana-reporter.rb myconfig
+    ruby bin/ruby-grafana-reporter myconfig
 
 Test your configuration by requesting the following URL in a browser of your
 choice:
@@ -132,30 +132,24 @@ to step into the integration with grafana.
 
 ### As a GEM
 
-The gem installation might mainly be interesting, if you would like to use the
-reporter as a library and include it in other application setups. Anyway you
-can also you it identical as in the other examples. Let me show you how:
+Installation as a gem is a simple way, if you don't want to mess with the
+efforts of a barebone installation.
 
 To install as a gem, simply run:
 
     gem install ruby-grafana-reporter
 
-To see if it works properly, you may run the following code (easiest way might
-be to check in `irb`, but you can also create an `.rb` file and run it with
-the preceeding `ruby` command. Here's now the code:
+To see if it works properly, you may run the application:
 
-    require 'ruby-grafana-reporter'
-    GrafanaReporter::Application::Application.new.configure_and_run
+    ruby-grafana-reporter
 
 To check if your configured grafana instance can be accessed properly:
 
-    require 'ruby-grafana-reporter'
-    GrafanaReporter::Application::Application.new.configure_and_run(["myconfig", "--test", "default"])
+    ruby-grafana-reporter myconfig --test default
 
 Now you may want to check the conversion of your Hello World example:
 
-    require 'ruby-grafana-reporter'
-    GrafanaReporter::Application::Application.new.configure_and_run(["myconfig", "--template", "myfirsttemplate.adoc", "--output", "myfirstrender.pdf"])
+    ruby-grafana-reporter myconfig --template myfirsttemplate.adoc --output myfirstrender.pdf
 
 You should now find a PDF document named `myfirstrender.pdf` which includes a detailed
 help page on how to use the ruby grafana reporter functions in asciidoctor, as well
@@ -164,8 +158,7 @@ as a list of all environment variables that can be accessed.
 If this has been working properly as well, you might want to run the reporter
 as a webservice. Nothing easier than that. Just call:
 
-    require 'ruby-grafana-reporter'
-    GrafanaReporter::Application::Application.new.configure_and_run(["myconfig"])
+    ruby-grafana-reporter myconfig
 
 Test your configuration by requesting the following URL in a browser of your
 choice:
@@ -200,15 +193,15 @@ To test the setup, you'll have to first step inside the container, e.g. by
 calling `docker exec` with the appropriate parameters. Then you can simply
 run
 
-    ruby bin/ruby-grafana-reporter.rb -h
+    ruby bin/ruby-grafana-reporter -h
 
 Check that your configured grafana instance can be accessed properly:
 
-    ruby bin/ruby-grafana-reporter.rb myconfig --test default
+    ruby bin/ruby-grafana-reporter myconfig --test default
 
 Now you may want to check the conversion of your Hello World example:
 
-    ruby bin/ruby-grafana-reporter.rb myconfig --template myfirsttemplate.adoc --output myfirstrender.pdf
+    ruby bin/ruby-grafana-reporter myconfig --template myfirsttemplate.adoc --output myfirstrender.pdf
 
 You should now find a PDF document named `myfirstrender.pdf` which includes a detailed
 help page on how to use the ruby grafana reporter functions in asciidoctor, as well
@@ -232,7 +225,7 @@ Additionally you need to create a `startup.sh` file in the folder
 `<<an-empty-local-path>>` with the following content:
 
     cd /documents
-    ruby bin/ruby-grafana-reporter.rb myconfig
+    ruby bin/ruby-grafana-reporter myconfig
 
 After restarting the container, the service should be running.
 
