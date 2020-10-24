@@ -930,6 +930,40 @@ describe AlertsTableIncludeProcessor do
   end
 end
 
+describe ValueAsVariableIncludeProcessor do
+  before do
+    config = Configuration.new
+    config.load_config({ 'grafana' => { 'default' => { 'host' => stub_url, 'api_key' => stub_key } } })
+    report = Report.new(config, './spec/tests/demo_report.adoc')
+    Asciidoctor::Extensions.unregister_all
+    Asciidoctor::Extensions.register do
+      include_processor ValueAsVariableIncludeProcessor.new.current_report(report)
+      inline_macro SqlValueInlineMacro.new.current_report(report)
+    end
+    @report = report
+  end
+
+  it 'can be processed' do
+    expect(Asciidoctor.convert("include::grafana_value_as_variable[call=\"grafana_sql_value:#{stub_datasource}\",sql=\"SELECT 1\",variable_name=\"test\",panel=\"#{stub_panel}\",dashboard=\"#{stub_dashboard}\"]", to_file: false)).not_to include('1')
+    expect(Asciidoctor.convert("include::grafana_value_as_variable[call=\"grafana_sql_value:#{stub_datasource}\",sql=\"SELECT 1\",variable_name=\"test\",panel=\"#{stub_panel}\",dashboard=\"#{stub_dashboard}\"]\n{test}", to_file: false)).to include('1')
+  end
+
+  it 'shows error if mandatory call attributes is missing' do
+    expect(@report.logger).to receive(:error).with("Missing mandatory attribute 'call' or 'variable_name'.")
+    Asciidoctor.convert("include::grafana_value_as_variable[variable_name=\"test\",panel=\"#{stub_panel}\",dashboard=\"#{stub_dashboard}\"]", to_file: false)
+  end
+  
+  it 'shows error if mandatory variable_name attributes is missing' do
+    expect(@report.logger).to receive(:error).with("Missing mandatory attribute 'call' or 'variable_name'.")
+    Asciidoctor.convert("include::grafana_value_as_variable[call=\"test:1\",panel=\"#{stub_panel}\",dashboard=\"#{stub_dashboard}\"]", to_file: false)
+  end
+  
+  it 'shows error if mandatory call attributes is malformed' do
+    expect(@report.logger).to receive(:error).with("Could not find inline macro extension for 'test'.")
+    Asciidoctor.convert("include::grafana_value_as_variable[call=\"test\",variable_name=\"test\",panel=\"#{stub_panel}\",dashboard=\"#{stub_dashboard}\"]", to_file: false)
+  end
+end
+
 describe ShowEnvironmentIncludeProcessor do
   before do
     config = Configuration.new
