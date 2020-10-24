@@ -87,7 +87,8 @@ Now you're ready to go! Let's check it out!
 
 ### "Baremetal" Ruby
 
-To install on a plain ruby installation, follow these steps:
+To install on a plain ruby installation, make sure that the `ruby` command is
+accessible from your command line and then follow these steps:
 
 Download the ruby grafana reporter to a folder of your choice.
 
