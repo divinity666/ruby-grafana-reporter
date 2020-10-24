@@ -7,5 +7,5 @@ git_source(:github) {|ruby_grafana_reporter| "https://github.com/divinity666/rub
 gemspec
 
 if ENV["TRAVIS"]
-  gem "rake", "~>0.13"
+  gem "rake", "~>13.0"
 end
