@@ -39,13 +39,13 @@ module Grafana
 
       # handle value 'All' properly
       # TODO fix check for selection of All properly
-      if value == 'All' or @text == 'All'
+      if (value == 'All') || (@text == 'All')
         if !@config['options'].empty?
           value = @config['options'].map { |item| item['value'] }
         elsif !@config['query'].empty?
           # TODO: replace variables in this query, too
           return @config['query']
-          # TODO handle 'All' value properly for query attributes
+          # TODO: handle 'All' value properly for query attributes
         else
           # TODO how to handle All selection properly at this point?
         end
@@ -63,7 +63,7 @@ module Grafana
         value
       when 'doublequote'
         if multi?
-          value = value.map { |item| "\"#{item.gsub(/[\\]/, '\\\\').gsub(/"/, '\\"')}\"" }
+          value = value.map { |item| "\"#{item.gsub(/\\/, '\\\\').gsub(/"/, '\\"')}\"" }
           return value.join(',')
         end
         "\"#{value.gsub(/"/, '\\"')}\""
@@ -91,17 +91,17 @@ module Grafana
 
       when 'regex'
         if multi?
-          value = value.map { |item| item.gsub(%r{[/$\.\|\\]}, '\\\\' + '\0') }
+          value = value.map { |item| item.gsub(%r{[/$.|\\]}, '\\\\' + '\0') }
           return "(#{value.join('|')})"
         end
-        value.gsub(%r{[/$\.\|\\]}, '\\\\' + '\0')
+        value.gsub(%r{[/$.|\\]}, '\\\\' + '\0')
 
       when 'singlequote'
         if multi?
-          value = value.map { |item| "'#{item.gsub(/[']/, '\\\\' + '\0')}'" }
+          value = value.map { |item| "'#{item.gsub(/'/, '\\\\' + '\0')}'" }
           return value.join(',')
         end
-        "'#{value.gsub(/[']/, '\\\\' + '\0')}'"
+        "'#{value.gsub(/'/, '\\\\' + '\0')}'"
 
       when 'sqlstring'
         if multi?
@@ -117,9 +117,9 @@ module Grafana
         end
         value.gsub(%r{[" |=/\\]}, '\\\\' + '\0')
 
-      when /^date(?:[:](?<format>.*))?$/
-        #TODO validate how grafana handles multivariables with date format
-        get_date_formatted(value, $1)
+      when /^date(?::(?<format>.*))?$/
+        # TODO: validate how grafana handles multivariables with date format
+        get_date_formatted(value, Regexp.last_match(1))
 
       when ''
         # default
@@ -131,8 +131,8 @@ module Grafana
 
       else
         # glob and all unknown
-	#TODO add check for array value properly for all cases
-        return "{#{value.join(',')}}" if multi? and value.is_a?(Array)
+        # TODO add check for array value properly for all cases
+        return "{#{value.join(',')}}" if multi? && value.is_a?(Array)
 
         value
       end
@@ -164,93 +164,93 @@ module Grafana
     # and {https://momentjs.com/docs/#/displaying/}.
     def get_date_formatted(value, format)
       return (Float(value) / 1000).to_i.to_s if format == 'seconds'
-      return Time.at((Float(value) / 1000).to_i).utc.iso8601(3) if !format or format == 'iso'
+      return Time.at((Float(value) / 1000).to_i).utc.iso8601(3) if !format || (format == 'iso')
 
       # build array of known matches
       matches = []
       work_string = format
       while work_string.length > 0
         tmp = work_string.scan(/^(?:M{1,4}|D{1,4}|d{1,4}|e|E|w{1,2}|W{1,2}|Y{4}|Y{2}|A|a|H{1,2}|h{1,2}|k{1,2}|m{1,2}|s{1,2}|S+|X)/)
-        unless tmp.empty?
-          matches << tmp[0]
-          work_string.delete_prefix!(tmp[0])
-        else
+        if tmp.empty?
           matches << work_string[0]
           work_string.delete_prefix!(work_string[0])
+        else
+          matches << tmp[0]
+          work_string.delete_prefix!(tmp[0])
         end
       end
 
-      #TODO move case when to hash
-      format_string = ""
+      # TODO: move case when to hash
+      format_string = ''
       matches.each do |match|
         format_string += case match
-          when 'M'
-            '%-m'
-          when 'MM'
-            '%m'
-          when 'MMM'
-            '%b'
-          when 'MMMM'
-            '%B'
-          when 'D'
-            '%-d'
-          when 'DD'
-            '%d'
-          when 'DDD'
-            '%-j'
-          when 'DDDD'
-            '%j'
-          when 'YY'
-            '%y'
-          when 'YYYY'
-            '%Y'
-          when 'd'
-            '%w'
-          when 'ddd'
-            '%a'
-          when 'dddd'
-            '%A'
-          when 'e'
-            '%w'
-          when 'E'
-            '%u'
-          when 'w'
-            '%-U'
-          when 'ww'
-            '%U'
-          when 'W'
-            '%-V'
-          when 'WW'
-            '%V'
-          when 'YY'
-            '%y'
-          when 'YYYY'
-            '%Y'
-          when 'A'
-            '%p'
-          when 'a'
-            '%P'
-          when 'H'
-            '%-H'
-          when 'HH'
-            '%H'
-          when 'h'
-            '%-I'
-          when 'hh'
-            '%I'
-          when 'm'
-            '%-M'
-          when 'mm'
-            '%M'
-          when 's'
-            '%-S'
-          when 'ss'
-            '%S'
-          when 'X'
-            '%s'
-          else
-            match
-          end
+                         when 'M'
+                           '%-m'
+                         when 'MM'
+                           '%m'
+                         when 'MMM'
+                           '%b'
+                         when 'MMMM'
+                           '%B'
+                         when 'D'
+                           '%-d'
+                         when 'DD'
+                           '%d'
+                         when 'DDD'
+                           '%-j'
+                         when 'DDDD'
+                           '%j'
+                         when 'YY'
+                           '%y'
+                         when 'YYYY'
+                           '%Y'
+                         when 'd'
+                           '%w'
+                         when 'ddd'
+                           '%a'
+                         when 'dddd'
+                           '%A'
+                         when 'e'
+                           '%w'
+                         when 'E'
+                           '%u'
+                         when 'w'
+                           '%-U'
+                         when 'ww'
+                           '%U'
+                         when 'W'
+                           '%-V'
+                         when 'WW'
+                           '%V'
+                         when 'YY'
+                           '%y'
+                         when 'YYYY'
+                           '%Y'
+                         when 'A'
+                           '%p'
+                         when 'a'
+                           '%P'
+                         when 'H'
+                           '%-H'
+                         when 'HH'
+                           '%H'
+                         when 'h'
+                           '%-I'
+                         when 'hh'
+                           '%I'
+                         when 'm'
+                           '%-M'
+                         when 'mm'
+                           '%M'
+                         when 's'
+                           '%-S'
+                         when 'ss'
+                           '%S'
+                         when 'X'
+                           '%s'
+                         else
+                           match
+                         end
       end
 
       Time.at((Float(value) / 1000).to_i).strftime(format_string)

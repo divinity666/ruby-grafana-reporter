@@ -1,11 +1,9 @@
 # frozen_string_literal: true
 
-source "https://rubygems.org"
+source 'https://rubygems.org'
 
-git_source(:github) {|ruby_grafana_reporter| "https://github.com/divinity666/ruby-grafana-reporter" }
+git_source(:github) { |_ruby_grafana_reporter| 'https://github.com/divinity666/ruby-grafana-reporter' }
 
 gemspec
 
-if ENV["TRAVIS"]
-  gem "rake", "~>13.0"
-end
+gem 'rake', '~>13.0' if ENV['TRAVIS']

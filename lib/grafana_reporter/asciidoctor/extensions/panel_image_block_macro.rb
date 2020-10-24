@@ -58,8 +58,7 @@ module GrafanaReporter
           end
 
           attrs['target'] = image_path
-          block = create_image_block(parent, attrs)
-          block
+          create_image_block(parent, attrs)
         end
       end
     end

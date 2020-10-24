@@ -17,7 +17,7 @@ module GrafanaReporter
       # @return [void]
       def create_report
         @start_time = Time.now
-        attrs = {'convert-backend' => 'pdf'}.merge(@config.default_document_attributes.merge(@custom_attributes))
+        attrs = { 'convert-backend' => 'pdf' }.merge(@config.default_document_attributes.merge(@custom_attributes))
         attrs['grafana-report-timestamp'] = @start_time.to_s
         logger.info('Report started at ' + @start_time.to_s)
         logger.debug('Document attributes: ' + attrs.to_s)
@@ -28,7 +28,7 @@ module GrafanaReporter
         ::Asciidoctor::LoggerManager.logger = logger
 
         registry = ::Asciidoctor::Extensions::Registry.new
-        #TODO dynamically register macros, which is also needed when supporting custom macros
+        # TODO: dynamically register macros, which is also needed when supporting custom macros
         registry.inline_macro Extensions::PanelImageInlineMacro.new.current_report(self)
         registry.inline_macro Extensions::PanelQueryValueInlineMacro.new.current_report(self)
         registry.inline_macro Extensions::PanelPropertyInlineMacro.new.current_report(self)
@@ -53,7 +53,7 @@ module GrafanaReporter
           dest_path = @destination_file_or_path.path if @destination_file_or_path.is_a?(File)
 
           # build zip file
-          zip_file = Tempfile.new("gf_zip")
+          zip_file = Tempfile.new('gf_zip')
           Zip::File.open(zip_file.path, Zip::File::CREATE) do |zipfile|
             # add report file
             zipfile.get_output_stream(dest_path.gsub(@config.reports_folder, '') + ".#{attrs['convert-backend']}") { |f| f.puts File.read(dest_path) }
@@ -68,7 +68,7 @@ module GrafanaReporter
           zip_file.rewind
           begin
             File.write(dest_path, zip_file.read)
-          rescue => e
+          rescue StandardError => e
             logger.fatal("Could not overwrite report file '#{dest_path}' with ZIP file. (#{e.message}).")
           end
 
@@ -76,7 +76,7 @@ module GrafanaReporter
           zip_file.close
           zip_file.unlink
         end
-        
+
         clean_image_files
         @end_time = Time.now
         logger.info('Report finished after ' + (@end_time - @start_time).to_s + ' seconds.')
@@ -141,18 +141,18 @@ module GrafanaReporter
         @image_files.each(&:unlink)
         @image_files = []
       end
-      
+
       def initialize_step_counter
         @total_steps = 0
         File.readlines(@template).each do |line|
           begin
             @total_steps += line.gsub(%r{//.*}, '').scan(/(?:grafana_panel_image|grafana_panel_query_value|grafana_panel_query_table|grafana_sql_value|grafana_sql_table|grafana_environment|grafana_help|grafana_panel_property|grafana_annotations|grafana_alerts|grafana_value_as_variable)/).length
-          rescue => e
+          rescue StandardError => e
             logger.error("Could not process line '#{line}' (Error: #{e.message})")
             raise e
           end
         end
-        logger.debug("Template #{@template} contains #{@total_steps.to_s} calls of grafana reporter functions.")
+        logger.debug("Template #{@template} contains #{@total_steps} calls of grafana reporter functions.")
       end
     end
   end

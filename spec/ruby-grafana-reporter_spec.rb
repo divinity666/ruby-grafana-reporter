@@ -1,4 +1,4 @@
-if ENV["TRAVIS"]
+if ENV['TRAVIS']
   require 'coveralls'
   Coveralls.wear!
 else
@@ -6,7 +6,7 @@ else
   SimpleCov.start
 end
 
-require_relative '../lib/ruby-grafana-reporter.rb'
+require_relative '../lib/ruby-grafana-reporter'
 require 'webmock/rspec'
 
 include Grafana
@@ -117,17 +117,16 @@ describe Variable do
       expect(subject.text).to eq('resolved')
     end
 
-    context "date" do
-      subject {dashboard.variables.select{|item| item.name == "timestamp"}.first}
+    context 'date' do
+      subject { dashboard.variables.select { |item| item.name == 'timestamp' }.first }
 
-
-      it "can format date" do
-        expect(subject.value_formatted).to eq("1596660163000")
-        expect(subject.value_formatted('date:seconds')).to eq("1596660163")
-        expect(subject.value_formatted('date')).to eq("2020-08-05T20:42:43.000Z") #Time.at(1596660163).utc.iso8601(3)
-        expect(subject.value_formatted('date:iso')).to eq("2020-08-05T20:42:43.000Z") #Time.at(1596660163).utc.iso8601(3)
-        expect(subject.value_formatted('date:YYYY-MM-DD')).to eq("2020-08-05")
-        expect(subject.value_formatted('date:M MM MMM MMMM D DD d ddd dddd e E w ww W WW YY YYYY A a H HH h hh m mm s ss X')).to eq("8 08 Aug August 5 05 3 Wed Wednesday 3 3 31 31 32 32 20 2020 PM pm 22 22 10 10 42 42 43 43 1596660163")
+      it 'can format date' do
+        expect(subject.value_formatted).to eq('1596660163000')
+        expect(subject.value_formatted('date:seconds')).to eq('1596660163')
+        expect(subject.value_formatted('date')).to eq('2020-08-05T20:42:43.000Z') # Time.at(1596660163).utc.iso8601(3)
+        expect(subject.value_formatted('date:iso')).to eq('2020-08-05T20:42:43.000Z') # Time.at(1596660163).utc.iso8601(3)
+        expect(subject.value_formatted('date:YYYY-MM-DD')).to eq('2020-08-05')
+        expect(subject.value_formatted('date:M MM MMM MMMM D DD d ddd dddd e E w ww W WW YY YYYY A a H HH h hh m mm s ss X')).to eq('8 08 Aug August 5 05 3 Wed Wednesday 3 3 31 31 32 32 20 2020 PM pm 22 22 10 10 42 42 43 43 1596660163')
       end
     end
   end
@@ -738,7 +737,7 @@ describe PanelImageBlockMacro do
   end
 
   it 'can be processed' do
-    expect(Asciidoctor.convert("grafana_panel_image::#{stub_panel}[dashboard=\"#{stub_dashboard}\"]", to_file: false)).to include('<img src="gf_image_').and match (/(?!Error)/)
+    expect(Asciidoctor.convert("grafana_panel_image::#{stub_panel}[dashboard=\"#{stub_dashboard}\"]", to_file: false)).to include('<img src="gf_image_').and match(/(?!Error)/)
   end
 end
 
@@ -870,11 +869,11 @@ describe PanelQueryTableIncludeProcessor do
   it 'can format values' do
     expect(Asciidoctor.convert("include::grafana_panel_query_table:#{stub_panel}[query=\"#{stub_panel_query}\",dashboard=\"#{stub_dashboard}\",format=\",%.2f\"]", to_file: false)).to match(/<p>\| 1594308060000 \| 43.90/)
   end
-  
+
   it 'handles column and row divider' do
     expect(Asciidoctor.convert("include::grafana_panel_query_table:#{stub_panel}[query=\"#{stub_panel_query}\",dashboard=\"#{stub_dashboard}\",column_divider=\" col \",row_divider=\"row \"]", to_file: false)).to match(/<p>row 1594308060000 col 43.9/)
   end
-  
+
   it 'can transpose results' do
     expect(Asciidoctor.convert("include::grafana_panel_query_table:#{stub_panel}[query=\"#{stub_panel_query}\",dashboard=\"#{stub_dashboard}\",transpose=\"true\"]", to_file: false)).to match(/<p>\| 1594308060000 \| 1594308030000 \|/)
   end
@@ -952,12 +951,12 @@ describe ValueAsVariableIncludeProcessor do
     expect(@report.logger).to receive(:error).with("Missing mandatory attribute 'call' or 'variable_name'.")
     Asciidoctor.convert("include::grafana_value_as_variable[variable_name=\"test\",panel=\"#{stub_panel}\",dashboard=\"#{stub_dashboard}\"]", to_file: false)
   end
-  
+
   it 'shows error if mandatory variable_name attributes is missing' do
     expect(@report.logger).to receive(:error).with("Missing mandatory attribute 'call' or 'variable_name'.")
     Asciidoctor.convert("include::grafana_value_as_variable[call=\"test:1\",panel=\"#{stub_panel}\",dashboard=\"#{stub_dashboard}\"]", to_file: false)
   end
-  
+
   it 'shows error if mandatory call attributes is malformed' do
     expect(@report.logger).to receive(:error).with("Could not find inline macro extension for 'test'.")
     Asciidoctor.convert("include::grafana_value_as_variable[call=\"test\",variable_name=\"test\",panel=\"#{stub_panel}\",dashboard=\"#{stub_dashboard}\"]", to_file: false)

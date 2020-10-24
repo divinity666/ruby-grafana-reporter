@@ -14,11 +14,11 @@ module GrafanaReporter
     attr_accessor :report_class
 
     # Returned by {#mode} if only a connection test shall be executed.
-    MODE_CONNECTION_TEST = 'test'
+    MODE_CONNECTION_TEST = 'test'.freeze
     # Returned by {#mode} if only one configured report shall be rendered.
-    MODE_SINGLE_RENDER = 'single-render'
+    MODE_SINGLE_RENDER = 'single-render'.freeze
     # Returned by {#mode} if the default webservice shall be started.
-    MODE_SERVICE = 'webservice'
+    MODE_SERVICE = 'webservice'.freeze
 
     def initialize
       @config = {}
@@ -31,9 +31,11 @@ module GrafanaReporter
 
     # @return [String] mode, in which the reporting shall be executed. One of {MODE_CONNECTION_TEST}, {MODE_SINGLE_RENDER} and {MODE_SERVICE}.
     def mode
-      return MODE_SERVICE if get_config('grafana-reporter:run-mode') != MODE_CONNECTION_TEST and get_config('grafana-reporter:run-mode') != MODE_SINGLE_RENDER
+      if (get_config('grafana-reporter:run-mode') != MODE_CONNECTION_TEST) && (get_config('grafana-reporter:run-mode') != MODE_SINGLE_RENDER)
+        return MODE_SERVICE
+      end
 
-      return get_config('grafana-reporter:run-mode')
+      get_config('grafana-reporter:run-mode')
     end
 
     # @return [String] configured report template. Only needed in {MODE_SINGLE_RENDER}.
@@ -81,7 +83,7 @@ module GrafanaReporter
     # @return [String] configured folder, in which the report templates are stored including trailing slash. By default: current folder.
     def templates_folder
       result = get_config('grafana-reporter:templates-folder') || '.'
-      result.sub!(%r{[/]*$}, '/') unless result.empty?
+      result.sub!(/[\/]*$/, '/') unless result.empty?
       result
     end
 
@@ -92,7 +94,7 @@ module GrafanaReporter
     def images_folder
       img_path = templates_folder
       img_path = img_path.empty? ? get_config('default-document-attributes:imagesdir').to_s : img_path + get_config('default-document-attributes:imagesdir').to_s
-      img_path.empty? ? './' : img_path.sub(%r{[/]*$}, '/')
+      img_path.empty? ? './' : img_path.sub(/[\/]*$/, '/')
     end
 
     # @return [String] name of grafana instance, against which a test shall be executed
@@ -103,7 +105,7 @@ module GrafanaReporter
     # @return [String] configured folder, in which the reports shall be stored including trailing slash. By default: current folder.
     def reports_folder
       result = get_config('grafana-reporter:reports-folder') || '.'
-      result.sub!(%r{[/]*$}, '/') unless result.empty?
+      result.sub!(/[\/]*$/, '/') unless result.empty?
       result
     end
 
@@ -153,8 +155,8 @@ module GrafanaReporter
           if get_config('grafana-reporter')
             @config['grafana-reporter']['run-mode'] = 'test'
           else
-            @config.merge!({'grafana-reporter' => {'run-mode' => 'test'} })
-	  end
+            @config.merge!({ 'grafana-reporter' => { 'run-mode' => 'test' } })
+          end
           @config['grafana-reporter']['test-instance'] = instance
         end
 
@@ -162,8 +164,8 @@ module GrafanaReporter
           if get_config('grafana-reporter')
             @config['grafana-reporter']['run-mode'] = 'single-render'
           else
-            @config.merge!({'grafana-reporter' => {'run-mode' => 'single-render'} })
-	  end
+            @config.merge!({ 'grafana-reporter' => { 'run-mode' => 'single-render' } })
+          end
           @config['default-document-attributes']['var-template'] = template
         end
 
@@ -282,7 +284,7 @@ module GrafanaReporter
       end
 
       # validate also if subject has further configurations, which are not known by the reporter
-      subject.each do |item, subitems|
+      subject.each do |item, _subitems|
         schema_config = schema[item] || schema[nil]
         if schema_config.nil?
           logger.warn("Item '#{item}' in configuration is unknown to the reporter and will be ignored")

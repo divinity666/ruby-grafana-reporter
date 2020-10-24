@@ -1,8 +1,6 @@
 module GrafanaReporter
-
   # This module contains special extensions for use in the reporter.
   module Logger
-
     # This logger enables a special use case, so that one and the same log
     # will automatically be send to two different logger destinations.
     #

@@ -9,7 +9,7 @@ module GrafanaReporter
       # @return [void]
       def merge_hash_variables(document_hash, item_hash)
         merge_variables(document_hash.select { |k, _v| k =~ /^var-/ || k == 'grafana-report-timestamp' }.transform_values { |item| ::Grafana::Variable.new(item) })
-	# TODO: add documentation for transpose, column_divider and row_divider
+        # TODO: add documentation for transpose, column_divider and row_divider
         merge_variables(item_hash.select { |k, _v| k =~ /^var-/ || k =~ /^render-/ || k =~ /filter_columns|format|replace_values_.*|transpose|column_divider|row_divider/ }.transform_values { |item| ::Grafana::Variable.new(item) })
         # TODO: add documentation for timeout and grafana-default-timeout
         self.timeout = item_hash['timeout'] || document_hash['grafana-default-timeout'] || timeout
@@ -54,7 +54,7 @@ module GrafanaReporter
               table[:points].each do |point|
                 result = []
                 result << point[1]
-                (content_position - 1).times {result << nil}
+                (content_position - 1).times { result << nil }
                 result << point[0]
                 results[:content][0] << result
               end
@@ -74,7 +74,7 @@ module GrafanaReporter
       # @return [Hash] transposed query result
       def transpose(result, transpose_variable)
         return result unless transpose_variable
-        return result unless transpose_variable.raw_value == 'true' 
+        return result unless transpose_variable.raw_value == 'true'
 
         result[:content] = result[:content].transpose
 
@@ -196,15 +196,15 @@ module GrafanaReporter
                     skip = false
                     begin
                       val = Float(row[i])
-                    rescue
+                    rescue StandardError
                       # value cannot be converted to number, simply ignore it as the comparison does not fit here
                       skip = true
                     end
 
-                    if not skip
+                    unless skip
                       begin
-		        op = match[:operator].gsub(/^=$/, '==').gsub(/^<>$/, '!=')
-		        if val.public_send(op.to_sym, Float(match[:number]))
+                        op = match[:operator].gsub(/^=$/, '==').gsub(/^<>$/, '!=')
+                        if val.public_send(op.to_sym, Float(match[:number]))
                           row[i] = if v.include?('\\1')
                                      v.gsub(/\\1/, row[i].to_s)
                                    else

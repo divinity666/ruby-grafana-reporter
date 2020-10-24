@@ -12,7 +12,6 @@ module GrafanaReporter
         @property = property
       end
 
-
       # Overrides the default method, as the query does not have to run against a SQL table,
       # but rather against the panel model.
       # @param grafana [Grafana::Grafana] grafana instance against which the panel property is queried
@@ -25,7 +24,7 @@ module GrafanaReporter
         post_process
         @result
 
-# TODO handle text (markdown and similar) properly
+        # TODO: handle text (markdown and similar) properly
       end
 
       # Prepare query. Mainly here nothing special has to take place.

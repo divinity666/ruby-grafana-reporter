@@ -107,8 +107,7 @@ module Grafana
       request.body = options[:body]
 
       @logger.debug("Requesting #{relative_uri} with '#{options[:body]}' and timeout '#{http.read_timeout}'")
-      resp = http.request(request)
-      resp
+      http.request(request)
     end
 
     private

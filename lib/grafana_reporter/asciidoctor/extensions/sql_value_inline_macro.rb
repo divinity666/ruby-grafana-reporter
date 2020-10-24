@@ -1,8 +1,6 @@
 module GrafanaReporter
-
   module Asciidoctor
     module Extensions
-
       # Implements the hook
       #   grafana_sql_value:<datasource_id>[<options>]
       #

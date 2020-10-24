@@ -74,9 +74,9 @@ module Grafana
       repeat = true
       repeat_count = 0
 
-      # TODO find a proper way to replace variables recursively instead of over and over again
+      # TODO: find a proper way to replace variables recursively instead of over and over again
       # TODO add tests for recursive replacement of variable
-      while repeat and repeat_count < 3
+      while repeat && (repeat_count < 3)
         repeat = false
         repeat_count += 1
         variables.each do |var_name, obj|
