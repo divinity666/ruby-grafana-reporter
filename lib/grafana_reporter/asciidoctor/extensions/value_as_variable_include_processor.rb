@@ -4,7 +4,6 @@ module GrafanaReporter
   module Asciidoctor
     module Extensions
       # TODO: add documentation
-      # TODO: add tests
       class ValueAsVariableIncludeProcessor < ::Asciidoctor::Extensions::IncludeProcessor
         include ProcessorMixin
 
@@ -20,9 +19,10 @@ module GrafanaReporter
           # do NOT increase step, as this is done by sub processor
           #@report.next_step
 
-          call, target = attrs.delete('call').split(":")
+          call_attr = attrs.delete('call')
+          call, target = call_attr.split(":") if call_attr
           attribute = attrs.delete('variable_name')
-          @report.logger.debug("Processing AttributeIncludeProcessor (call: #{call}, target: #{target}, variable_name: #{attribute}, attrs: #{attrs.to_s})")
+          @report.logger.debug("Processing ValueAsVariableIncludeProcessor (call: #{call}, target: #{target}, variable_name: #{attribute}, attrs: #{attrs.to_s})")
           if not call or not attribute
             @report.logger.error("Missing mandatory attribute 'call' or 'variable_name'.")
             return reader
@@ -34,18 +34,18 @@ module GrafanaReporter
           end
           
           # TODO: properly show error messages also in document
-          ext = doc.extensions.find_inline_macro_extension(call)
+          ext = doc.extensions.find_inline_macro_extension(call) if doc.extensions.inline_macros?
           if not ext
-            @report.logger.error("Could not find extension for '#{call}'.")
+            @report.logger.error("Could not find inline macro extension for '#{call}'.")
           else
-            @report.logger.debug("AttributeIncludeProcessor: Calling sub-method.")
+            @report.logger.debug("ValueAsVariableIncludeProcessor: Calling sub-method.")
             item = ext.process_method.call(doc, target, attrs)
             if not item.text.to_s.empty?
 	      result = ":#{attribute}: #{item.text}"
-              @report.logger.debug("AttributeIncludeProcessor: Adding '#{result}' to document.")
+              @report.logger.debug("ValueAsVariableIncludeProcessor: Adding '#{result}' to document.")
               reader.unshift_line(result)
             else
-              @report.logger.debug("AttributeIncludeProcessor: Not adding variable '#{attribute}', as query result was empty.")
+              @report.logger.debug("ValueAsVariableIncludeProcessor: Not adding variable '#{attribute}', as query result was empty.")
             end
           end
           
