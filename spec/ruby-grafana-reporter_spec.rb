@@ -15,6 +15,17 @@ include GrafanaReporter::Application
 include GrafanaReporter::Asciidoctor
 include GrafanaReporter::Asciidoctor::Extensions
 
+describe AbstractQuery do
+  let(:query) { AbstractQuery.new }
+
+  it 'has abstract methods' do
+    expect { query.uri }.to raise_error(NotImplementedError)
+    expect { query.request }.to raise_error(NotImplementedError)
+    expect { query.pre_process(nil) }.to raise_error(NotImplementedError)
+    expect { query.post_process }.to raise_error(NotImplementedError)
+  end
+end
+
 describe Dashboard do
   let(:dashboard) { Dashboard.new(JSON.parse(File.read('./spec/tests/demo_dashboard.json'))['dashboard'], Grafana::Grafana.new('')) }
 
