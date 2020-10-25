@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Grafana
   # This class contains a representation of
   # {https://grafana.com/docs/grafana/latest/variables/templates-and-variables grafana variables},
@@ -8,7 +10,24 @@ module Grafana
   class Variable
     attr_reader :name, :text, :raw_value
 
-    # @param config_or_value [Hash, Object] configuration hash of a variable out of an {Dashboard} instance or a value of any kind.
+    DATE_MATCHES = { 'M' => '%-m', 'MM' => '%m', 'MMM' => '%b',  'MMMM' => '%B',
+                     'D' => '%-d', 'DD' => '%d', 'DDD' => '%-j', 'DDDD' => '%j',
+                     'd' => '%w',                'ddd' => '%a',  'dddd' => '%A',
+                     'YY' => '%y', 'YYYY' => '%Y',
+                     'h' => '%-I', 'hh' => '%I',
+                     'H' => '%-H', 'HH' => '%H',
+                     'm' => '%-M', 'mm' => '%M',
+                     's' => '%-S', 'ss' => '%S',
+                     'w' => '%-U', 'ww' => '%U',
+                     'W' => '%-V', 'WW' => '%V',
+                     'a' => '%P',
+                     'A' => '%p',
+                     'e' => '%w',
+                     'E' => '%u',
+                     'X' => '%s' }.freeze
+
+   # @param config_or_value [Hash, Object] configuration hash of a variable out of an {Dashboard} instance
+   #  or a value of any kind.
     def initialize(config_or_value)
       if config_or_value.is_a? Hash
         @config = config_or_value
@@ -26,11 +45,16 @@ module Grafana
 
     # Returns the stored value formatted according the given format.
     #
-    # Supported formats are: +csv+, +distributed+, +doublequote+, +json+, +percentencode+, +pipe+, +raw+, +regex+, +singlequote+, +sqlstring+, +lucene+, +date+ or +glob+ (default)
+    # Supported formats are: +csv+, +distributed+, +doublequote+, +json+, +percentencode+, +pipe+, +raw+,
+    # +regex+, +singlequote+, +sqlstring+, +lucene+, +date+ or +glob+ (default)
     #
-    # For details see {https://grafana.com/docs/grafana/latest/variables/advanced-variable-format-options Grafana Advanced variable format options}.
+    # For details see {https://grafana.com/docs/grafana/latest/variables/advanced-variable-format-options
+    # Grafana Advanced variable format options}.
     #
-    # For details of +date+ format, see {https://grafana.com/docs/grafana/latest/variables/variable-types/global-variables/#__from-and-__to}. Please note that input for +date+ format is unixtime in milliseconds.
+    # For details of +date+ format, see
+    # {https://grafana.com/docs/grafana/latest/variables/variable-types/global-variables/#__from-and-__to 
+    # Grafana global variables $__from and $__to}.
+    # Please note that input for +date+ format is unixtime in milliseconds.
     #
     # @param format [String] desired format
     # @return [String] value of stored variable according the specified format
@@ -38,7 +62,7 @@ module Grafana
       value = @raw_value
 
       # handle value 'All' properly
-      # TODO fix check for selection of All properly
+      # TODO: fix check for selection of All properly
       if (value == 'All') || (@text == 'All')
         if !@config['options'].empty?
           value = @config['options'].map { |item| item['value'] }
@@ -47,7 +71,7 @@ module Grafana
           return @config['query']
           # TODO: handle 'All' value properly for query attributes
         else
-          # TODO how to handle All selection properly at this point?
+          # TODO: how to handle All selection properly at this point?
         end
       end
 
@@ -70,7 +94,7 @@ module Grafana
 
       when 'json'
         if multi?
-          value = value.map { |item| "\"#{item.gsub(/["\\]/, '\\\\' + '\0')}\"" }
+          value = value.map { |item| "\"#{item.gsub(/["\\]/, '\\\\\0')}\"" }
           return "[#{value.join(',')}]"
         end
         "\"#{value.gsub(/"/, '\\"')}\""
@@ -91,17 +115,17 @@ module Grafana
 
       when 'regex'
         if multi?
-          value = value.map { |item| item.gsub(%r{[/$.|\\]}, '\\\\' + '\0') }
+          value = value.map { |item| item.gsub(%r{[/$.|\\]}, '\\\\\0') }
           return "(#{value.join('|')})"
         end
-        value.gsub(%r{[/$.|\\]}, '\\\\' + '\0')
+        value.gsub(%r{[/$.|\\]}, '\\\\\0')
 
       when 'singlequote'
         if multi?
-          value = value.map { |item| "'#{item.gsub(/'/, '\\\\' + '\0')}'" }
+          value = value.map { |item| "'#{item.gsub(/'/, '\\\\\0')}'" }
           return value.join(',')
         end
-        "'#{value.gsub(/'/, '\\\\' + '\0')}'"
+        "'#{value.gsub(/'/, '\\\\\0')}'"
 
       when 'sqlstring'
         if multi?
@@ -112,10 +136,10 @@ module Grafana
 
       when 'lucene'
         if multi?
-          value = value.map { |item| "\"#{item.gsub(%r{[" |=/\\]}, '\\\\' + '\0')}\"" }
+          value = value.map { |item| "\"#{item.gsub(%r{[" |=/\\]}, '\\\\\0')}\"" }
           return "(#{value.join(' OR ')})"
         end
-        value.gsub(%r{[" |=/\\]}, '\\\\' + '\0')
+        value.gsub(%r{[" |=/\\]}, '\\\\\0')
 
       when /^date(?::(?<format>.*))?$/
         # TODO: validate how grafana handles multivariables with date format
@@ -169,8 +193,9 @@ module Grafana
       # build array of known matches
       matches = []
       work_string = format
-      while work_string.length > 0
-        tmp = work_string.scan(/^(?:M{1,4}|D{1,4}|d{1,4}|e|E|w{1,2}|W{1,2}|Y{4}|Y{2}|A|a|H{1,2}|h{1,2}|k{1,2}|m{1,2}|s{1,2}|S+|X)/)
+      until work_string.empty?
+        tmp = work_string.scan(/^(?:M{1,4}|D{1,4}|d{1,4}|e|E|w{1,2}|W{1,2}|Y{4}|Y{2}|A|a|H{1,2}|
+                                    h{1,2}|k{1,2}|m{1,2}|s{1,2}|S+|X)/x)
         if tmp.empty?
           matches << work_string[0]
           work_string.delete_prefix!(work_string[0])
@@ -180,77 +205,14 @@ module Grafana
         end
       end
 
-      # TODO: move case when to hash
-      format_string = ''
+      format_string = ''.dup
       matches.each do |match|
-        format_string += case match
-                         when 'M'
-                           '%-m'
-                         when 'MM'
-                           '%m'
-                         when 'MMM'
-                           '%b'
-                         when 'MMMM'
-                           '%B'
-                         when 'D'
-                           '%-d'
-                         when 'DD'
-                           '%d'
-                         when 'DDD'
-                           '%-j'
-                         when 'DDDD'
-                           '%j'
-                         when 'YY'
-                           '%y'
-                         when 'YYYY'
-                           '%Y'
-                         when 'd'
-                           '%w'
-                         when 'ddd'
-                           '%a'
-                         when 'dddd'
-                           '%A'
-                         when 'e'
-                           '%w'
-                         when 'E'
-                           '%u'
-                         when 'w'
-                           '%-U'
-                         when 'ww'
-                           '%U'
-                         when 'W'
-                           '%-V'
-                         when 'WW'
-                           '%V'
-                         when 'YY'
-                           '%y'
-                         when 'YYYY'
-                           '%Y'
-                         when 'A'
-                           '%p'
-                         when 'a'
-                           '%P'
-                         when 'H'
-                           '%-H'
-                         when 'HH'
-                           '%H'
-                         when 'h'
-                           '%-I'
-                         when 'hh'
-                           '%I'
-                         when 'm'
-                           '%-M'
-                         when 'mm'
-                           '%M'
-                         when 's'
-                           '%-S'
-                         when 'ss'
-                           '%S'
-                         when 'X'
-                           '%s'
-                         else
-                           match
-                         end
+        replacement = DATE_MATCHES[match]
+        if replacement
+          format_string << replacement
+        else
+          format_string << match
+        end
       end
 
       Time.at((Float(value) / 1000).to_i).strftime(format_string)
