@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Grafana
   # @abstract Override {#url}, #{#request}, {#pre_process} and {#post_process} in subclass.
   #
@@ -59,7 +61,8 @@ module Grafana
       self
     end
 
-    # @return [Hash<String, Variable>] all grafana variables stored in this query, i.e. the variable name is prefixed with +var-+
+    # @return [Hash<String, Variable>] all grafana variables stored in this query, i.e. the variable name
+    #  is prefixed with +var-+
     def grafana_variables
       @variables.select { |k, _v| k =~ /^var-.+/ }
     end
@@ -67,7 +70,8 @@ module Grafana
     # Replaces the grafana variables in the given string with their replacement value.
     #
     # @param string [String] string in which the variables shall be replaced
-    # @param variables [Hash<String,Variable>] Hash containing the variables, which shall be replaced in the given string
+    # @param variables [Hash<String,Variable>] Hash containing the variables, which shall be replaced in the
+    #  given string
     # @return [String] string in which all variables are properly replaced
     def replace_variables(string, variables = {})
       res = string
@@ -75,15 +79,15 @@ module Grafana
       repeat_count = 0
 
       # TODO: find a proper way to replace variables recursively instead of over and over again
-      # TODO add tests for recursive replacement of variable
+      # TODO: add tests for recursive replacement of variable
       while repeat && (repeat_count < 3)
         repeat = false
         repeat_count += 1
         variables.each do |var_name, obj|
           # only set ticks if value is string
           variable = var_name.gsub(/^var-/, '')
-          res = res.gsub(/(?:\$\{#{variable}(?::(?<format>[\w]+))?\}|(?<!\.)\$#{variable}(?!\.))/) do
-            obj.value_formatted($~[:format])
+          res = res.gsub(/(?:\$\{#{variable}(?::(?<format>\w+))?\}|(?<!\.)\$#{variable}(?!\.))/) do
+            obj.value_formatted($LAST_MATCH_INFO[:format])
           end
         end
         repeat = true if res.include?('$')
@@ -101,7 +105,8 @@ module Grafana
 
     # @abstract
     #
-    # @return [Hash] Hash containing the request parameters, which shall be overwritten or extended in {Grafana#execute_http_request}
+    # @return [Hash] Hash containing the request parameters, which shall be overwritten or extended in
+    #  {Grafana#execute_http_request}
     def request
       raise NotImplementedError
     end
