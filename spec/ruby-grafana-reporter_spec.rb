@@ -126,7 +126,7 @@ describe Variable do
         expect(subject.value_formatted('date')).to eq('2020-08-05T20:42:43.000Z') # Time.at(1596660163).utc.iso8601(3)
         expect(subject.value_formatted('date:iso')).to eq('2020-08-05T20:42:43.000Z') # Time.at(1596660163).utc.iso8601(3)
         expect(subject.value_formatted('date:YYYY-MM-DD')).to eq('2020-08-05')
-        expect(subject.value_formatted('date:M MM MMM MMMM D DD d ddd dddd e E w ww W WW YY YYYY A a H HH h hh m mm s ss X')).to eq('8 08 Aug August 5 05 3 Wed Wednesday 3 3 31 31 32 32 20 2020 PM pm 22 22 10 10 42 42 43 43 1596660163')
+        expect(subject.value_formatted('date:M MM MMM MMMM D DD DDD DDDD d ddd dddd e E w ww W WW YY YYYY A a H HH h hh m mm s ss X')).to eq('8 08 Aug August 5 05 218 218 3 Wed Wednesday 3 3 31 31 32 32 20 2020 PM pm 22 22 10 10 42 42 43 43 1596660163')
       end
     end
   end
