@@ -9,10 +9,8 @@ Reporting Service for Grafana
 
 * [About the project](#about-the-project)
 * [Getting started](#getting-started)
-  * [Initial Configuration](#initial-configuration)
-  * [Option 1) "Baremetal" Ruby](#baremetal-ruby)
-  * [Option 2) As a GEM](#as-a-gem)
-  * [Option 3) Docker](#docker)
+  * [Configuration](#configuration)
+  * [Installation](#installation)
   * [Grafana integration](#grafana-integration)
 * [Webservice overview](#webservice-overview)
 * [Features](#features)
@@ -51,7 +49,7 @@ commands, that the tools are setup and run properly:
     ruby -v
     gem -v
 
-### Initial Configuration
+### Configuration
 
 #### Configuration file
 
@@ -85,53 +83,16 @@ Create a first asciidoctor template file in your `templates-folder`, e.g.
 
 Now you're ready to go! Let's check it out!
 
-### "Baremetal" Ruby
+### Installation
 
-To install on a plain ruby installation, make sure that the `ruby` command is
-accessible from your command line and then follow these steps:
+There exist several ways for installing the reporter. Check out the most
+convenient one for your use case. If you are unsure, I propose to start with
+the GEM setup.
 
-Download the ruby grafana reporter to a folder of your choice.
+<details>
+<summary>as a GEM (easiest method)</summary>
 
-Install asciidoctor
-
-    gem install asciidoctor asciidoctor-pdf zip
-
-or simply use
-
-    bundle install
-
-To check if all dependencies are setup properly, run the following command
-in that folder:
-
-    ruby bin/ruby-grafana-reporter -h
-
-Check that your configured grafana instance can be accessed properly:
-
-    ruby bin/ruby-grafana-reporter myconfig --test default
-
-Now you may want to check the conversion of your Hello World example:
-
-    ruby bin/ruby-grafana-reporter myconfig --template myfirsttemplate.adoc --output myfirstrender.pdf
-
-You should now find a PDF document named `myfirstrender.pdf` which includes a detailed
-help page on how to use the ruby grafana reporter functions in asciidoctor, as well
-as a list of all environment variables that can be accessed.
-
-If this has been working properly as well, you might want to run the reporter
-as a webservice. Nothing easier than that. Just call:
-
-    ruby bin/ruby-grafana-reporter myconfig
-
-Test your configuration by requesting the following URL in a browser of your
-choice:
-
-    http://<<your-server-url>>:8815/render?var-template=myfirsttemplate.adoc
-
-If this now also serves you the PDF document after a few seconds (remember to
-reload the page), you are done with the reporter service and might want to go
-to step into the integration with grafana.
-
-### As a GEM
+#### As a GEM
 
 Installation as a gem is a simple way, if you don't want to mess with the
 efforts of a barebone installation.
@@ -152,9 +113,10 @@ Now you may want to check the conversion of your Hello World example:
 
     ruby-grafana-reporter myconfig --template myfirsttemplate.adoc --output myfirstrender.pdf
 
-You should now find a PDF document named `myfirstrender.pdf` which includes a detailed
-help page on how to use the ruby grafana reporter functions in asciidoctor, as well
-as a list of all environment variables that can be accessed.
+You should now find a PDF document named `myfirstrender.pdf` which includes a
+detailed help page on how to use the ruby grafana reporter functions in
+asciidoctor, as well as a list of all environment variables that can be
+accessed.
 
 If this has been working properly as well, you might want to run the reporter
 as a webservice. Nothing easier than that. Just call:
@@ -170,7 +132,12 @@ If this now also serves you the PDF document after a few seconds (remember to
 reload the page), you are done with the reporter service and might want to go
 to step into the integration with grafana.
 
-### Docker
+</details>
+
+<details>
+<summary>integrate with docker</summary>
+
+#### Docker
 
 One of the key features of the reporter is, that it can work seemlessly with
 the official `asciidoctor` docker container without further dependencies.
@@ -238,6 +205,63 @@ choice:
 If this now also serves you the PDF document after a few seconds (remember to
 reload the page), you are done with the reporter service and might want to go
 to step into the integration with grafana.
+
+</details>
+
+<details>
+<summary>in a plain ruby setup</summary>
+
+#### "Baremetal" Ruby
+
+This installation is mainly intended to be used if you like to have a
+development setup, or similar. Most people will most likely go with the GEM
+or the docker installation.
+
+To install on a plain ruby installation, make sure that the `ruby` command is
+accessible from your command line and then follow these steps:
+
+Download the ruby grafana reporter to a folder of your choice.
+
+Install asciidoctor
+
+    gem install asciidoctor asciidoctor-pdf zip
+
+or simply use
+
+    bundle install
+
+To check if all dependencies are setup properly, run the following command
+in that folder:
+
+    ruby bin/ruby-grafana-reporter -h
+
+Check that your configured grafana instance can be accessed properly:
+
+    ruby bin/ruby-grafana-reporter myconfig --test default
+
+Now you may want to check the conversion of your Hello World example:
+
+    ruby bin/ruby-grafana-reporter myconfig --template myfirsttemplate.adoc --output myfirstrender.pdf
+
+You should now find a PDF document named `myfirstrender.pdf` which includes a detailed
+help page on how to use the ruby grafana reporter functions in asciidoctor, as well
+as a list of all environment variables that can be accessed.
+
+If this has been working properly as well, you might want to run the reporter
+as a webservice. Nothing easier than that. Just call:
+
+    ruby bin/ruby-grafana-reporter myconfig
+
+Test your configuration by requesting the following URL in a browser of your
+choice:
+
+    http://<<your-server-url>>:8815/render?var-template=myfirsttemplate.adoc
+
+If this now also serves you the PDF document after a few seconds (remember to
+reload the page), you are done with the reporter service and might want to go
+to step into the integration with grafana.
+
+</details>
 
 ### Grafana integration
 
