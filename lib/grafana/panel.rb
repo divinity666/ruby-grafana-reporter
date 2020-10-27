@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Grafana
   # Representation of one specific panel in a {Dashboard} instance.
   class Panel
