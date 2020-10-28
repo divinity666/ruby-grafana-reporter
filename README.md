@@ -89,9 +89,6 @@ There exist several ways for installing the reporter. Check out the most
 convenient one for your use case. If you are unsure, I propose to start with
 the GEM setup.
 
-<details>
-<summary>as a GEM (easiest method)</summary>
-
 #### As a GEM
 
 Installation as a gem is a simple way, if you don't want to mess with the
@@ -130,12 +127,7 @@ choice:
 
 If this now also serves you the PDF document after a few seconds (remember to
 reload the page), you are done with the reporter service and might want to go
-to step into the integration with grafana.
-
-</details>
-
-<details>
-<summary>integrate with docker</summary>
+to step into the [integration with grafana](#grafana-integration).
 
 #### Docker
 
@@ -204,12 +196,7 @@ choice:
 
 If this now also serves you the PDF document after a few seconds (remember to
 reload the page), you are done with the reporter service and might want to go
-to step into the integration with grafana.
-
-</details>
-
-<details>
-<summary>in a plain ruby setup</summary>
+to step into the [integration with grafana](#grafana-integration).
 
 #### "Baremetal" Ruby
 
@@ -259,9 +246,7 @@ choice:
 
 If this now also serves you the PDF document after a few seconds (remember to
 reload the page), you are done with the reporter service and might want to go
-to step into the integration with grafana.
-
-</details>
+to step into the [integration with grafana](#grafana-integration).
 
 ### Grafana integration
 
