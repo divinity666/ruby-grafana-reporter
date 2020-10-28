@@ -31,7 +31,7 @@ task :build do
 
   # update version file
   version = File.read('lib/VERSION.rb')
-  File.write('lib/VERSION.rb', version.gsub(/GRAFANA_REPORTER_RELEASE_DATE *= [^$\n]*/, "GRAFANA_REPORTER_RELEASE_DATE = '#{Time.now.to_s[0..9]}'.freeze"))
+  File.write('lib/VERSION.rb', version.gsub(/GRAFANA_REPORTER_RELEASE_DATE *= [^$\n]*/, "GRAFANA_REPORTER_RELEASE_DATE = '#{Time.now.to_s[0..9]}'"))
 
   # build new versions
   require_relative 'lib/VERSION'

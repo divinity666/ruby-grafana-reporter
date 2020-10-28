@@ -26,8 +26,8 @@ module Grafana
                      'E' => '%u',
                      'X' => '%s' }.freeze
 
-   # @param config_or_value [Hash, Object] configuration hash of a variable out of an {Dashboard} instance
-   #  or a value of any kind.
+    # @param config_or_value [Hash, Object] configuration hash of a variable out of an {Dashboard} instance
+    #  or a value of any kind.
     def initialize(config_or_value)
       if config_or_value.is_a? Hash
         @config = config_or_value
@@ -52,7 +52,7 @@ module Grafana
     # Grafana Advanced variable format options}.
     #
     # For details of +date+ format, see
-    # {https://grafana.com/docs/grafana/latest/variables/variable-types/global-variables/#__from-and-__to 
+    # {https://grafana.com/docs/grafana/latest/variables/variable-types/global-variables/#__from-and-__to
     # Grafana global variables $__from and $__to}.
     # Please note that input for +date+ format is unixtime in milliseconds.
     #
