@@ -3,7 +3,7 @@
 [![Coverage Status](https://coveralls.io/repos/github/divinity666/ruby-grafana-reporter/badge.svg?branch=master)](https://coveralls.io/github/divinity666/ruby-grafana-reporter?branch=master)
 
 # Ruby Grafana Reporter
-Reporting Service for Grafana
+Reporting Service for Grafana ([Project page](https://github.com/divinity666/ruby-grafana-reporter))
 
 ## Table of Contents
 
