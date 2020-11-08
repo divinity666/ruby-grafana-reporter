@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # In this namespace all objects needed for the grafana reporter are collected.
 module GrafanaReporter
   # Used to store the whole settings, which are necessary to run the reporter.
@@ -14,24 +16,26 @@ module GrafanaReporter
     attr_accessor :report_class
 
     # Returned by {#mode} if only a connection test shall be executed.
-    MODE_CONNECTION_TEST = 'test'.freeze
+    MODE_CONNECTION_TEST = 'test'
     # Returned by {#mode} if only one configured report shall be rendered.
-    MODE_SINGLE_RENDER = 'single-render'.freeze
+    MODE_SINGLE_RENDER = 'single-render'
     # Returned by {#mode} if the default webservice shall be started.
-    MODE_SERVICE = 'webservice'.freeze
+    MODE_SERVICE = 'webservice'
 
     def initialize
       @config = {}
-      @logger = ::Logger.new(STDERR, level: :unknown)
+      @logger = ::Logger.new($stderr, level: :unknown)
       # TODO: set report class somewhere else, but make it known here
       self.report_class = Asciidoctor::Report
     end
 
     attr_reader :logger
 
-    # @return [String] mode, in which the reporting shall be executed. One of {MODE_CONNECTION_TEST}, {MODE_SINGLE_RENDER} and {MODE_SERVICE}.
+    # @return [String] mode, in which the reporting shall be executed. One of {MODE_CONNECTION_TEST},
+    #   {MODE_SINGLE_RENDER} and {MODE_SERVICE}.
     def mode
-      if (get_config('grafana-reporter:run-mode') != MODE_CONNECTION_TEST) && (get_config('grafana-reporter:run-mode') != MODE_SINGLE_RENDER)
+      if (get_config('grafana-reporter:run-mode') != MODE_CONNECTION_TEST) &&
+         (get_config('grafana-reporter:run-mode') != MODE_SINGLE_RENDER)
         return MODE_SERVICE
       end
 
@@ -72,7 +76,8 @@ module GrafanaReporter
     end
 
     # @param instance [String] grafana instance name, for which the value shall be retrieved.
-    # @return [Hash<String,Integer>] configured datasources for the requested grafana instance. Name as key, ID as value.
+    # @return [Hash<String,Integer>] configured datasources for the requested grafana instance. Name as key,
+    #   ID as value.
     def grafana_datasources(instance = 'default')
       hash = get_config("grafana:#{instance}:datasources")
       return nil if hash.nil?
@@ -80,10 +85,12 @@ module GrafanaReporter
       hash.map { |k, v| [k, v] }.to_h
     end
 
-    # @return [String] configured folder, in which the report templates are stored including trailing slash. By default: current folder.
+    # @return [String] configured folder, in which the report templates are stored including trailing slash.
+    #   By default: current folder.
     def templates_folder
       result = get_config('grafana-reporter:templates-folder') || '.'
-      result.sub!(/[\/]*$/, '/') unless result.empty?
+      return result.sub(%r{/*$}, '/') unless result.empty?
+
       result
     end
 
@@ -93,8 +100,12 @@ module GrafanaReporter
     # @return [String] configured folder, in which temporary images shall be stored.
     def images_folder
       img_path = templates_folder
-      img_path = img_path.empty? ? get_config('default-document-attributes:imagesdir').to_s : img_path + get_config('default-document-attributes:imagesdir').to_s
-      img_path.empty? ? './' : img_path.sub(/[\/]*$/, '/')
+      img_path = if img_path.empty?
+                   get_config('default-document-attributes:imagesdir').to_s
+                 else
+                   img_path + get_config('default-document-attributes:imagesdir').to_s
+                 end
+      img_path.empty? ? './' : img_path.sub(%r{/*$}, '/')
     end
 
     # @return [String] name of grafana instance, against which a test shall be executed
@@ -102,14 +113,17 @@ module GrafanaReporter
       get_config('grafana-reporter:test-instance')
     end
 
-    # @return [String] configured folder, in which the reports shall be stored including trailing slash. By default: current folder.
+    # @return [String] configured folder, in which the reports shall be stored including trailing slash.
+    #   By default: current folder.
     def reports_folder
       result = get_config('grafana-reporter:reports-folder') || '.'
-      result.sub!(/[\/]*$/, '/') unless result.empty?
+      return result.sub(%r{/*$}, '/') unless result.empty?
+
       result
     end
 
-    # @return [Integer] how many hours a generated report shall be retained, before it shall be deleted. By default: 24.
+    # @return [Integer] how many hours a generated report shall be retained, before it shall be deleted.
+    #   By default: 24.
     def report_retention
       get_config('grafana-reporter:report-retention') || 24
     end
@@ -145,7 +159,7 @@ module GrafanaReporter
       params << '--help' if params.empty?
 
       parser = OptionParser.new do |opts|
-        opts.banner = "Usage: ruby #{$0} CONFIG_FILE [options]"
+        opts.banner = "Usage: ruby #{$PROGRAM_NAME} CONFIG_FILE [options]"
 
         opts.on('-d', '--debug LEVEL', 'Specify detail level: FATAL, ERROR, WARN, INFO, DEBUG.') do |level|
           @logger.level = Object.const_get("::Logger::Severity::#{level}") if level =~ /(?:FATAL|ERROR|WARN|INFO|DEBUG)/
@@ -259,27 +273,25 @@ module GrafanaReporter
           else
             raise ConfigurationError, "Unhandled configuration data type '#{subject.class}'."
           end
-        else
-          # apply to single item
-          if subject.is_a?(Hash)
-            if !subject.key?(key) && (min_occurence > 0)
-              raise ConfigurationDoesNotMatchSchemaError.new(key, 'occur', min_occurence, 0)
-            end
-            if !subject[key].is_a?(type) && subject.key?(key)
-              raise ConfigurationDoesNotMatchSchemaError.new(key, 'be a', type, subject[key].class)
-            end
-
-          elsif subject.is_a?(Array)
-            if (subject.length < key) && (min_occurence > subject.length)
-              raise ConfigurationDoesNotMatchSchemaError.new(key, 'occur', min_occurence, subject.length)
-            end
-            if !subject[key].is_a?(type) && (subject.length >= key)
-              raise ConfigurationDoesNotMatchSchemaError.new(key, 'be a', type, subject[key].class)
-            end
-
-          else
-            raise ConfigurationError, "Unhandled configuration data type '#{subject.class}'."
+        # apply to single item
+        elsif subject.is_a?(Hash)
+          if !subject.key?(key) && min_occurence.positive?
+            raise ConfigurationDoesNotMatchSchemaError.new(key, 'occur', min_occurence, 0)
           end
+          if !subject[key].is_a?(type) && subject.key?(key)
+            raise ConfigurationDoesNotMatchSchemaError.new(key, 'be a', type, subject[key].class)
+          end
+
+        elsif subject.is_a?(Array)
+          if (subject.length < key) && (min_occurence > subject.length)
+            raise ConfigurationDoesNotMatchSchemaError.new(key, 'occur', min_occurence, subject.length)
+          end
+          if !subject[key].is_a?(type) && (subject.length >= key)
+            raise ConfigurationDoesNotMatchSchemaError.new(key, 'be a', type, subject[key].class)
+          end
+
+        else
+          raise ConfigurationError, "Unhandled configuration data type '#{subject.class}'."
         end
       end
 

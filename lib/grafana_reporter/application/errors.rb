@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module GrafanaReporter
   module Application
     # General grafana application error, from which the specific errors

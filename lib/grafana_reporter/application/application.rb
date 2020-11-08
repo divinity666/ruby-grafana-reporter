@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module GrafanaReporter
   # This module contains all classes, which are used by the grafana reporter
   # application. The application is a set of classes, which allows to run the
@@ -12,7 +14,7 @@ module GrafanaReporter
     # or run as a service.
     class Application
       def initialize
-        @logger = ::Logger.new(STDERR, level: :unknown)
+        @logger = ::Logger.new($stderr, level: :unknown)
         @reports = []
       end
 
@@ -53,7 +55,9 @@ module GrafanaReporter
 
         case @config.mode
         when Configuration::MODE_CONNECTION_TEST
-          res = Grafana::Grafana.new(@config.grafana_host(@config.test_instance), @config.grafana_api_key(@config.test_instance), logger: @logger).test_connection
+          res = Grafana::Grafana.new(@config.grafana_host(@config.test_instance),
+                                     @config.grafana_api_key(@config.test_instance),
+                                     logger: @logger).test_connection
           puts res
 
         when Configuration::MODE_SINGLE_RENDER
@@ -121,7 +125,10 @@ module GrafanaReporter
               running_reports = @reports.reject(&:done)
               until running_reports.empty?
                 unless running_reports.empty?
-                  @logger.info("#{running_reports.length} report(s) in progress: #{running_reports.map { |report| (report.progress * 100).to_i.to_s + '% (running ' + report.execution_time.to_i.to_s + ' secs)' }.join(', ')}")
+                  @logger.info("#{running_reports.length} report(s) in progress: "\
+                               "#{running_reports.map do |report|
+                                    "#{(report.progress * 100).to_i}% (running #{report.execution_time.to_i} secs)"
+                                  end.join(', ')}")
                 end
                 sleep 5
                 running_reports = @reports.reject(&:done)
@@ -142,7 +149,7 @@ module GrafanaReporter
         query_parameters = CGI.parse(query_string)
 
         @logger.debug("Received request: #{request.split("\r\n")[0]}")
-        @logger.debug('query_parameters: ' + query_parameters.to_s)
+        @logger.debug("query_parameters: #{query_parameters}")
 
         # read URL parameters
         attrs = {}
@@ -150,9 +157,10 @@ module GrafanaReporter
           attrs[k] = v.length == 1 ? v[0] : v
         end
 
-        if request.split("\r\n")[0] =~ %r{^GET /render[? ]}
+        case request.split("\r\n")[0]
+        when %r{^GET /render[? ]}
           # build report
-          template_file = @config.templates_folder.to_s + attrs['var-template'].to_s + '.adoc'
+          template_file = "#{@config.templates_folder}#{attrs['var-template']}.adoc"
 
           file = Tempfile.new('gf_pdf_', @config.reports_folder)
           begin
@@ -169,11 +177,11 @@ module GrafanaReporter
 
           return http_response(302, 'Found', nil, Location: "/view_report?report_id=#{report.object_id}")
 
-        elsif request.split("\r\n")[0] =~ %r{^GET /overview[? ]}
+        when %r{^GET /overview[? ]}
           # show overview for current reports
           return get_reports_status_as_html(@reports)
 
-        elsif request.split("\r\n")[0] =~ %r{^GET /view_report[? ]}
+        when %r{^GET /view_report[? ]}
           # view report if already available, or show status view
           report = @reports.select { |r| r.object_id.to_s == attrs['report_id'].to_s }.first
           raise WebserviceGeneralRenderingError, 'view_report has been called without valid id' if report.nil?
@@ -187,9 +195,10 @@ module GrafanaReporter
           return http_response(200, 'OK', content, "Content-Type": 'application/pdf') if content.start_with?('%PDF')
 
           # TODO: properly provide file as zip
-          return http_response(200, 'OK', content, "Content-Type": 'application/octet-stream', "Content-Disposition": 'attachment; filename=report.zip')
+          return http_response(200, 'OK', content, "Content-Type": 'application/octet-stream',
+                                                   "Content-Disposition": 'attachment; filename=report.zip')
 
-        elsif request.split("\r\n")[0] =~ %r{^GET /cancel_report[? ]}
+        when %r{^GET /cancel_report[? ]}
           # view report if already available, or show status view
           report = @reports.select { |r| r.object_id.to_s == attrs['report_id'].to_s }.first
           raise WebserviceGeneralRenderingError, 'cancel_report has been called without valid id' if report.nil?
@@ -199,7 +208,7 @@ module GrafanaReporter
           # redirect to view_report page
           return http_response(302, 'Found', nil, Location: "/view_report?report_id=#{report.object_id}")
 
-        elsif request.split("\r\n")[0] =~ %r{^GET /view_log[? ]}
+        when %r{^GET /view_log[? ]}
           # view report if already available, or show status view
           report = @reports.select { |r| r.object_id.to_s == attrs['report_id'].to_s }.first
           raise WebserviceGeneralRenderingError, 'view_log has been called without valid id' if report.nil?
@@ -215,9 +224,31 @@ module GrafanaReporter
       def get_reports_status_as_html(reports)
         i = reports.length
 
-        content = '<html><head></head><body><table><thead><th>#</th><th>Start Time</th><th>End Time</th><th>Template</th><th>Execution time</th><th>Status</th><th>Error</th><th>Action</th></thead>' +
+        content = '<html>'\
+                  '<head></head>'\
+                  '<body>'\
+                  '<table>'\
+                  '<thead>'\
+                  '<th>#</th>'\
+                  '<th>Start Time</th>'\
+                  '<th>End Time</th>'\
+                  '<th>Template</th>'\
+                  '<th>Execution time</th>'\
+                  '<th>Status</th>'\
+                  '<th>Error</th>'\
+                  '<th>Action</th>'\
+                  '</thead>' +
                   reports.reverse.map do |report|
-                    "<tr><td>#{i -= 1}</td><td>#{report.start_time}</td><td>#{report.end_time}</td><td>#{report.template}</td><td>#{report.execution_time.to_i} secs</td><td>#{report.status} (#{(report.progress * 100).to_i}%)</td><td>#{report.error.join('<br>')}</td><td>#{!report.done && !report.cancel ? "<a href=\"/cancel_report?report_id=#{report.object_id}\">Cancel</a>&nbsp;" : ''}#{(report.status == 'finished') || (report.status == 'cancelled') ? "<a href=\"/view_report?report_id=#{report.object_id}\">View</a>&nbsp;" : '&nbsp;'}<a href=\"/view_log?report_id=#{report.object_id}\">Log</a></td></tr>"
+                    '<tr>'\
+                    "<td>#{i -= 1}</td>"\
+                    "<td>#{report.start_time}</td>"\
+                    "<td>#{report.end_time}</td>"\
+                    "<td>#{report.template}</td>"\
+                    "<td>#{report.execution_time.to_i} secs</td><td>#{report.status} (#{(report.progress * 100).to_i}%)</td><td>#{report.error.join('<br>')}</td>"\
+                    "<td>#{!report.done && !report.cancel ? "<a href=\"/cancel_report?report_id=#{report.object_id}\">Cancel</a>&nbsp;" : ''}"\
+                    "#{(report.status == 'finished') || (report.status == 'cancelled') ? "<a href=\"/view_report?report_id=#{report.object_id}\">View</a>&nbsp;" : '&nbsp;'}"\
+                    "<a href=\"/view_log?report_id=#{report.object_id}\">Log</a></td>"\
+                    '</tr>'
                   end.join('') +
                   '</table></body></html>'
 
@@ -225,7 +256,8 @@ module GrafanaReporter
       end
 
       def http_response(code, text, body, opts = {})
-        "HTTP/1.1 #{code} #{text}\r\n#{opts.map { |k, v| "#{k}: #{v}" }.join("\r\n")}#{body ? "\r\nContent-Length: #{body.to_s.bytesize}" : ''}\r\n\r\n#{body}"
+        "HTTP/1.1 #{code} #{text}\r\n#{opts.map { |k, v| "#{k}: #{v}" }.join("\r\n")}"\
+        "#{body ? "\r\nContent-Length: #{body.to_s.bytesize}" : ''}\r\n\r\n#{body}"
       end
     end
   end

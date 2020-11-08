@@ -208,11 +208,7 @@ module Grafana
       format_string = ''.dup
       matches.each do |match|
         replacement = DATE_MATCHES[match]
-        if replacement
-          format_string << replacement
-        else
-          format_string << match
-        end
+        format_string << (replacement || match)
       end
 
       Time.at((Float(value) / 1000).to_i).strftime(format_string)

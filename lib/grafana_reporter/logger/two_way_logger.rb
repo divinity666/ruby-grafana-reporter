@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module GrafanaReporter
   # This module contains special extensions for use in the reporter.
   module Logger
@@ -42,8 +44,14 @@ module GrafanaReporter
 
       # Delegates all not configured calls to the internal and the additional logger.
       def method_missing(method, *args)
+        super
         @internal_logger.send(method, *args)
         @additional_logger.send(method, *args)
+      end
+
+      def respond_to_missing?(method, *_args)
+        super
+        @internal_logger.respond_to?(method)
       end
     end
   end

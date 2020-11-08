@@ -1,8 +1,10 @@
+# frozen_string_literal: true
+
 module GrafanaReporter
   # General error of the reporter. All other errors will inherit from this class.
   class GrafanaReporterError < StandardError
     def initialize(message)
-      super('GrafanaReporterError: ' + message.to_s)
+      super("GrafanaReporterError: #{message}")
     end
   end
 
@@ -32,7 +34,8 @@ module GrafanaReporter
   # Details about how to fix that are provided in the message.
   class ConfigurationDoesNotMatchSchemaError < ConfigurationError
     def initialize(item, verb, expected, currently)
-      super("Configuration file does not match schema definition. Expected '#{item}' to #{verb} '#{expected}', but was '#{currently}'.")
+      super("Configuration file does not match schema definition. Expected '#{item}' to #{verb} '#{expected}',"\
+            "but was '#{currently}'.")
     end
   end
 end
