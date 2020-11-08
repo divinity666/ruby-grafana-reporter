@@ -38,11 +38,6 @@ Gem::Specification.new do |s|
   #  s.required_ruby_version = '~>2.5.5'
   s.extra_rdoc_files = ['README.md', 'LICENSE']
 
-  #  s.requirements << 'asciidoctor, ~>2.0'
-  #  s.requirements << 'asciidoctor-pdf, ~>1.5'
-  #  s.requirements << 'fileutils, ~>1.4'
-  #  s.requirements << 'zip, ~>2.0'
-
   s.bindir = 'bin'
 
   s.add_runtime_dependency 'asciidoctor', '~>2.0'
@@ -52,7 +47,6 @@ Gem::Specification.new do |s|
   #  s.add_runtime_dependency 'asciidoctor-epub3', '~>1.5.0.alpha.18'
   s.add_runtime_dependency 'rubyzip', '>1.1.1', '<2.3'
 
-  s.add_development_dependency 'coveralls', '~>0.8'
   s.add_development_dependency 'rspec', '~>3.9'
   s.add_development_dependency 'simplecov', '~>0.16'
   s.add_development_dependency 'webmock', '~>3.9'
