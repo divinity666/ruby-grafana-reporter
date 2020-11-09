@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require_relative 'processor_mixin'
 
 module GrafanaReporter
@@ -51,7 +53,8 @@ module GrafanaReporter
           instance = attrs['instance'] || doc.attr('grafana_default_instance') || 'default'
           dashboard_id = attrs['dashboard'] || doc.attr('grafana_default_dashboard')
           panel_id = attrs['panel']
-          @report.logger.debug("Processing AlertsTableIncludeProcessor (instance: #{instance}, dashboard: #{dashboard_id}, panel: #{panel_id})")
+          @report.logger.debug("Processing AlertsTableIncludeProcessor (instance: #{instance},"\
+                               " dashboard: #{dashboard_id}, panel: #{panel_id})")
 
           query = if dashboard_id.to_s.empty?
                     # no dashboard shall be used, so also the panel will be omitted
@@ -65,17 +68,20 @@ module GrafanaReporter
                   end
 
           query.merge_hash_variables(doc.attributes, attrs)
-          query.merge_variables(attrs.select { |k, _v| k =~ /(?:columns|limit|folderId|dashboardId|panelId|dahboardTag|dashboardQuery|state|query)/ }.transform_values { |item| ::Grafana::Variable.new(item) })
+          selected_attrs = attrs.select do |k, _v|
+            k =~ /(?:columns|limit|folderId|dashboardId|panelId|dahboardTag|dashboardQuery|state|query)/x
+          end
+          query.merge_variables(selected_attrs.transform_values { |item| ::Grafana::Variable.new(item) })
           @report.logger.debug("from: #{query.from}, to: #{query.to}")
 
           begin
             reader.unshift_lines query.execute(@report.grafana(instance))
           rescue GrafanaReporterError => e
             @report.logger.error(e.message)
-            reader.unshift_line '|' + e.message
+            reader.unshift_line "|#{e.message}"
           rescue StandardError => e
             @report.logger.fatal(e.message)
-            reader.unshift_line '|' + e.message
+            reader.unshift_line "|#{e.message}"
           end
 
           reader

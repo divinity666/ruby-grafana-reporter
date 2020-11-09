@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require_relative 'processor_mixin'
 
 module GrafanaReporter
@@ -65,17 +67,20 @@ module GrafanaReporter
                   end
 
           query.merge_hash_variables(doc.attributes, attrs)
-          query.merge_variables(attrs.select { |k, _v| k =~ /(?:columns|limit|alertId|dashboardId|panelId|userId|type|tags)/ }.transform_values { |item| ::Grafana::Variable.new(item) })
+          selected_attrs = attrs.select do |k, _v|
+            k =~ /(?:columns|limit|alertId|dashboardId|panelId|userId|type|tags)/
+          end
+          query.merge_variables(selected_attrs.transform_values { |item| ::Grafana::Variable.new(item) })
           @report.logger.debug("from: #{query.from}, to: #{query.to}")
 
           begin
             reader.unshift_lines query.execute(@report.grafana(instance))
           rescue GrafanaReporterError => e
             @report.logger.error(e.message)
-            reader.unshift_line '|' + e.message
+            reader.unshift_line "|#{e.message}"
           rescue StandardError => e
             @report.logger.fatal(e.message)
-            reader.unshift_line '|' + e.message
+            reader.unshift_line "|#{e.message}"
           end
 
           reader

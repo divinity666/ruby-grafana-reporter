@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module GrafanaReporter
   module Asciidoctor
     # Implementation of a specific {AbstractReport}. It is used to
@@ -19,8 +21,8 @@ module GrafanaReporter
         @start_time = Time.now
         attrs = { 'convert-backend' => 'pdf' }.merge(@config.default_document_attributes.merge(@custom_attributes))
         attrs['grafana-report-timestamp'] = @start_time.to_s
-        logger.info('Report started at ' + @start_time.to_s)
-        logger.debug('Document attributes: ' + attrs.to_s)
+        logger.info("Report started at #{@start_time}")
+        logger.debug("Document attributes: #{attrs}")
 
         initialize_step_counter
 
@@ -42,7 +44,8 @@ module GrafanaReporter
         registry.include_processor Extensions::AnnotationsTableIncludeProcessor.new.current_report(self)
         registry.include_processor Extensions::AlertsTableIncludeProcessor.new.current_report(self)
 
-        ::Asciidoctor.convert_file(@template, extension_registry: registry, backend: attrs['convert-backend'], to_file: path, attributes: attrs, header_footer: true)
+        ::Asciidoctor.convert_file(@template, extension_registry: registry, backend: attrs['convert-backend'],
+                                              to_file: path, attributes: attrs, header_footer: true)
 
         @destination_file_or_path.close if @destination_file_or_path.is_a?(File)
 
@@ -56,7 +59,9 @@ module GrafanaReporter
           zip_file = Tempfile.new('gf_zip')
           Zip::File.open(zip_file.path, Zip::File::CREATE) do |zipfile|
             # add report file
-            zipfile.get_output_stream(dest_path.gsub(@config.reports_folder, '') + ".#{attrs['convert-backend']}") { |f| f.puts File.read(dest_path) }
+            zipfile.get_output_stream("#{dest_path.gsub(@config.reports_folder, '')}.#{attrs['convert-backend']}") do |f|
+              f.puts File.read(dest_path)
+            end
 
             # add image files
             @image_files.each do |file|
@@ -79,7 +84,7 @@ module GrafanaReporter
 
         clean_image_files
         @end_time = Time.now
-        logger.info('Report finished after ' + (@end_time - @start_time).to_s + ' seconds.')
+        logger.info("Report finished after #{@end_time - @start_time} seconds.")
         @done = true
       rescue StandardError => e
         # catch all errors during execution
@@ -99,7 +104,10 @@ module GrafanaReporter
       # @return [Grafana::Grafana] the requested grafana instance.
       def grafana(instance)
         unless @grafana_instances[instance]
-          @grafana_instances[instance] = ::Grafana::Grafana.new(@config.grafana_host(instance), @config.grafana_api_key(instance), logger: @logger, datasources: @config.grafana_datasources(instance))
+          @grafana_instances[instance] = ::Grafana::Grafana.new(@config.grafana_host(instance),
+                                                                @config.grafana_api_key(instance),
+                                                                logger: @logger,
+                                                                datasources: @config.grafana_datasources(instance))
         end
         @grafana_instances[instance]
       end
@@ -127,10 +135,10 @@ module GrafanaReporter
       end
 
       # Called, if the report generation has died with an error.
-      # @param e [StandardError] occured error
+      # @param error [StandardError] occured error
       # @return [void]
-      def died_with_error(e)
-        @error = [e.message] << [e.backtrace]
+      def died_with_error(error)
+        @error = [error.message] << [error.backtrace]
         @end_time = Time.now
         @done = true
       end
@@ -146,7 +154,11 @@ module GrafanaReporter
         @total_steps = 0
         File.readlines(@template).each do |line|
           begin
-            @total_steps += line.gsub(%r{//.*}, '').scan(/(?:grafana_panel_image|grafana_panel_query_value|grafana_panel_query_table|grafana_sql_value|grafana_sql_table|grafana_environment|grafana_help|grafana_panel_property|grafana_annotations|grafana_alerts|grafana_value_as_variable)/).length
+            @total_steps += line.gsub(%r{//.*}, '').scan(/(?:grafana_panel_image|grafana_panel_query_value|
+                                                         grafana_panel_query_table|grafana_sql_value|
+                                                         grafana_sql_table|grafana_environment|grafana_help|
+                                                         grafana_panel_property|grafana_annotations|grafana_alerts|
+                                                         grafana_value_as_variable)/x).length
           rescue StandardError => e
             logger.error("Could not process line '#{line}' (Error: #{e.message})")
             raise e

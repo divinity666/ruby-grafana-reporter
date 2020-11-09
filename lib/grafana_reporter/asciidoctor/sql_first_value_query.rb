@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module GrafanaReporter
   module Asciidoctor
     # This class is being used to execute a SQL query against a grafana datasource.
@@ -17,7 +19,8 @@ module GrafanaReporter
         results = replace_values(results, @variables.select { |k, _v| k =~ /^replace_values_\d+/ })
         results = filter_columns(results, @variables['filter_columns'])
         if @variables['filter_column']
-          @report.logger.warn("DEPRECATED: Call of  no longer supported function 'filter_column' has been found. Rename to 'filter_columns'")
+          @report.logger.warn("DEPRECATED: Call of  no longer supported function 'filter_column' has been found."\
+                              " Rename to 'filter_columns'")
           results = filter_columns(results, @variables['filter_column'])
         end
 

@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module GrafanaReporter
   module Asciidoctor
     # This class is being used to execute a SQL query against a grafana datasource.
@@ -16,7 +18,8 @@ module GrafanaReporter
         results = replace_values(results, @variables.select { |k, _v| k =~ /^replace_values_\d+/ })
         results = filter_columns(results, @variables['filter_columns'])
         if @variables['filter_column']
-          @report.logger.warn("DEPRECATED: Call of  no longer supported function 'filter_column' has been found. Rename to 'filter_columns'")
+          @report.logger.warn("DEPRECATED: Call of  no longer supported function 'filter_column' has been found."\
+                              " Rename to 'filter_columns'")
           results = filter_columns(results, @variables['filter_column'])
         end
         results = transpose(results, @variables['transpose'])
@@ -25,7 +28,11 @@ module GrafanaReporter
         column_divider = ' | '
         column_divider = @variables['column_divider'].raw_value if @variables['column_divider'].is_a?(Grafana::Variable)
 
-        @result = results[:content].map { |row| row_divider + row.map { |item| column_divider == ' | ' ? item.to_s.gsub('|', '\\|') : item.to_s }.join(column_divider) }
+        @result = results[:content].map do |row|
+          row_divider + row.map do |item|
+            column_divider == ' | ' ? item.to_s.gsub('|', '\\|') : item.to_s
+          end.join(column_divider)
+        end
       end
     end
   end

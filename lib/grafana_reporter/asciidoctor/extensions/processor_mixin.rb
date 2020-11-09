@@ -1,7 +1,9 @@
+# frozen_string_literal: true
+
 module GrafanaReporter
   module Asciidoctor
-    # The classes within this module implement the interface to asciidoctor. Each class implements a specific extension to
-    # asciidoctor.
+    # The classes within this module implement the interface to asciidoctor. Each class implements a specific extension
+    # to asciidoctor.
     module Extensions
       # This module contains common methods for all asciidoctor extensions.
       module ProcessorMixin

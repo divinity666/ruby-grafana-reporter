@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require_relative 'processor_mixin'
 
 module GrafanaReporter
@@ -49,7 +51,8 @@ module GrafanaReporter
           @report.next_step
           instance = attrs['instance'] || parent.document.attr('grafana_default_instance') || 'default'
           dashboard = attrs['dashboard'] || parent.document.attr('grafana_default_dashboard')
-          @report.logger.debug("Processing PanelQueryValueInlineMacro (instance: #{instance}, dashboard: #{dashboard}, panel: #{target}, query: #{attrs['query']})")
+          @report.logger.debug("Processing PanelQueryValueInlineMacro (instance: #{instance}, dashboard: #{dashboard},"\
+                               " panel: #{target}, query: #{attrs['query']})")
           query = PanelFirstValueQuery.new(@report.grafana(instance).dashboard(dashboard).panel(target), attrs['query'])
           query.merge_hash_variables(parent.document.attributes, attrs)
           @report.logger.debug("from: #{query.from}, to: #{query.to}")

@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module GrafanaReporter
   # This module contains all classes, which are necessary to use the grafana
   # reporter to be used in conjunction with asciidoctor.
@@ -6,7 +8,8 @@ module GrafanaReporter
     # invalid.
     class MalformedReplaceValuesStatementError < GrafanaReporterError
       def initialize(statement)
-        super("The specified replace_values statement '#{statement}' is invalid. Make sure it contains exactly one not escaped ':' symbol.")
+        super("The specified replace_values statement '#{statement}' is invalid. Make sure it contains"\
+              " exactly one not escaped ':' symbol.")
       end
     end
 

@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module GrafanaReporter
   module Asciidoctor
     module Extensions
@@ -42,7 +44,8 @@ module GrafanaReporter
 
           @report.next_step
           instance = attrs['instance'] || parent.document.attr('grafana_default_instance') || 'default'
-          @report.logger.debug("Processing SqlValueInlineMacro (instance: #{instance}, datasource: #{target}, sql: #{attrs['sql']})")
+          @report.logger.debug("Processing SqlValueInlineMacro (instance: #{instance}, datasource: #{target},"\
+                               " sql: #{attrs['sql']})")
           query = SqlFirstValueQuery.new(attrs['sql'], target)
           query.merge_hash_variables(parent.document.attributes, attrs)
           @report.logger.debug("from: #{query.from}, to: #{query.to}")

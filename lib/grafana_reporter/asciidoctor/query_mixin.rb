@@ -35,7 +35,7 @@ module GrafanaReporter
         results = {}
         results.default = []
 
-        JSON.parse(raw_result)['results'].values.each do |query_result|
+        JSON.parse(raw_result)['results'].each_value do |query_result|
           if query_result.key?('error')
             results[:header] = results[:header] << ['SQL Error']
             results[:content] = [[query_result['error']]]
@@ -192,7 +192,7 @@ module GrafanaReporter
                     end
 
                   # handle value comparisons
-                  elsif match = k.match(/^ *(?<operator>[<>]=?|<>|=) *(?<number>[+-]?\d+(?:\.\d+)?)$/)
+                  elsif (match = k.match(/^ *(?<operator>[<>]=?|<>|=) *(?<number>[+-]?\d+(?:\.\d+)?)$/))
                     skip = false
                     begin
                       val = Float(row[i])
@@ -217,8 +217,8 @@ module GrafanaReporter
                     end
 
                   # handle as normal comparison
-                  else
-                    row[i] = v if row[i].to_s == k
+                  elsif row[i].to_s == k
+                    row[i] = v
                   end
                 end
               end
@@ -239,7 +239,8 @@ module GrafanaReporter
       # report is running.
       # @param orig_date [String] time string provided by grafana, usually +from+ or +to+.
       # @param report_time [Grafana::Variable] report start time
-      # @param is_to_time [Boolean] true, if the time should be calculated for +to+, false if it shall be calculated for +from+
+      # @param is_to_time [Boolean] true, if the time should be calculated for +to+, false if it shall be
+      #   calculated for +from+
       # @return [String] translated date as timestamp string
       def translate_date(orig_date, report_time, is_to_time)
         report_time ||= Variable.new(Time.now.to_s)

@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require_relative 'processor_mixin'
 
 module GrafanaReporter
@@ -22,7 +24,8 @@ module GrafanaReporter
           call_attr = attrs.delete('call')
           call, target = call_attr.split(':') if call_attr
           attribute = attrs.delete('variable_name')
-          @report.logger.debug("Processing ValueAsVariableIncludeProcessor (call: #{call}, target: #{target}, variable_name: #{attribute}, attrs: #{attrs})")
+          @report.logger.debug("Processing ValueAsVariableIncludeProcessor (call: #{call}, target: #{target},"\
+                               " variable_name: #{attribute}, attrs: #{attrs})")
           if !call || !attribute
             @report.logger.error("Missing mandatory attribute 'call' or 'variable_name'.")
             return reader
@@ -45,7 +48,8 @@ module GrafanaReporter
               @report.logger.debug("ValueAsVariableIncludeProcessor: Adding '#{result}' to document.")
               reader.unshift_line(result)
             else
-              @report.logger.debug("ValueAsVariableIncludeProcessor: Not adding variable '#{attribute}', as query result was empty.")
+              @report.logger.debug("ValueAsVariableIncludeProcessor: Not adding variable '#{attribute}',"\
+                                   ' as query result was empty.')
             end
           end
 

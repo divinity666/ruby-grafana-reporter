@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module GrafanaReporter
   module Asciidoctor
     # This class is used to query properties from a {Grafana::Panel}, such as +description+,
