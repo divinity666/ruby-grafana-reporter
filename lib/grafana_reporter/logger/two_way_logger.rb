@@ -44,11 +44,11 @@ module GrafanaReporter
 
       # Delegates all not configured calls to the internal and the additional logger.
       def method_missing(method, *args)
-        super
         @internal_logger.send(method, *args)
         @additional_logger.send(method, *args)
       end
 
+      # Registers all methods to which the internal logger responds.
       def respond_to_missing?(method, *_args)
         super
         @internal_logger.respond_to?(method)
