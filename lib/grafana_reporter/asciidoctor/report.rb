@@ -50,10 +50,16 @@ module GrafanaReporter
         @destination_file_or_path.close if @destination_file_or_path.is_a?(File)
 
         # store report including als images as ZIP file, if the result is not a PDF
-        # TODO add tests for zipping results
         if attrs['convert-backend'] != 'pdf'
-          dest_path = @destination_file_or_path
-          dest_path = @destination_file_or_path.path if @destination_file_or_path.is_a?(File)
+          dest_path = nil
+          case
+          when @destination_file_or_path.is_a?(File)
+            dest_path = @destination_file_or_path.path
+          when @destination_file_or_path.is_a?(Tempfile)
+            dest_path = @destination_file_or_path.path
+          else
+            dest_path = @destination_file_or_path
+          end
 
           # build zip file
           zip_file = Tempfile.new('gf_zip')
