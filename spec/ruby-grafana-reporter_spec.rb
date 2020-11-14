@@ -621,7 +621,7 @@ describe Application do
     subject do
       config = Configuration.new
       yaml = "grafana-reporter:
-  port: 8050
+  webservice-port: 8050
   templates-folder: ./spec/tests
   reports-folder: .
 
@@ -638,26 +638,6 @@ default-document-attributes:
       app.config = config
       app
     end
-
-    it 'can handle invalid web requests' do
-      expect { subject.send(:handle_request, 'GET /rend HTTP/1.1') }.to raise_error(WebserviceUnknownPathError)
-      expect { subject.send(:handle_request, 'GET /render HTTP/1.1') }.to raise_error(MissingTemplateError)
-      expect { subject.send(:handle_request, 'GET /render?var-template=does_not_exist HTTP/1.1') }.to raise_error(MissingTemplateError)
-    end
-
-    it 'can handle all web requests' do
-      result = subject.send(:handle_request, 'GET /render?var-template=demo_report HTTP/1.1')
-      expect(result).to include("Found\r\nLocation: /view_report?report_id=")
-
-      id = result.split("\r\n")[1].gsub(/.*report_id=([^\r\n]*).*/, '\1')
-      expect(subject.send(:handle_request, "GET /view_report?report_id=#{id} HTTP/1.1")).to include('in progress')
-      expect { subject.send(:handle_request, "GET /cancel_report?report_id=#{id} HTTP/1.1") }.not_to raise_error
-      expect { subject.send(:handle_request, "GET /view_log?report_id=#{id} HTTP/1.1") }.not_to raise_error
-      expect(subject.send(:handle_request, 'GET /overview HTTP/1.1')).to include(id)
-
-      sleep 1 # race condition with webmock here, because report might not be finished earlier
-      expect(subject.send(:handle_request, "GET /view_report?report_id=#{id} HTTP/1.1")).to include('application/pdf')
-    end
   end
 
   context 'command line' do
@@ -665,6 +645,114 @@ default-document-attributes:
 
     it 'can configure and run' do
       expect { subject.configure_and_run(['./spec/tests/demo_config.txt', '--test', 'default', '-d', 'FATAL']) }.to output("Admin\n").to_stdout
+    end
+  end
+
+  context 'webserver' do
+    before(:context) do
+      WebMock.disable!
+      config = Configuration.new
+      yaml = "grafana-reporter:
+  webservice-port: 8033
+  templates-folder: ./spec/tests
+  reports-folder: .
+
+grafana:
+  default:
+    host: http://localhost
+    api_key: #{stub_key}
+
+default-document-attributes:
+  imagesdir: ."
+
+      config.load_config(YAML.load(yaml))
+      app = GrafanaReporter::Application::Application.new
+      app.config = config
+      webserver = Thread.new { app.run }
+      sleep 1
+    end
+
+    after(:context) do
+      WebMock.enable!
+      # TODO: kill thread
+    end
+
+    it 'responds to overview' do
+      res = Net::HTTP.get(URI('http://localhost:8033/overview'))
+      expect(res).to include("<th>Execution time</th>")
+    end
+
+    it 'can handle invalid web requests' do
+      res = Net::HTTP.get(URI('http://localhost:8033/rend'))
+      expect(res).to include("calls an unknown path for this webservice.")
+      res = Net::HTTP.get(URI('http://localhost:8033/overview2'))
+      expect(res).to include("calls an unknown path for this webservice")
+    end
+
+    it 'can properly cancel demo report' do
+      url = URI('http://localhost:8033/render?var-template=demo_report')
+      http = Net::HTTP.new(url.host, url.port)
+      res = http.request_get(url.request_uri)
+      expect(res.code).to eq("302")
+      expect(res['location']).to include("/view_report?report_id=")
+
+      id = res['location'].gsub(/.*report_id=([^\r\n]*).*/, '\1')
+      res = Net::HTTP.get(URI("http://localhost:8033/view_report?report_id=#{id}"))
+      expect(res).to include("in progress")
+      res = http.request_get("/cancel_report?report_id=#{id}")
+      expect(res.code).to eq("302")
+      res = Net::HTTP.get(URI("http://localhost:8033/view_log?report_id=#{id}"))
+      expect(res).to include("Cancelling report generation invoked.")
+      res = Net::HTTP.get(URI('http://localhost:8033/overview'))
+      expect(res).to include(id)
+    end
+
+    it 'can properly create demo pdf report' do
+      url = URI('http://localhost:8033/render?var-template=demo_report')
+      http = Net::HTTP.new(url.host, url.port)
+      res = http.request_get(url.request_uri)
+      expect(res.code).to eq("302")
+      expect(res['location']).to include("/view_report?report_id=")
+
+      id = res['location'].gsub(/.*report_id=([^\r\n]*).*/, '\1')
+      res = http.request_get("/view_report?report_id=#{id}")
+      expect(res.body).to include("in progress")
+      res = http.request_get("/view_log?report_id=#{id}")
+      expect(res.body).not_to include("Cancelling report generation invoked.")
+      res = http.request_get('/overview')
+      expect(res.body).to include(id)
+
+      sleep 1 # race condition with webmock here, because report might not be finished earlier
+      res = http.request_get("/view_report?report_id=#{id}")
+      expect(res['content-type']).to include('application/pdf')
+    end
+
+    it 'can properly create demo html report' do
+      url = URI('http://localhost:8033/render?var-template=demo_report&convert-backend=html')
+      http = Net::HTTP.new(url.host, url.port)
+      res = http.request_get(url.request_uri)
+      expect(res.code).to eq("302")
+      expect(res['location']).to include("/view_report?report_id=")
+
+      id = res['location'].gsub(/.*report_id=([^\r\n]*).*/, '\1')
+      res = http.request_get("/view_report?report_id=#{id}")
+      expect(res.body).to include("in progress")
+      res = http.request_get("/view_log?report_id=#{id}")
+      expect(res.body).not_to include("Cancelling report generation invoked.")
+      res = http.request_get('/overview')
+      expect(res.body).to include(id)
+
+      sleep 1 # race condition with webmock here, because report might not be finished earlier
+      res = http.request_get("/view_report?report_id=#{id}")
+      expect(res['content-type']).to include('application/octet-stream')
+      expect(res['content-disposition']).to include('.zip')
+    end
+
+    it 'returns error on render without proper template' do
+      res = Net::HTTP.get(URI('http://localhost:8033/render'))
+      expect(res).to include("is not a valid template.")
+      res = Net::HTTP.get(URI('http://localhost:8033/render?var-template=does_not_exist'))
+      expect(res).to include("is not a valid template.")
     end
   end
 end
