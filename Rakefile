@@ -16,7 +16,7 @@ task :check_asciidoctor_docker do
   expected_asciidoctor_epub3_version = gemspec.scan(/add_runtime_dependency 'asciidoctor-epub3', '~>([\d.\w]+)'/).flatten.first
 
   if cur_asciidoctor_version.start_with?(expected_asciidoctor_version) && cur_asciidoctor_pdf_version.start_with?(expected_asciidoctor_pdf_version) && cur_asciidoctor_epub3_version.start_with?(expected_asciidoctor_epub3_version)
-    puts 'Versions are OK'
+    puts 'Current version dependencies PERFECTLY FIT to asciidoctor docker versions.'
   else
     puts 'Version dependencies in gemspec have to be adapted to docker versions:'
     puts " - asciidoctor: #{cur_asciidoctor_version}"
