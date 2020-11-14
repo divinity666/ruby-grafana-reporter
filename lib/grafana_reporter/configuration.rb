@@ -222,8 +222,8 @@ module GrafanaReporter
 
       # check if set folders exist
       raise FolderDoesNotExistError.new(reports_folder, 'reports-folder') unless File.directory?(reports_folder)
-      raise FolderDoesNotExistError.new(templates - folder, 'templates-folder') unless File.directory?(templates_folder)
-      raise FolderDoesNotExistError.new(images - folder, 'images-folder') unless File.directory?(images_folder)
+      raise FolderDoesNotExistError.new(templates_folder, 'templates-folder') unless File.directory?(templates_folder)
+      raise FolderDoesNotExistError.new(images_folder, 'images-folder') unless File.directory?(images_folder)
     end
 
     private
