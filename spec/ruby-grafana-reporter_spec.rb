@@ -340,7 +340,7 @@ describe Configuration do
   context 'with config file' do
     subject do
       obj = Configuration.new
-      obj.load_config(YAML.load_file('./spec/tests/demo_config.txt'))
+      obj.config = YAML.load_file('./spec/tests/demo_config.txt')
       obj
     end
 
@@ -414,65 +414,48 @@ describe Configuration do
     subject { Configuration.new }
 
     it 'validates required fields' do
-      subject.load_config({
+      subject.config = {
                             'grafana' => { 'default' => { 'host' => 'test' } }
-                          })
+                          }
       expect { subject.validate }.not_to raise_error
     end
 
     it 'validates optional datasources' do
-      subject.load_config({
+      subject.config = {
                             'grafana' => { 'default' => { 'host' => 'test', 'datasources' => { 'test' => 1 } } }
-                          })
+                          }
       expect { subject.validate }.not_to raise_error
     end
 
     it 'raises error if item exists without required subitem' do
-      subject.load_config({
+      subject.config = {
                             'grafana' => { 'default' => { 'host' => 'test', 'datasources' => {} } }
-                          })
+                          }
       expect { subject.validate }.to raise_error(ConfigurationDoesNotMatchSchemaError)
     end
 
     it 'raises error on wrong datasource type' do
-      subject.load_config({
+      subject.config = {
                             'grafana' => { 'default' => { 'host' => 'test', 'datasources' => { 'test' => 'bla' } } }
-                          })
+                          }
       expect { subject.validate }.to raise_error(ConfigurationDoesNotMatchSchemaError)
     end
 
     it 'raises error if folder does not exist' do
-      subject.load_config({
+      subject.config = {
                             'grafana' => { 'default' => { 'host' => 'test' } },
                             'grafana-reporter' => { 'reports-folder' => 'ewfhenwf8' }
-                          })
+                          }
       expect { subject.validate }.to raise_error(FolderDoesNotExistError)
     end
 
     it 'warns if not evaluated configurations exist' do
-      subject.load_config({
+      subject.config = {
                             'grafana' => { 'default' => { 'host' => 'test' } },
                             'grafana-reporter' => { 'repots-folder' => 'ewfhenwf8' }
-                          })
+                          }
       expect(subject.logger).to receive(:warn).with("Item 'repots-folder' in configuration is unknown to the reporter and will be ignored")
       subject.validate
-    end
-  end
-
-  context 'command line interface' do
-    subject { Configuration.new }
-
-    it 'returns help' do
-      expect { subject.configure_by_command_line(['--help']) }.to output(/--debug/).to_stdout
-      expect { subject.configure_by_command_line }.to output(/--debug/).to_stdout
-    end
-
-    it 'can handle wrong config files' do
-      expect { subject.configure_by_command_line(['./spec/tests/demo_report.adoc']) }.to raise_error(ConfigurationError)
-    end
-
-    it 'can handle correct config files' do
-      expect { subject.configure_by_command_line(['./spec/tests/demo_config.txt', '--test', 'default']) }.not_to raise_error
     end
   end
 end
@@ -480,7 +463,7 @@ end
 describe Report do
   subject do
     config = Configuration.new
-    config.load_config(YAML.load_file('./spec/tests/demo_config.txt'))
+    config.config = YAML.load_file('./spec/tests/demo_config.txt')
 
     Report.new(config, './spec/tests/demo_report.adoc')
   end
@@ -633,7 +616,7 @@ grafana:
 default-document-attributes:
   imagesdir: images/"
 
-      config.load_config(YAML.load(yaml))
+      config.config = YAML.load(yaml)
       app = GrafanaReporter::Application::Application.new
       app.config = config
       app
@@ -645,6 +628,31 @@ default-document-attributes:
 
     it 'can configure and run' do
       expect { subject.configure_and_run(['./spec/tests/demo_config.txt', '--test', 'default', '-d', 'FATAL']) }.to output("Admin\n").to_stdout
+    end
+
+    it 'returns help' do
+      expect { subject.configure_and_run(['--help']) }.to output(/--debug/).to_stdout
+      expect { subject.configure_and_run }.to output(/--debug/).to_stdout
+    end
+
+    it 'can handle wrong config files' do
+      expect { subject.configure_and_run(['./spec/tests/demo_report.adoc']) }.to raise_error(ConfigurationError)
+    end
+  end
+
+  context 'config wizard' do
+    subject { GrafanaReporter::Application::Application.new }
+
+    it 'creates valid config file with proper values' do
+      File.delete('grafana_reporter.config') if File.exist?('grafana_reporter.config')
+
+      allow(subject).to receive(:gets).and_return("8815\n", "\n", "\n", "n\n", "\n", "n\n", "\n", "n\n", "24\n")
+      allow(subject).to receive(:puts)
+      allow(subject).to receive(:print)
+
+      subject.config_wizard
+      expect(File.exist?('grafana_reporter.config')).to be true
+      File.delete('grafana_reporter.config') if File.exist?('grafana_reporter.config')
     end
   end
 
@@ -665,7 +673,7 @@ grafana:
 default-document-attributes:
   imagesdir: ."
 
-      config.load_config(YAML.load(yaml))
+      config.config = YAML.load(yaml)
       app = GrafanaReporter::Application::Application.new
       app.config = config
       webserver = Thread.new { app.run }
@@ -790,7 +798,7 @@ end
 describe PanelQueryValueInlineMacro do
   before do
     config = Configuration.new
-    config.load_config({ 'grafana' => { 'default' => { 'host' => stub_url, 'api_key' => stub_key } } })
+    config.config = { 'grafana' => { 'default' => { 'host' => stub_url, 'api_key' => stub_key } } }
     report = Report.new(config, './spec/tests/demo_report.adoc')
     Asciidoctor::Extensions.unregister_all
     Asciidoctor::Extensions.register do
@@ -827,7 +835,7 @@ end
 describe PanelImageBlockMacro do
   before do
     config = Configuration.new
-    config.load_config({ 'grafana' => { 'default' => { 'host' => stub_url, 'api_key' => stub_key } } })
+    config.config = { 'grafana' => { 'default' => { 'host' => stub_url, 'api_key' => stub_key } } }
     report = Report.new(config, './spec/tests/demo_report.adoc')
     Asciidoctor::Extensions.unregister_all
     Asciidoctor::Extensions.register do
@@ -843,7 +851,7 @@ end
 describe PanelImageInlineMacro do
   before do
     config = Configuration.new
-    config.load_config({ 'grafana' => { 'default' => { 'host' => stub_url, 'api_key' => stub_key } } })
+    config.config = { 'grafana' => { 'default' => { 'host' => stub_url, 'api_key' => stub_key } } }
     report = Report.new(config, './spec/tests/demo_report.adoc')
     Asciidoctor::Extensions.unregister_all
     Asciidoctor::Extensions.register do
@@ -866,7 +874,7 @@ end
 describe SqlTableIncludeProcessor do
   before do
     config = Configuration.new
-    config.load_config({ 'grafana' => { 'default' => { 'host' => stub_url, 'api_key' => stub_key } } })
+    config.config = { 'grafana' => { 'default' => { 'host' => stub_url, 'api_key' => stub_key } } }
     report = Report.new(config, './spec/tests/demo_report.adoc')
     Asciidoctor::Extensions.unregister_all
     Asciidoctor::Extensions.register do
@@ -882,7 +890,7 @@ end
 describe SqlValueInlineMacro do
   before do
     config = Configuration.new
-    config.load_config({ 'grafana' => { 'default' => { 'host' => stub_url, 'api_key' => stub_key } } })
+    config.config = { 'grafana' => { 'default' => { 'host' => stub_url, 'api_key' => stub_key } } }
     report = Report.new(config, './spec/tests/demo_report.adoc')
     Asciidoctor::Extensions.unregister_all
     Asciidoctor::Extensions.register do
@@ -912,7 +920,7 @@ end
 describe PanelPropertyInlineMacro do
   before do
     config = Configuration.new
-    config.load_config({ 'grafana' => { 'default' => { 'host' => stub_url, 'api_key' => stub_key } } })
+    config.config = { 'grafana' => { 'default' => { 'host' => stub_url, 'api_key' => stub_key } } }
     report = Report.new(config, './spec/tests/demo_report.adoc')
     Asciidoctor::Extensions.unregister_all
     Asciidoctor::Extensions.register do
@@ -933,7 +941,7 @@ end
 describe PanelQueryTableIncludeProcessor do
   before do
     config = Configuration.new
-    config.load_config({ 'grafana' => { 'default' => { 'host' => stub_url, 'api_key' => stub_key } } })
+    config.config = { 'grafana' => { 'default' => { 'host' => stub_url, 'api_key' => stub_key } } }
     report = Report.new(config, './spec/tests/demo_report.adoc')
     Asciidoctor::Extensions.unregister_all
     Asciidoctor::Extensions.register do
@@ -981,7 +989,7 @@ end
 describe AnnotationsTableIncludeProcessor do
   before do
     config = Configuration.new
-    config.load_config({ 'grafana' => { 'default' => { 'host' => stub_url, 'api_key' => stub_key } } })
+    config.config = { 'grafana' => { 'default' => { 'host' => stub_url, 'api_key' => stub_key } } }
     report = Report.new(config, './spec/tests/demo_report.adoc')
     Asciidoctor::Extensions.unregister_all
     Asciidoctor::Extensions.register do
@@ -1010,7 +1018,7 @@ end
 describe AlertsTableIncludeProcessor do
   before do
     config = Configuration.new
-    config.load_config({ 'grafana' => { 'default' => { 'host' => stub_url, 'api_key' => stub_key } } })
+    config.config = { 'grafana' => { 'default' => { 'host' => stub_url, 'api_key' => stub_key } } }
     report = Report.new(config, './spec/tests/demo_report.adoc')
     Asciidoctor::Extensions.unregister_all
     Asciidoctor::Extensions.register do
@@ -1031,7 +1039,7 @@ end
 describe ValueAsVariableIncludeProcessor do
   before do
     config = Configuration.new
-    config.load_config({ 'grafana' => { 'default' => { 'host' => stub_url, 'api_key' => stub_key } } })
+    config.config = { 'grafana' => { 'default' => { 'host' => stub_url, 'api_key' => stub_key } } }
     report = Report.new(config, './spec/tests/demo_report.adoc')
     Asciidoctor::Extensions.unregister_all
     Asciidoctor::Extensions.register do
@@ -1065,7 +1073,7 @@ end
 describe ShowEnvironmentIncludeProcessor do
   before do
     config = Configuration.new
-    config.load_config({ 'grafana' => { 'default' => { 'host' => stub_url, 'api_key' => stub_key } } })
+    config.config = { 'grafana' => { 'default' => { 'host' => stub_url, 'api_key' => stub_key } } }
     report = Report.new(config, './spec/tests/demo_report.adoc')
     Asciidoctor::Extensions.unregister_all
     Asciidoctor::Extensions.register do
@@ -1082,7 +1090,7 @@ end
 describe ShowHelpIncludeProcessor do
   before do
     config = Configuration.new
-    config.load_config({ 'grafana' => { 'default' => { 'host' => stub_url, 'api_key' => stub_key } } })
+    config.config = { 'grafana' => { 'default' => { 'host' => stub_url, 'api_key' => stub_key } } }
     report = Report.new(config, './spec/tests/demo_report.adoc')
     Asciidoctor::Extensions.unregister_all
     Asciidoctor::Extensions.register do
