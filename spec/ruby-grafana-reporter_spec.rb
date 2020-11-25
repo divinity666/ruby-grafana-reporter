@@ -627,32 +627,44 @@ default-document-attributes:
     subject { GrafanaReporter::Application::Application.new }
 
     it 'can configure and run' do
-      expect { subject.configure_and_run(['./spec/tests/demo_config.txt', '--test', 'default', '-d', 'FATAL']) }.to output("Admin\n").to_stdout
+      expect { subject.configure_and_run(['-c', './spec/tests/demo_config.txt', '--test', 'default', '-d', 'FATAL']) }.to output("Admin\n").to_stdout
     end
 
     it 'returns help' do
       expect { subject.configure_and_run(['--help']) }.to output(/--debug/).to_stdout
-      expect { subject.configure_and_run }.to output(/--debug/).to_stdout
     end
 
     it 'can handle wrong config files' do
-      expect { subject.configure_and_run(['./spec/tests/demo_report.adoc']) }.to raise_error(ConfigurationError)
+      expect { subject.configure_and_run(['-c', './spec/tests/demo_report.adoc']) }.to raise_error(ConfigurationError)
     end
   end
 
   context 'config wizard' do
     subject { GrafanaReporter::Application::Application.new }
 
-    it 'creates valid config file with proper values' do
+    before do
       File.delete('grafana_reporter.config') if File.exist?('grafana_reporter.config')
-
-      allow(subject).to receive(:gets).and_return("8815\n", "\n", "\n", "n\n", "\n", "n\n", "\n", "n\n", "24\n")
+      @config = ["\n", "http://localhost\n", "a\n", "#{stub_key}\n", "\n", "i\n", "\n", "i\n", "\n", "i\n", "24\n"]
       allow(subject).to receive(:puts)
       allow(subject).to receive(:print)
+    end
 
+    after do
+      File.delete('grafana_reporter.config') if File.exist?('grafana_reporter.config')
+    end
+
+    it 'creates valid config file as admin' do
+      allow(subject).to receive(:gets).and_return(*@config)
       subject.config_wizard
       expect(File.exist?('grafana_reporter.config')).to be true
-      File.delete('grafana_reporter.config') if File.exist?('grafana_reporter.config')
+    end
+
+    it 'creates valid config file as non admin with manual datasource' do
+      @config.slice!(2,2)
+      @config.insert(2, "d\n", "demo\n", "1\n", "a\n", "d\n")
+      allow(subject).to receive(:gets).and_return(*@config)
+      subject.config_wizard
+      expect(File.exist?('grafana_reporter.config')).to be true
     end
   end
 

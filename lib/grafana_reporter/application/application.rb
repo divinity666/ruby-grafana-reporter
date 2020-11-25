@@ -13,6 +13,9 @@ module GrafanaReporter
     # It can be run to test the grafana connection, render a single template
     # or run as a service.
     class Application
+      # Default file name for grafana reporter configuration file
+      CONFIG_FILE = 'grafana_reporter.config'
+
       def initialize
         @logger = ::Logger.new($stdout, level: :unknown)
       end
@@ -25,44 +28,36 @@ module GrafanaReporter
       # @param params [Array<String>] command line parameters, mainly ARGV can be used.
       # @return [Integer] 0 if everything is fine, -1 if execution aborted.
       def configure_and_run(params = [])
-        @config = GrafanaReporter::Configuration.new
-        config.logger = @logger
-
-        params << '--help' if params.empty?
+        config_file = CONFIG_FILE
+        cli_config = {}
+        cli_config ['grafana-reporter'] = {}
+        cli_config ['default-document-attributes'] = {}
 
         parser = OptionParser.new do |opts|
-          opts.banner = "Usage: ruby #{$PROGRAM_NAME} CONFIG_FILE [options]"
+          opts.banner = "Usage: ruby #{$PROGRAM_NAME} [options]"
+
+          opts.on('-c', '--config CONFIG_FILE_NAME', "Specify custom configuration file, instead of #{CONFIG_FILE}.") do |file_name|
+            config_file = file_name
+          end
 
           opts.on('-d', '--debug LEVEL', 'Specify detail level: FATAL, ERROR, WARN, INFO, DEBUG.') do |level|
             if level =~ /(?:FATAL|ERROR|WARN|INFO|DEBUG)/
-              config.logger.level = Object.const_get("::Logger::Severity::#{level}")
+              @logger.level = Object.const_get("::Logger::Severity::#{level}")
             end
           end
 
           opts.on('--test GRAFANA_INSTANCE', 'test current configuration against given GRAFANA_INSTANCE') do |instance|
-            if config.config['grafana-reporter']
-              config.config['grafana-reporter']['run-mode'] = 'test'
-            else
-              config.config.merge!({ 'grafana-reporter' => { 'run-mode' => 'test' } })
-            end
-            config.config['grafana-reporter']['test-instance'] = instance
+            cli_config['grafana-reporter']['run-mode'] = 'test'
+            cli_config['grafana-reporter']['test-instance'] = instance
           end
 
           opts.on('-t', '--template TEMPLATE', 'Render a single ASCIIDOC template to PDF and exit') do |template|
-            if config.config['grafana-reporter']
-              config.config['grafana-reporter']['run-mode'] = 'single-render'
-            else
-              config.config.merge!({ 'grafana-reporter' => { 'run-mode' => 'single-render' } })
-            end
-            if config.config['default-document-attributes']
-              config.config['default-document-attributes']['var-template'] = template
-            else
-              config.config.merge!({ 'default-document-attributes' => { 'var-template' => template } })
-            end
+            cli_config['grafana-reporter']['run-mode'] = 'single-render'
+            cli_config['default-document-attributes']['var-template'] = template
           end
 
           opts.on('-o', '--output FILE', 'Output filename if only a single file is rendered') do |file|
-            config.config.merge!({ 'to_file' => file })
+            cli_config['to_file'] = file
           end
 
           opts.on('-w', '--wizard', 'Configuration wizard to prepare environment for the reporter.') do
@@ -79,18 +74,27 @@ module GrafanaReporter
             return -1
           end
         end
-
-        unless params.empty?
-          if File.exist?(params[0])
-            config_file = params.slice!(0)
-            begin
-              config.config = YAML.load_file(config_file)
-            rescue StandardError => e
-              raise ConfigurationError, "Could not read CONFIG_FILE '#{config_file}' (Error: #{e.message})"
-            end
-          end
-        end
         parser.parse!(params)
+
+        # abort if config file does not exist
+        unless File.exist?(config_file)
+          puts "Config file '#{config_file}' does not exist. Consider calling the configuration wizard with option '-w'. Aborting."
+          return -1
+        end
+
+        # read config file
+        @config = GrafanaReporter::Configuration.new
+        config.logger = @logger
+        config_hash = nil
+        begin
+          config_hash = YAML.load_file(config_file)
+        rescue StandardError => e
+          raise ConfigurationError, "Could not read config file '#{config_file}' (Error: #{e.message})"
+        end
+
+        # merge command line configuration with read config file
+        config_hash.merge!(cli_config) { |_key, v1, v2| Hash === v1 && Hash === v2 ? v1.merge(v2) : v2 }
+        config.config = config_hash
 
         run
       end
@@ -125,9 +129,12 @@ module GrafanaReporter
       # Provides a command line configuration wizard for setting up the necessary configuration
       # file.
       def config_wizard
-        if File.exist?('grafana_reporter.config')
-          overwrite = user_input('Configuration file \'grafana_reporter.config\' already exists. Do you want to overwrite it?', 'yN', 'config')
-          return unless overwrite
+        if File.exist?(CONFIG_FILE)
+          input = nil
+          until input
+            input = user_input("Configuration file '#{CONFIG_FILE}' already exists. Do you want to overwrite it?", 'yN')
+            return if input =~ /^(?:n|N|yN)$/
+          end
         end
 
         puts 'This wizard will guide you through an initial configuration for'\
@@ -135,18 +142,16 @@ module GrafanaReporter
              ' in the current folder. Please make sure to specify necessary paths'\
              ' either with a relative or an absolute path properly.'
         puts
-        port = user_input('Specify port on which reporter shall run', '8815', 'unsigned_num')
-        grafana = user_input('Specify grafana host', 'http://localhost:3000', 'grafana')
-        templates = user_input('Specify path where templates shall be stored', './templates', 'folder')
-        reports = user_input('Specify path where created reports shall be stored', './reports', 'folder')
-        images = user_input('Specify path where rendered images shall be stored (relative to reports folder)', './images', 'folder')
-        retention = user_input('Specify report retention duration', '24', 'unsigned_num')
+        port = ui_config_port
+        grafana = ui_config_grafana
+        templates = ui_config_templates_folder
+        reports = ui_config_reports_folder
+        images = ui_config_images_folder(templates)
+        retention = ui_config_retention
 
         config_yaml = %{# This configuration has been built with the configuration wizard.
 
-grafana:
-  default:
-    host: #{grafana}
+#{grafana}
 
 grafana-reporter:
   templates-folder: #{templates}
@@ -156,10 +161,11 @@ grafana-reporter:
 
 default-document-attributes:
   imagesdir: #{images}
+# feel free to add here additional asciidoctor document attributes which are applied to all your templates
 }
 
         begin
-          File.write('grafana_reporter.config', config_yaml, mode: 'w')
+          File.write(CONFIG_FILE, config_yaml, mode: 'w')
           puts "Configuration file successfully created."
         rescue => e
           raise e
@@ -167,67 +173,181 @@ default-document-attributes:
 
         config = Configuration.new
         begin
-          config.config = YAML.load_file('grafana_reporter.config')
+          config.config = YAML.load_file(CONFIG_FILE)
           puts "Configuration file validated successfully."
         rescue StandardError => e
-          raise ConfigurationError, "Could not read CONFIG_FILE '#{config_file}' (Error: #{e.message})"
+          raise ConfigurationError, "Could not read config file '#{CONFIG_FILE}' (Error: #{e.message})\nSource:\n#{File.read(CONFIG_FILE)}"
         end
       end
 
       private
 
-      def user_input(text, default, validation_type = '')
+      def ui_config_grafana
         valid = false
+        url = nil
+        api_key = nil
+        datasources = ""
         until valid
-          print "#{text} [#{default}]: "
-          input = gets.gsub(/\n$/, '')
-          input = default if input.empty?
+          url = user_input('Specify grafana host', 'http://localhost:3000') unless url
+          print "Testing connection to '#{url}' #{api_key ? '_with_' : '_without_'} API key..."
+          begin
+            res = Grafana::Grafana.new(url,
+                                       api_key,
+                                       logger: @logger).test_connection
+          rescue => e
+            puts
+            puts e.message
+          end
+          puts 'done.'
 
-          valid = false
-          case validation_type
-          when 'folder'
-            return input if Dir.exist?(input)
-
-            print "Directory '#{input} does not exist. Shall I create it? [Yn]: "
-            case gets
-            when /^(?:y|Y|)$/
-              begin
-                Dir.mkdir(input)
-                puts "Directory '#{input}' successfully created."
-                valid = true
-              rescue => e
-                puts "WARN: Directory '#{input}' does not exist. Please create manually."
-                puts e.message
-              end
-
-            when /^(?:n|N)$/
-              puts "WARN: Directory '#{input}' does not exist. Please create manually."
-              valid = true
-            end
-
-          when 'unsigned_num'
-            valid = true if input =~ /[0-9]+/
-
-          when 'config'
-            case input
-            when /^(?:y|Y)$/
-              input = true
-              valid = true
-            when /^(?:n|N|yN)$/
-              input = false
-              valid = true
-            end
-
-          when 'grafana'
+          case res
+          when 'Admin'
             valid = true
+
+          when 'NON-Admin'
+            print "Access to grafana is permitted as NON-Admin. Do you want to use an [a]pi key,"\
+                  " configure [d]atasource manually, [r]e-enter api key or [i]gnore? [adRi]: "
+
+            case gets
+            when /(?:i|I)$/
+              valid = true
+
+            when /(?:a|A)$/
+              print 'Enter API key: '
+              api_key = gets.sub(/\n$/, '')
+
+            when /(?:r|R|adRi)$/
+              api_key = nil
+
+            when /(?:d|D)$/
+              valid = true
+              datasources = ui_config_datasources
+
+            end
 
           else
-            valid = true
+            print "Grafana could not be accessed at '#{url}'. Do you want do [r]e-enter url, or"\
+                 " [i]gnore and proceed? [Ri]: "
+
+            case gets
+            when /(?:i|I)$/
+              valid = true
+
+            else
+              url = nil
+              api_key = nil
+
+            end
+
           end
         end
+      %{grafana:
+  default:
+    host: #{url}#{api_key ? "\n    api_key: #{api_key}" : ''}#{datasources ? "\n#{datasources}" : ''}
+}
+      end
 
-        puts
+      def ui_config_datasources
+        finished = false
+        datasources = []
+        until finished
+          item = {}
+          print "Datasource ###{datasources.length + 1}) Enter datasource name as configured in grafana: "
+          item[:ds_name] = gets.sub(/\n$/, '')
+          print "Datasource ###{datasources.length + 1}) Enter datasource id: "
+          item[:ds_id] = gets.sub(/\n$/, '')
+
+          puts
+          selection = user_input("Datasource name: '#{item[:ds_name]}', Datasource id: '#{item[:ds_id]}'. [A]ccept, [r]etry or [c]ancel?", "Arc")
+
+          case selection
+          when /(?:Arc|A|a)$/
+            datasources << item
+            another = user_input('Add [a]nother datasource or [d]one?', 'aD')
+            finished = true if another =~ /(?:d|D)$/
+
+          when /(?:c|C)$/
+            finished = true
+
+          end
+        end
+        "    datasources:\n#{datasources.collect { |item| "      #{item[:ds_name]}: #{item[:ds_id]}" }.join('\n') }"
+      end
+
+      def ui_config_port
+        input = nil
+        until input
+          input = user_input('Specify port on which reporter shall run', '8815')
+          input = nil unless input =~ /[0-9]+/
+        end
         input
+      end
+
+      def ui_config_templates_folder
+        input = nil
+        until input
+          input = user_input('Specify path where templates shall be stored', './templates')
+          input = nil unless validate_config_folder(input)
+        end
+        input
+      end
+
+      def ui_config_reports_folder
+        input = nil
+        until input
+          input = user_input('Specify path where created reports shall be stored', './reports')
+          input = nil unless validate_config_folder(input)
+        end
+        input
+      end
+
+      def ui_config_images_folder(parent)
+        input = nil
+        until input
+          input = user_input('Specify path where rendered images shall be stored (relative to templates folder)',
+                             './images')
+          input = nil unless validate_config_folder(File.join(parent, input))
+        end
+        input
+      end
+
+      def ui_config_retention
+        input = nil
+        until input
+          input = user_input('Specify report retention duration in hours', '24')
+          input = nil unless input =~ /[0-9]+/
+        end
+        input
+      end
+
+      def user_input(text, default)
+        print "#{text} [#{default}]: "
+        input = gets.gsub(/\n$/, '')
+        input = default if input.empty?
+        input
+      end
+
+      def validate_config_folder(folder)
+        return true if Dir.exist?(folder)
+
+        print "Directory '#{folder} does not exist: [c]reate, [r]e-enter path or [i]gnore? [cRi]: "
+        case gets
+        when /^(?:c|C)$/
+          begin
+            Dir.mkdir(folder)
+            puts "Directory '#{folder}' successfully created."
+            return true
+          rescue => e
+            puts "WARN: Directory '#{folder}' could not be created. Please create it manually."
+            puts e.message
+          end
+
+        when /^(?:i|I)$/
+          puts "WARN: Directory '#{folder}' does not exist. Please create manually."
+          return true
+        end
+
+        false
       end
     end
   end
