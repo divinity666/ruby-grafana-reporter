@@ -659,7 +659,7 @@ default-document-attributes:
     end
 
     it 'can single render a template' do
-      expect { subject.configure_and_run(['-c', './spec/tests/demo_config.txt', '-t', './spec/tests/demo_report.adoc', '-o', './result.pdf']) }.not_to output(/ERROR/).to_stdout
+      expect { subject.configure_and_run(['-c', './spec/tests/demo_config.txt', '-t', 'spec/tests/demo_report', '-o', './result.pdf']) }.not_to output(/ERROR/).to_stdout
       expect(File.exist?('./result.pdf')).to be true
     end
   end

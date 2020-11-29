@@ -48,9 +48,10 @@ module GrafanaReporter
       get_config('grafana-reporter:run-mode')
     end
 
-    # @return [String] configured report template. Only needed in {MODE_SINGLE_RENDER}.
+    # @return [String] full path of configured report template. Only needed in {MODE_SINGLE_RENDER}.
     def template
-      get_config('default-document-attributes:var-template')
+      return nil if get_config('default-document-attributes:var-template').nil?
+      "#{templates_folder}#{get_config('default-document-attributes:var-template')}.adoc"
     end
 
     # @return [String] destination filename for the report in {MODE_SINGLE_RENDER}.
