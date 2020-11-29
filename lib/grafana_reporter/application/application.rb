@@ -36,7 +36,8 @@ module GrafanaReporter
         parser = OptionParser.new do |opts|
           opts.banner = "Usage: ruby #{$PROGRAM_NAME} [options]"
 
-          opts.on('-c', '--config CONFIG_FILE_NAME', "Specify custom configuration file, instead of #{CONFIG_FILE}.") do |file_name|
+          opts.on('-c', '--config CONFIG_FILE_NAME', 'Specify custom configuration file,'\
+                  " instead of #{CONFIG_FILE}.") do |file_name|
             config_file = file_name
           end
 
@@ -78,7 +79,8 @@ module GrafanaReporter
 
         # abort if config file does not exist
         unless File.exist?(config_file)
-          puts "Config file '#{config_file}' does not exist. Consider calling the configuration wizard with option '-w'. Aborting."
+          puts "Config file '#{config_file}' does not exist. Consider calling the configuration wizard"\
+               ' with option \'-w\'. Aborting.'
           return -1
         end
 
@@ -126,6 +128,8 @@ module GrafanaReporter
         0
       end
 
+      private
+
       # Provides a command line configuration wizard for setting up the necessary configuration
       # file.
       def config_wizard
@@ -149,7 +153,7 @@ module GrafanaReporter
         images = ui_config_images_folder(templates)
         retention = ui_config_retention
 
-        config_yaml = %{# This configuration has been built with the configuration wizard.
+        config_yaml = %(# This configuration has been built with the configuration wizard.
 
 #{grafana}
 
@@ -162,39 +166,66 @@ grafana-reporter:
 default-document-attributes:
   imagesdir: #{images}
 # feel free to add here additional asciidoctor document attributes which are applied to all your templates
-}
+)
 
         begin
           File.write(CONFIG_FILE, config_yaml, mode: 'w')
-          puts "Configuration file successfully created."
-        rescue => e
+          puts 'Configuration file successfully created.'
+        rescue StandardError => e
           raise e
         end
 
         config = Configuration.new
         begin
           config.config = YAML.load_file(CONFIG_FILE)
-          puts "Configuration file validated successfully."
+          puts 'Configuration file validated successfully.'
         rescue StandardError => e
-          raise ConfigurationError, "Could not read config file '#{CONFIG_FILE}' (Error: #{e.message})\nSource:\n#{File.read(CONFIG_FILE)}"
+          raise ConfigurationError, "Could not read config file '#{CONFIG_FILE}' (Error: #{e.message})\n"\
+                "Source:\n#{File.read(CONFIG_FILE)}"
         end
-      end
 
-      private
+        # create a demo report
+        unless Dir.exist?(config.templates_folder)
+          puts "Skip creation of DEMO template, as folder '#{config.templates_folder}' does not exist."
+          return
+        end
+        demo_report = %(= First Grafana Report Template
+
+include::grafana_help[]
+
+include::grafana_environment[])
+
+        demo_report_file = "#{config.templates_folder}demo_report.adoc"
+        if File.exist?(demo_report_file)
+          puts "Skip creation of DEMO template, as file '#{demo_report_file}' already exists."
+        else
+          begin
+            File.write(demo_report_file, demo_report, mode: 'w')
+            puts "DEMO template '#{demo_report_file}' successfully created."
+          rescue StandardError => e
+            raise e
+          end
+        end
+
+        puts
+        puts 'Now everything is setup properly. Run the grafana reporter without any command to start the service.'
+        puts "Call 'http://localhost:#{config.webserver_port}/render?var-template=demo_report' to test the'
+        puts 'configuration."
+      end
 
       def ui_config_grafana
         valid = false
         url = nil
         api_key = nil
-        datasources = ""
+        datasources = ''
         until valid
-          url = user_input('Specify grafana host', 'http://localhost:3000') unless url
+          url ||= user_input('Specify grafana host', 'http://localhost:3000')
           print "Testing connection to '#{url}' #{api_key ? '_with_' : '_without_'} API key..."
           begin
             res = Grafana::Grafana.new(url,
                                        api_key,
                                        logger: @logger).test_connection
-          rescue => e
+          rescue StandardError => e
             puts
             puts e.message
           end
@@ -205,8 +236,8 @@ default-document-attributes:
             valid = true
 
           when 'NON-Admin'
-            print "Access to grafana is permitted as NON-Admin. Do you want to use an [a]pi key,"\
-                  " configure [d]atasource manually, [r]e-enter api key or [i]gnore? [adRi]: "
+            print 'Access to grafana is permitted as NON-Admin. Do you want to use an [a]pi key,'\
+                  ' configure [d]atasource manually, [r]e-enter api key or [i]gnore? [adRi]: '
 
             case gets
             when /(?:i|I)$/
@@ -227,7 +258,7 @@ default-document-attributes:
 
           else
             print "Grafana could not be accessed at '#{url}'. Do you want do [r]e-enter url, or"\
-                 " [i]gnore and proceed? [Ri]: "
+                 ' [i]gnore and proceed? [Ri]: '
 
             case gets
             when /(?:i|I)$/
@@ -241,10 +272,10 @@ default-document-attributes:
 
           end
         end
-      %{grafana:
+        %(grafana:
   default:
     host: #{url}#{api_key ? "\n    api_key: #{api_key}" : ''}#{datasources ? "\n#{datasources}" : ''}
-}
+)
       end
 
       def ui_config_datasources
@@ -258,7 +289,8 @@ default-document-attributes:
           item[:ds_id] = gets.sub(/\n$/, '')
 
           puts
-          selection = user_input("Datasource name: '#{item[:ds_name]}', Datasource id: '#{item[:ds_id]}'. [A]ccept, [r]etry or [c]ancel?", "Arc")
+          selection = user_input("Datasource name: '#{item[:ds_name]}', Datasource id: '#{item[:ds_id]}'."\
+                                 ' [A]ccept, [r]etry or [c]ancel?', 'Arc')
 
           case selection
           when /(?:Arc|A|a)$/
@@ -271,7 +303,7 @@ default-document-attributes:
 
           end
         end
-        "    datasources:\n#{datasources.collect { |item| "      #{item[:ds_name]}: #{item[:ds_id]}" }.join('\n') }"
+        "    datasources:\n#{datasources.collect { |el| "      #{el[:ds_name]}: #{el[:ds_id]}" }.join('\n')}"
       end
 
       def ui_config_port
@@ -337,7 +369,7 @@ default-document-attributes:
             Dir.mkdir(folder)
             puts "Directory '#{folder}' successfully created."
             return true
-          rescue => e
+          rescue StandardError => e
             puts "WARN: Directory '#{folder}' could not be created. Please create it manually."
             puts e.message
           end
