@@ -47,6 +47,15 @@ module GrafanaReporter
             end
           end
 
+          opts.on('-o', '--output FILE', 'Output filename if only a single file is rendered') do |file|
+            cli_config['to_file'] = file
+          end
+
+          opts.on('-s', '--set VARIABLE,VALUE', Array, 'Set a variable value, which will be passed to the rendering') do |list|
+            raise ParameterValueError.new(list.length) unless list.length == 2
+            cli_config['default-document-attributes'][list[0]] = list[1]
+          end
+
           opts.on('--test GRAFANA_INSTANCE', 'test current configuration against given GRAFANA_INSTANCE') do |instance|
             cli_config['grafana-reporter']['run-mode'] = 'test'
             cli_config['grafana-reporter']['test-instance'] = instance
@@ -55,10 +64,6 @@ module GrafanaReporter
           opts.on('-t', '--template TEMPLATE', 'Render a single ASCIIDOC template to PDF and exit') do |template|
             cli_config['grafana-reporter']['run-mode'] = 'single-render'
             cli_config['default-document-attributes']['var-template'] = template
-          end
-
-          opts.on('-o', '--output FILE', 'Output filename if only a single file is rendered') do |file|
-            cli_config['to_file'] = file
           end
 
           opts.on('-w', '--wizard', 'Configuration wizard to prepare environment for the reporter.') do
@@ -75,12 +80,18 @@ module GrafanaReporter
             return -1
           end
         end
-        parser.parse!(params)
+
+        begin
+          parser.parse!(params)
+        rescue ApplicationError => e
+          puts e.message
+          return -1
+        end
 
         # abort if config file does not exist
         unless File.exist?(config_file)
           puts "Config file '#{config_file}' does not exist. Consider calling the configuration wizard"\
-               ' with option \'-w\'. Aborting.'
+               ' with option \'-w\' or use \'-h\' to see help message. Aborting.'
           return -1
         end
 
@@ -119,7 +130,11 @@ module GrafanaReporter
           puts res
 
         when Configuration::MODE_SINGLE_RENDER
-          config.report_class.new(config, config.template, config.to_file).create_report
+          begin
+            config.report_class.new(config, config.template, config.to_file).create_report
+          rescue StandardError => e
+            puts e.message
+          end
 
         when Configuration::MODE_SERVICE
           Webservice.new(config).run
@@ -209,8 +224,11 @@ include::grafana_environment[])
 
         puts
         puts 'Now everything is setup properly. Run the grafana reporter without any command to start the service.'
-        puts "Call 'http://localhost:#{config.webserver_port}/render?var-template=demo_report' to test the'
-        puts 'configuration."
+        puts
+        puts '   ruby-grafana-reporter'
+        puts
+        puts "Open 'http://localhost:#{config.webserver_port}/render?var-template=demo_report' in a webbrowser to"
+        puts 'verify your configuration.'
       end
 
       def ui_config_grafana

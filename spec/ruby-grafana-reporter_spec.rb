@@ -662,8 +662,17 @@ default-document-attributes:
       expect { subject.configure_and_run(['-c', './spec/tests/demo_config.txt', '-t', 'spec/tests/demo_report', '-o', './result.pdf']) }.not_to output(/ERROR/).to_stdout
       expect(File.exist?('./result.pdf')).to be true
     end
+
+    it 'can accept custom command line parameters' do
+      expect { subject.configure_and_run(['-c', './spec/tests/demo_config.txt', '-t', 'spec/tests/demo_report', '-o', './result.pdf', '-d', 'DEBUG', '-s', 'par1,test']) }.to output(/"par1"=>"test"/).to_stdout
+    end
+
+    it 'does not raise error on non existing template' do
+      expect { subject.configure_and_run(['-c', './spec/tests/demo_config.txt', '-t', 'does_not_exist']) }.to output(/report template .* is not a valid template/).to_stdout
+    end
   end
 
+# TODO make sure that local config file is not modified by tests
   context 'config wizard' do
     subject { GrafanaReporter::Application::Application.new }
     let(:folder) { './test_templates' }
