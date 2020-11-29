@@ -23,6 +23,13 @@ module GrafanaReporter
     end
   end
 
+  # Thrown if a non existing template has been specified.
+  class MissingTemplateError < ConfigurationError
+    def initialize(template)
+      super("Given report template '#{template}' is not a valid template.")
+    end
+  end
+
   # Thrown, if a configured path does not exist.
   class FolderDoesNotExistError < ConfigurationError
     def initialize(folder, config_item)
