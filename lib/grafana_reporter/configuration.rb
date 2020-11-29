@@ -194,34 +194,16 @@ module GrafanaReporter
               validate_schema(sub_scheme, subject)
             end
 
-          when subject.is_a?(Array)
-            if subject.length < min_occurence
-              raise ConfigurationDoesNotMatchSchemaError.new(key, 'occur', min_occurence, subject.length)
-            end
-
-            subject.each_index do |i|
-              sub_scheme = {}
-              sub_scheme[i] = schema[nil]
-              validate_schema(sub_scheme, subject)
-            end
-
           else
             raise ConfigurationError, "Unhandled configuration data type '#{subject.class}'."
           end
+
         # apply to single item
         elsif subject.is_a?(Hash)
           if !subject.key?(key) && min_occurence.positive?
             raise ConfigurationDoesNotMatchSchemaError.new(key, 'occur', min_occurence, 0)
           end
           if !subject[key].is_a?(type) && subject.key?(key)
-            raise ConfigurationDoesNotMatchSchemaError.new(key, 'be a', type, subject[key].class)
-          end
-
-        elsif subject.is_a?(Array)
-          if (subject.length < key) && (min_occurence > subject.length)
-            raise ConfigurationDoesNotMatchSchemaError.new(key, 'occur', min_occurence, subject.length)
-          end
-          if !subject[key].is_a?(type) && (subject.length >= key)
             raise ConfigurationDoesNotMatchSchemaError.new(key, 'be a', type, subject[key].class)
           end
 
