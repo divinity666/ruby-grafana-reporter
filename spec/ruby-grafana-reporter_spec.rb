@@ -637,13 +637,41 @@ default-document-attributes:
     it 'can handle wrong config files' do
       expect { subject.configure_and_run(['-c', './spec/tests/demo_report.adoc']) }.to raise_error(ConfigurationError)
     end
+
+    it 'can output version information' do
+      expect { subject.configure_and_run(['-v']) }.to output(/#{GRAFANA_REPORTER_VERSION.join('.*')}/).to_stdout
+    end
+
+    it 'expects default config file' do
+      expect { subject.configure_and_run([]) }.to output(/Config file.* does not exist/).to_stdout
+    end
+  end
+
+  context 'command line single rendering' do
+    subject { GrafanaReporter::Application::Application.new }
+
+    before do
+      File.delete('./result.pdf') if File.exist?('./result.pdf')
+    end
+
+    after do
+      File.delete('./result.pdf') if File.exist?('./result.pdf')
+    end
+
+    it 'can single render a template' do
+      expect { subject.configure_and_run(['-c', './spec/tests/demo_config.txt', '-t', './spec/tests/demo_report.adoc', '-o', './result.pdf']) }.not_to output(/ERROR/).to_stdout
+      expect(File.exist?('./result.pdf')).to be true
+    end
   end
 
   context 'config wizard' do
     subject { GrafanaReporter::Application::Application.new }
+    let(:folder) { './test_templates' }
 
     before do
       File.delete('grafana_reporter.config') if File.exist?('grafana_reporter.config')
+      File.delete("#{folder}/demo_report.adoc") if File.exist?("#{folder}/demo_report.adoc")
+      Dir.delete(folder) if Dir.exist?(folder)
       @config = ["\n", "http://localhost\n", "a\n", "#{stub_key}\n", "\n", "i\n", "\n", "i\n", "\n", "i\n", "24\n"]
       allow(subject).to receive(:puts)
       allow(subject).to receive(:print)
@@ -651,11 +679,21 @@ default-document-attributes:
 
     after do
       File.delete('grafana_reporter.config') if File.exist?('grafana_reporter.config')
+      File.delete("#{folder}/demo_report.adoc") if File.exist?("#{folder}/demo_report.adoc")
+      Dir.delete(folder) if Dir.exist?(folder)
+    end
+
+    it 'can create configured folders' do
+      @config.slice!(4, 2)
+      @config.insert(4, "#{folder}\n", "c\n")
+      allow(subject).to receive(:gets).and_return(*@config)
+      subject.configure_and_run(['-w'])
+      expect(Dir.exist?(folder)).to be true
     end
 
     it 'creates valid config file as admin' do
       allow(subject).to receive(:gets).and_return(*@config)
-      subject.config_wizard
+      subject.configure_and_run(['-w'])
       expect(File.exist?('grafana_reporter.config')).to be true
     end
 
@@ -663,7 +701,28 @@ default-document-attributes:
       @config.slice!(2,2)
       @config.insert(2, "d\n", "demo\n", "1\n", "a\n", "d\n")
       allow(subject).to receive(:gets).and_return(*@config)
-      subject.config_wizard
+      subject.configure_and_run(['-w'])
+      expect(File.exist?('grafana_reporter.config')).to be true
+    end
+
+    it 'asks before overwriting config file' do
+      allow(subject).to receive(:gets).and_return(*@config)
+      subject.configure_and_run(['-w'])
+      expect(File.exist?('grafana_reporter.config')).to be true
+      modify_date = File.mtime('grafana_reporter.config')
+      #try to create config again
+      @config = ["\n"]
+      allow(subject).to receive(:gets).and_return(*@config)
+      subject.configure_and_run(['-w'])
+      expect(File.mtime('grafana_reporter.config')).to eq(modify_date)
+    end
+
+    it 'warns if grafana instance could not be accessed' do
+      @config.insert(1, "http://blabla:9999\n", "r\n")
+      allow(subject).to receive(:gets).and_return(*@config)
+      WebMock.disable_net_connect!(allow: ['http://blabla:9999'])
+      subject.configure_and_run(['-w'])
+      WebMock.enable!
       expect(File.exist?('grafana_reporter.config')).to be true
     end
   end
