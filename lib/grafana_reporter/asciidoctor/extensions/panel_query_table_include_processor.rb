@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require_relative 'processor_mixin'
 
 module GrafanaReporter
@@ -52,7 +54,8 @@ module GrafanaReporter
           panel_id = target.split(':')[1]
           instance = attrs['instance'] || doc.attr('grafana_default_instance') || 'default'
           dashboard = attrs['dashboard'] || doc.attr('grafana_default_dashboard')
-          @report.logger.debug("Processing PanelQueryTableIncludeProcessor (instance: #{instance}, dashboard: #{dashboard}, panel: #{panel_id}, query: #{attrs['query']})")
+          @report.logger.debug("Processing PanelQueryTableIncludeProcessor (instance: #{instance}, "\
+                               "dashboard: #{dashboard}, panel: #{panel_id}, query: #{attrs['query']})")
           query = PanelTableQuery.new(@report.grafana(instance).dashboard(dashboard).panel(panel_id), attrs['query'])
           query.merge_hash_variables(doc.attributes, attrs)
           @report.logger.debug("from: #{query.from}, to: #{query.to}")
@@ -61,10 +64,10 @@ module GrafanaReporter
             reader.unshift_lines query.execute(@report.grafana(instance))
           rescue GrafanaReporterError => e
             @report.logger.error(e.message)
-            reader.unshift_line '|' + e.message
+            reader.unshift_line "|#{e.message}"
           rescue StandardError => e
             @report.logger.fatal(e.message)
-            reader.unshift_line '|' + e.message
+            reader.unshift_line "|#{e.message}"
           end
 
           reader

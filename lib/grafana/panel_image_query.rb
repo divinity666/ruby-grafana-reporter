@@ -1,7 +1,10 @@
+# frozen_string_literal: true
+
 module Grafana
   # Query, which allows to render a {Panel} as a PNG image.
   class PanelImageQuery < AbstractPanelQuery
-    # Returns the URL for rendering the panel. Uses {Panel#render_url} and sets additional url parameters according {https://grafana.com/docs/grafana/latest/reference/share_panel Grafana Share Panel}.
+    # Returns the URL for rendering the panel. Uses {Panel#render_url} and sets additional url
+    # parameters according {https://grafana.com/docs/grafana/latest/reference/share_panel Grafana Share Panel}.
     #
     # @see AbstractQuery#url
     # @return [String] string for rendering the panel
@@ -43,7 +46,7 @@ module Grafana
       url_params = URI.encode_www_form(url_vars.map { |k, v| [k, v.raw_value.to_s] })
       return '' if url_params.empty?
 
-      '&' + url_params
+      "&#{url_params}"
     end
   end
 end

@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require_relative 'query_mixin'
 
 module GrafanaReporter
@@ -20,7 +22,7 @@ module GrafanaReporter
 
       # @return [String] URL for querying alerts
       def url
-        '/api/alerts' + url_parameters
+        "/api/alerts#{url_parameters}"
       end
 
       # @return [Hash] empty hash object
@@ -72,11 +74,12 @@ module GrafanaReporter
         result = replace_values(result, @variables.select { |k, _v| k =~ /^replace_values_\d+/ })
         result = filter_columns(result, @variables['filter_columns'])
         if @variables['filter_column']
-          @report.logger.warn("DEPRECATED: Call of  no longer supported function 'filter_column' has been found. Rename to 'filter_columns'")
+          @report.logger.warn("DEPRECATED: Call of  no longer supported function 'filter_column' has been found."\
+                              " Rename to 'filter_columns'")
           result = filter_columns(result, @variables['filter_column'])
         end
 
-        @result = result[:content].map { |row| '| ' + row.map { |item| item.to_s.gsub('|', '\\|') }.join(' | ') }
+        @result = result[:content].map { |row| "| #{row.map { |item| item.to_s.gsub('|', '\\|') }.join(' | ')}" }
       end
 
       private
@@ -86,13 +89,15 @@ module GrafanaReporter
         url_vars['dashboardId'] = ::Grafana::Variable.new(@dashboard.id) if @dashboard
         url_vars['panelId'] = ::Grafana::Variable.new(@panel.id) if @panel
 
-        url_vars.merge!(variables.select { |k, _v| k =~ /^(?:limit|dashboardId|panelId|query|state|folderId|dashboardQuery|dashboardTag)/ })
+        url_vars.merge!(variables.select do |k, _v|
+          k =~ /^(?:limit|dashboardId|panelId|query|state|folderId|dashboardQuery|dashboardTag)/x
+        end)
         url_vars['from'] = ::Grafana::Variable.new(@from) if @from
         url_vars['to'] = ::Grafana::Variable.new(@to) if @to
         url_params = URI.encode_www_form(url_vars.map { |k, v| [k, v.raw_value.to_s] })
         return '' if url_params.empty?
 
-        '?' + url_params
+        "?#{url_params}"
       end
     end
   end

@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Grafana
   # @abstract
   #
@@ -22,7 +24,14 @@ module Grafana
 
     # @return [Hash] request, which executes the SQL statement against the specified datasource
     def request
-      { body: { from: @from, to: @to, queries: [rawSql: @sql, datasourceId: @datasource_id.to_i, format: 'table'] }.to_json, request: Net::HTTP::Post }
+      {
+        body: {
+          from: @from,
+          to: @to,
+          queries: [rawSql: @sql, datasourceId: @datasource_id.to_i, format: 'table']
+        }.to_json,
+        request: Net::HTTP::Post
+      }
     end
 
     # Replaces all variables in the SQL statement.

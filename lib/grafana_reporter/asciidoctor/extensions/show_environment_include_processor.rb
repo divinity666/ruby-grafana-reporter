@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module GrafanaReporter
   module Asciidoctor
     module Extensions
@@ -29,7 +31,7 @@ module GrafanaReporter
           vars = ['== Accessible Variables',
                   '|===']
           doc.attributes.sort.each do |k, v|
-            vars << '| `+{' + k.to_s + '}+`' + ' | ' + v.to_s
+            vars << "| `+{#{k}}+` | #{v}"
           end
           vars << '|==='
 

@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module GrafanaReporter
   module Asciidoctor
     module Extensions
@@ -44,7 +46,8 @@ module GrafanaReporter
 
           @report.next_step
           instance = attrs['instance'] || doc.attr('grafana_default_instance') || 'default'
-          @report.logger.debug("Processing SqlTableIncludeProcessor (instance: #{instance}, datasource: #{target.split(':')[1]}, sql: #{attrs['sql']})")
+          @report.logger.debug("Processing SqlTableIncludeProcessor (instance: #{instance},"\
+                               " datasource: #{target.split(':')[1]}, sql: #{attrs['sql']})")
           query = SqlTableQuery.new(attrs['sql'], target.split(':')[1])
           query.merge_hash_variables(doc.attributes, attrs)
           @report.logger.debug("from: #{query.from}, to: #{query.to}")
@@ -53,10 +56,10 @@ module GrafanaReporter
             reader.unshift_lines query.execute(@report.grafana(instance))
           rescue GrafanaReporterError => e
             @report.logger.error(e.message)
-            reader.unshift_line '|' + e.message
+            reader.unshift_line "|#{e.message}"
           rescue StandardError => e
             @report.logger.fatal(e.message)
-            reader.unshift_line '|' + e.message
+            reader.unshift_line "|#{e.message}"
           end
 
           reader

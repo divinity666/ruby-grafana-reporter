@@ -3,16 +3,14 @@
 [![Coverage Status](https://coveralls.io/repos/github/divinity666/ruby-grafana-reporter/badge.svg?branch=master)](https://coveralls.io/github/divinity666/ruby-grafana-reporter?branch=master)
 
 # Ruby Grafana Reporter
-Reporting Service for Grafana ([Project page](https://github.com/divinity666/ruby-grafana-reporter))
+Reporting Service for Grafana
 
 ## Table of Contents
 
 * [About the project](#about-the-project)
 * [Getting started](#getting-started)
-  * [Configuration](#configuration)
-  * [Installation](#installation)
   * [Grafana integration](#grafana-integration)
-* [Webservice overview](#webservice-overview)
+  * [Webservice overview](#webservice-overview)
 * [Features](#features)
 * [Roadmap](#roadmap)
 * [Contributing](#contributing)
@@ -42,211 +40,33 @@ found here.
 
 ## Getting started
 
-There exist several ways of installing the reporter. All of them have in
-common, that they require a working ruby environment. Check with the following
-commands, that the tools are setup and run properly:
+There exist several ways of installing the reporter. Here I cover the easiest
+setup by using ruby gems. If you need further installation help, or want to use
+a "baremetal" ruby setup or a docker integration, please have a look at the more
+extended [installation documentation](INSTALL.md).
 
-    ruby -v
-    gem -v
-
-### Configuration
-
-#### Configuration file
-
-Create a first configuration file, named e.g. `myconfig` with the following
-content:
-
-    grafana-reporter:
-      templates-folder: templates
-      reports-folder: reports
-    
-    grafana:
-      default:
-        host: <<url to your grafana host, e.g. https://localhost:3000>>
-        api_key: <<api key to be used by the reporter>>
-        datasources: # mandatory, if the api_key has only viewer rights, optional otherwise
-          "<<data source name in grafana>>": <<data source id in grafana>>
-    
-    default-document-attributes:
-      imagesdir: .
-
-#### "Hello World" asciidoctor template
-
-Create a first asciidoctor template file in your `templates-folder`, e.g.
-`myfirsttemplate.adoc` with the following content:
-
-    = First Ruby Grafana Reporter Example
-    
-    include::grafana_help[]
-
-    include::grafana_environment[]
-
-Now you're ready to go! Let's check it out!
-
-### Installation
-
-There exist several ways for installing the reporter. Check out the most
-convenient one for your use case. If you are unsure, I propose to start with
-the GEM setup.
-
-#### As a GEM
-
-Installation as a gem is a simple way, if you don't want to mess with the
-efforts of a barebone installation.
-
-To install as a gem, simply run:
+To install the reporter as a gem, simply run:
 
     gem install ruby-grafana-reporter
 
-To see if it works properly, you may run the application:
+If no configuration file is in place, you might want to use the configuration
+wizard, which leads you through all necessary steps:
+
+    ruby-grafana-reporter -w
+
+Now you're ready to go! Let's check it out!
+
+    ruby-grafana-reporter -t demo_report -o my_first_render.pdf
+
+If everything works as expected, you should find a file named `my_first_render.pdf`
+in the current folder, which contains a detailed explanation of all available
+commands as well as your available configuration options.
+
+To run the reporter as a service, you only need to call it like this:
 
     ruby-grafana-reporter
 
-To check if your configured grafana instance can be accessed properly:
-
-    ruby-grafana-reporter myconfig --test default
-
-Now you may want to check the conversion of your Hello World example:
-
-    ruby-grafana-reporter myconfig --template myfirsttemplate.adoc --output myfirstrender.pdf
-
-You should now find a PDF document named `myfirstrender.pdf` which includes a
-detailed help page on how to use the ruby grafana reporter functions in
-asciidoctor, as well as a list of all environment variables that can be
-accessed.
-
-If this has been working properly as well, you might want to run the reporter
-as a webservice. Nothing easier than that. Just call:
-
-    ruby-grafana-reporter myconfig
-
-Test your configuration by requesting the following URL in a browser of your
-choice:
-
-    http://<<your-server-url>>:8815/render?var-template=myfirsttemplate.adoc
-
-If this now also serves you the PDF document after a few seconds (remember to
-reload the page), you are done with the reporter service and might want to go
-to step into the [integration with grafana](#grafana-integration).
-
-#### Docker
-
-One of the key features of the reporter is, that it can work seemlessly with
-the official `asciidoctor` docker container without further dependencies.
-
-Assuming you have a `docker-compose` setup running, you may want to add the
-following to your services secion in your `docker-compose.yml`:
-
-    asciidoctor:
-      image: asciidoctor/docker-asciidoctor
-      container_name: asciidoctor
-      hostname: asciidoctor
-      volumes:
-        - /<<an-empty-local-path>>:/documents
-      restart: unless-stopped
-
-After running this container, you have to copy the reporter files. Download the
-ruby grafana reporter to the folder `<<an-empty-local-path>>`. I tend to use
-the single file application there.
-
-To test the setup, you'll have to first step inside the container, e.g. by
-calling `docker exec` with the appropriate parameters. Then you can simply
-run
-
-    ruby bin/ruby-grafana-reporter -h
-
-Check that your configured grafana instance can be accessed properly:
-
-    ruby bin/ruby-grafana-reporter myconfig --test default
-
-Now you may want to check the conversion of your Hello World example:
-
-    ruby bin/ruby-grafana-reporter myconfig --template myfirsttemplate.adoc --output myfirstrender.pdf
-
-You should now find a PDF document named `myfirstrender.pdf` which includes a detailed
-help page on how to use the ruby grafana reporter functions in asciidoctor, as well
-as a list of all environment variables that can be accessed.
-
-If this has been working properly as well, you might want to run the reporter
-as a webservice always when starting the container. To do so, use the following
-`docker-compose` configuration. Watch out for the added lines!
-
-    asciidoctor:
-      image: asciidoctor/docker-asciidoctor
-      container_name: asciidoctor
-      hostname: asciidoctor
-      volumes:
-        - /<<an-empty-local-path>>:/documents
-      command:
-        sh /documents/startup.sh
-      restart: unless-stopped
-
-Additionally you need to create a `startup.sh` file in the folder
-`<<an-empty-local-path>>` with the following content:
-
-    cd /documents
-    ruby bin/ruby-grafana-reporter myconfig
-
-After restarting the container, the service should be running.
-
-Test your configuration by requesting the following URL in a browser of your
-choice:
-
-    http://<<your-server-url>>:8815/render?var-template=myfirsttemplate.adoc
-
-If this now also serves you the PDF document after a few seconds (remember to
-reload the page), you are done with the reporter service and might want to go
-to step into the [integration with grafana](#grafana-integration).
-
-#### "Baremetal" Ruby
-
-This installation is mainly intended to be used if you like to have a
-development setup, or similar. Most people will most likely go with the GEM
-or the docker installation.
-
-To install on a plain ruby installation, make sure that the `ruby` command is
-accessible from your command line and then follow these steps:
-
-Download the ruby grafana reporter to a folder of your choice.
-
-Install asciidoctor
-
-    gem install asciidoctor asciidoctor-pdf zip
-
-or simply use
-
-    bundle install
-
-To check if all dependencies are setup properly, run the following command
-in that folder:
-
-    ruby bin/ruby-grafana-reporter -h
-
-Check that your configured grafana instance can be accessed properly:
-
-    ruby bin/ruby-grafana-reporter myconfig --test default
-
-Now you may want to check the conversion of your Hello World example:
-
-    ruby bin/ruby-grafana-reporter myconfig --template myfirsttemplate.adoc --output myfirstrender.pdf
-
-You should now find a PDF document named `myfirstrender.pdf` which includes a detailed
-help page on how to use the ruby grafana reporter functions in asciidoctor, as well
-as a list of all environment variables that can be accessed.
-
-If this has been working properly as well, you might want to run the reporter
-as a webservice. Nothing easier than that. Just call:
-
-    ruby bin/ruby-grafana-reporter myconfig
-
-Test your configuration by requesting the following URL in a browser of your
-choice:
-
-    http://<<your-server-url>>:8815/render?var-template=myfirsttemplate.adoc
-
-If this now also serves you the PDF document after a few seconds (remember to
-reload the page), you are done with the reporter service and might want to go
-to step into the [integration with grafana](#grafana-integration).
+Neat, isn't it?
 
 ### Grafana integration
 
@@ -262,7 +82,7 @@ grafana dashboard:
 * Select `Add`
 * Fill out as following:
   * Type: `link`
-  * Url: `http://<<your-server-url>>:8815/render?var-template=myfirsttemplate.adoc`
+  * Url: `http://<<your-server-url>>:<<your-webservice-port>>/render?var-template=myfirsttemplate`
   * Title: `MyFirstReport`
   * Select `Time range`
   * Select `Variable values`
@@ -280,7 +100,7 @@ Additionally you might want to make the selection of the template variable.
 Piece of cake: Just add a dashboard variable to your grafana dashboard named
 `template` and let the user select or enter a template name. To make use of it,
 you should change the link of the 'MyFirstReport' link to
-`http://<<your-server-url>>:8815/render?`
+`http://<<your-server-url>>:<<your-webservice-port>>/render?`
 
 That's it. Let me know your feedback!
 
@@ -309,7 +129,6 @@ Running the reporter as a webservice provides the following URLs
 This is just a collection of things, I am heading for in future, without a schedule.
 
 * Add documentation of possible asciidoctor calls to grafana
-* Add documentation for configuration file
 * Add a simple plugin system to support specific asciidoctor modifications
 * Solve code TODOs
 * Become [rubocop](https://rubocop.org/) ready
@@ -326,7 +145,6 @@ Definitely open spots from my side are:
 
 * This README
 * Clean and properly setup test cases
-* An own webpage for this project
 
 ## Licensing
 

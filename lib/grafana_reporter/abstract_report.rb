@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module GrafanaReporter
   # @abstract Override {#create_report} and {#progress}.
   #
@@ -88,7 +90,8 @@ module GrafanaReporter
       'in progress'
     end
 
-    # @return [String] string containing all messages ([Logger::Severity::DEBUG]) of the logger during report generation.
+    # @return [String] string containing all messages ([Logger::Severity::DEBUG]) of the logger during report
+    #   generation.
     def full_log
       logger.internal_messages
     end

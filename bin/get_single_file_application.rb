@@ -1,7 +1,7 @@
 # TODO: build single file application properly
 
 module Kernel
-  alias_method :orig_req_rel, :require_relative
+  alias orig_req_rel require_relative
 
   def require_relative(str)
     cur_file = File.expand_path(File.join([File.dirname(caller_locations.first.absolute_path), str]))
@@ -29,6 +29,6 @@ module Kernel
 end
 
 def get_result
-  require_relative '/../lib/ruby-grafana-reporter.rb'
-  [File.read('./LICENSE').gsub(/^/, "# "), required_contents, 'GrafanaReporter::Application::Application.new.configure_and_run(ARGV)'].join("\n")
+  require_relative '/../lib/ruby-grafana-reporter'
+  [File.read('./LICENSE').gsub(/^/, '# '), required_contents, 'GrafanaReporter::Application::Application.new.configure_and_run(ARGV)'].join("\n")
 end

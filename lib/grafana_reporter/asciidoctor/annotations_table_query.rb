@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module GrafanaReporter
   module Asciidoctor
     # This class is used to query annotations from grafana.
@@ -18,7 +20,7 @@ module GrafanaReporter
 
       # @return [String] URL for querying annotations
       def url
-        '/api/annotations' + url_parameters
+        "/api/annotations#{url_parameters}"
       end
 
       # @return [Hash] empty hash object
@@ -69,11 +71,12 @@ module GrafanaReporter
         result = replace_values(result, @variables.select { |k, _v| k =~ /^replace_values_\d+/ })
         result = filter_columns(result, @variables['filter_columns'])
         if @variables['filter_column']
-          @report.logger.warn("DEPRECATED: Call of  no longer supported function 'filter_column' has been found. Rename to 'filter_columns'")
+          @report.logger.warn("DEPRECATED: Call of  no longer supported function 'filter_column' has been found."\
+                              " Rename to 'filter_columns'")
           result = filter_columns(result, @variables['filter_column'])
         end
 
-        @result = result[:content].map { |row| '| ' + row.map { |item| item.to_s.gsub('|', '\\|') }.join(' | ') }
+        @result = result[:content].map { |row| "| #{row.map { |item| item.to_s.gsub('|', '\\|') }.join(' | ')}" }
       end
 
       private
@@ -89,7 +92,7 @@ module GrafanaReporter
         url_params = URI.encode_www_form(url_vars.map { |k, v| [k, v.raw_value.to_s] })
         return '' if url_params.empty?
 
-        '?' + url_params
+        "?#{url_params}"
       end
     end
   end

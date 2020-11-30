@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module GrafanaReporter
   module Application
     # General grafana application error, from which the specific errors
@@ -5,10 +7,11 @@ module GrafanaReporter
     class ApplicationError < GrafanaReporterError
     end
 
-    # Thrown if a non existing template has been specified.
-    class MissingTemplateError < ApplicationError
-      def initialize(template)
-        super("Given report template '#{template}' is not a valid template.")
+    # Thrown, if the '-s' parameter is not configured with exactly one variable
+    # name and one value.
+    class ParameterValueError < ApplicationError
+      def initialize(length)
+        super("Parameter '-s' needs exactly two values separated by comma, received #{length}.")
       end
     end
 

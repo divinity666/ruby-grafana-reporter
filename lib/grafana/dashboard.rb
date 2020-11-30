@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Grafana
   # Representation of one specific dashboard in a {Grafana} instance.
   class Dashboard
@@ -11,30 +13,8 @@ module Grafana
       @grafana = grafana
       @model = model
 
-      # read panels
-      @panels = []
-      if @model.key?('panels')
-        @model['panels'].each do |panel|
-          if panel.key?('panels')
-            panel['panels'].each do |subpanel|
-              @panels << Panel.new(subpanel, self)
-            end
-          else
-            @panels << Panel.new(panel, self)
-          end
-        end
-      end
-
-      # store variables in array as objects of type Variable
-      @variables = []
-      return unless @model.key?('templating')
-
-      list = @model['templating']['list']
-      return unless list.is_a? Array
-
-      list.each do |item|
-        @variables << Variable.new(item)
-      end
+      initialize_panels
+      initialize_variables
     end
 
     # @return [String] +from+ time configured in the dashboard.
@@ -61,6 +41,37 @@ module Grafana
       raise PanelDoesNotExistError.new(id, self) if panels.empty?
 
       panels.first
+    end
+  end
+
+  private
+
+  # store variables in array as objects of type Variable
+  def initialize_variables
+    @variables = []
+    return unless @model.key?('templating')
+
+    list = @model['templating']['list']
+    return unless list.is_a? Array
+
+    list.each do |item|
+      @variables << Variable.new(item)
+    end
+  end
+
+  # read panels
+  def initialize_panels
+    @panels = []
+    return unless @model.key?('panels')
+
+    @model['panels'].each do |panel|
+      if panel.key?('panels')
+        panel['panels'].each do |subpanel|
+          @panels << Panel.new(subpanel, self)
+        end
+      else
+        @panels << Panel.new(panel, self)
+      end
     end
   end
 end

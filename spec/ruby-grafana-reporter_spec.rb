@@ -1,4 +1,4 @@
-if ENV["TRAVIS"]
+if ENV['TRAVIS']
   require 'coveralls'
   Coveralls.wear!
 else
@@ -6,7 +6,7 @@ else
   SimpleCov.start
 end
 
-require_relative '../lib/ruby-grafana-reporter.rb'
+require_relative '../lib/ruby-grafana-reporter'
 require 'webmock/rspec'
 
 include Grafana
@@ -14,6 +14,17 @@ include GrafanaReporter
 include GrafanaReporter::Application
 include GrafanaReporter::Asciidoctor
 include GrafanaReporter::Asciidoctor::Extensions
+
+describe AbstractQuery do
+  let(:query) { AbstractQuery.new }
+
+  it 'has abstract methods' do
+    expect { query.uri }.to raise_error(NotImplementedError)
+    expect { query.request }.to raise_error(NotImplementedError)
+    expect { query.pre_process(nil) }.to raise_error(NotImplementedError)
+    expect { query.post_process }.to raise_error(NotImplementedError)
+  end
+end
 
 describe Dashboard do
   let(:dashboard) { Dashboard.new(JSON.parse(File.read('./spec/tests/demo_dashboard.json'))['dashboard'], Grafana::Grafana.new('')) }
@@ -117,17 +128,16 @@ describe Variable do
       expect(subject.text).to eq('resolved')
     end
 
-    context "date" do
-      subject {dashboard.variables.select{|item| item.name == "timestamp"}.first}
+    context 'date' do
+      subject { dashboard.variables.select { |item| item.name == 'timestamp' }.first }
 
-
-      it "can format date" do
-        expect(subject.value_formatted).to eq("1596660163000")
-        expect(subject.value_formatted('date:seconds')).to eq("1596660163")
-        expect(subject.value_formatted('date')).to eq("2020-08-05T20:42:43.000Z") #Time.at(1596660163).utc.iso8601(3)
-        expect(subject.value_formatted('date:iso')).to eq("2020-08-05T20:42:43.000Z") #Time.at(1596660163).utc.iso8601(3)
-        expect(subject.value_formatted('date:YYYY-MM-DD')).to eq("2020-08-05")
-        expect(subject.value_formatted('date:M MM MMM MMMM D DD d ddd dddd e E w ww W WW YY YYYY A a H HH h hh m mm s ss X')).to eq("8 08 Aug August 5 05 3 Wed Wednesday 3 3 31 31 32 32 20 2020 PM pm 22 22 10 10 42 42 43 43 1596660163")
+      it 'can format date' do
+        expect(subject.value_formatted).to eq('1596660163000')
+        expect(subject.value_formatted('date:seconds')).to eq('1596660163')
+        expect(subject.value_formatted('date')).to eq('2020-08-05T20:42:43.000Z') # Time.at(1596660163).utc.iso8601(3)
+        expect(subject.value_formatted('date:iso')).to eq('2020-08-05T20:42:43.000Z') # Time.at(1596660163).utc.iso8601(3)
+        expect(subject.value_formatted('date:YYYY-MM-DD')).to eq('2020-08-05')
+        expect(subject.value_formatted('date:M MM MMM MMMM D DD DDD DDDD d ddd dddd e E w ww W WW YY YYYY A a H HH h hh m mm s ss X')).to eq('8 08 Aug August 5 05 218 218 3 Wed Wednesday 3 3 31 31 32 32 20 2020 PM pm 22 22 10 10 42 42 43 43 1596660163')
       end
     end
   end
@@ -330,7 +340,7 @@ describe Configuration do
   context 'with config file' do
     subject do
       obj = Configuration.new
-      obj.load_config(YAML.load_file('./spec/tests/demo_config.txt'))
+      obj.config = YAML.load_file('./spec/tests/demo_config.txt')
       obj
     end
 
@@ -404,65 +414,48 @@ describe Configuration do
     subject { Configuration.new }
 
     it 'validates required fields' do
-      subject.load_config({
+      subject.config = {
                             'grafana' => { 'default' => { 'host' => 'test' } }
-                          })
+                          }
       expect { subject.validate }.not_to raise_error
     end
 
     it 'validates optional datasources' do
-      subject.load_config({
+      subject.config = {
                             'grafana' => { 'default' => { 'host' => 'test', 'datasources' => { 'test' => 1 } } }
-                          })
+                          }
       expect { subject.validate }.not_to raise_error
     end
 
     it 'raises error if item exists without required subitem' do
-      subject.load_config({
+      subject.config = {
                             'grafana' => { 'default' => { 'host' => 'test', 'datasources' => {} } }
-                          })
+                          }
       expect { subject.validate }.to raise_error(ConfigurationDoesNotMatchSchemaError)
     end
 
     it 'raises error on wrong datasource type' do
-      subject.load_config({
+      subject.config = {
                             'grafana' => { 'default' => { 'host' => 'test', 'datasources' => { 'test' => 'bla' } } }
-                          })
+                          }
       expect { subject.validate }.to raise_error(ConfigurationDoesNotMatchSchemaError)
     end
 
     it 'raises error if folder does not exist' do
-      subject.load_config({
+      subject.config = {
                             'grafana' => { 'default' => { 'host' => 'test' } },
                             'grafana-reporter' => { 'reports-folder' => 'ewfhenwf8' }
-                          })
+                          }
       expect { subject.validate }.to raise_error(FolderDoesNotExistError)
     end
 
     it 'warns if not evaluated configurations exist' do
-      subject.load_config({
+      subject.config = {
                             'grafana' => { 'default' => { 'host' => 'test' } },
                             'grafana-reporter' => { 'repots-folder' => 'ewfhenwf8' }
-                          })
+                          }
       expect(subject.logger).to receive(:warn).with("Item 'repots-folder' in configuration is unknown to the reporter and will be ignored")
       subject.validate
-    end
-  end
-
-  context 'command line interface' do
-    subject { Configuration.new }
-
-    it 'returns help' do
-      expect { subject.configure_by_command_line(['--help']) }.to output(/--debug/).to_stdout
-      expect { subject.configure_by_command_line }.to output(/--debug/).to_stdout
-    end
-
-    it 'can handle wrong config files' do
-      expect { subject.configure_by_command_line(['./spec/tests/demo_report.adoc']) }.to raise_error(ConfigurationError)
-    end
-
-    it 'can handle correct config files' do
-      expect { subject.configure_by_command_line(['./spec/tests/demo_config.txt', '--test', 'default']) }.not_to raise_error
     end
   end
 end
@@ -470,7 +463,7 @@ end
 describe Report do
   subject do
     config = Configuration.new
-    config.load_config(YAML.load_file('./spec/tests/demo_config.txt'))
+    config.config = YAML.load_file('./spec/tests/demo_config.txt')
 
     Report.new(config, './spec/tests/demo_report.adoc')
   end
@@ -611,7 +604,7 @@ describe Application do
     subject do
       config = Configuration.new
       yaml = "grafana-reporter:
-  port: 8050
+  webservice-port: 8050
   templates-folder: ./spec/tests
   reports-folder: .
 
@@ -623,30 +616,10 @@ grafana:
 default-document-attributes:
   imagesdir: images/"
 
-      config.load_config(YAML.load(yaml))
+      config.config = YAML.load(yaml)
       app = GrafanaReporter::Application::Application.new
       app.config = config
       app
-    end
-
-    it 'can handle invalid web requests' do
-      expect { subject.send(:handle_request, 'GET /rend HTTP/1.1') }.to raise_error(WebserviceUnknownPathError)
-      expect { subject.send(:handle_request, 'GET /render HTTP/1.1') }.to raise_error(MissingTemplateError)
-      expect { subject.send(:handle_request, 'GET /render?var-template=does_not_exist HTTP/1.1') }.to raise_error(MissingTemplateError)
-    end
-
-    it 'can handle all web requests' do
-      result = subject.send(:handle_request, 'GET /render?var-template=demo_report HTTP/1.1')
-      expect(result).to include("Found\r\nLocation: /view_report?report_id=")
-
-      id = result.split("\r\n")[1].gsub(/.*report_id=([^\r\n]*).*/, '\1')
-      expect(subject.send(:handle_request, "GET /view_report?report_id=#{id} HTTP/1.1")).to include('in progress')
-      expect { subject.send(:handle_request, "GET /cancel_report?report_id=#{id} HTTP/1.1") }.not_to raise_error
-      expect { subject.send(:handle_request, "GET /view_log?report_id=#{id} HTTP/1.1") }.not_to raise_error
-      expect(subject.send(:handle_request, 'GET /overview HTTP/1.1')).to include(id)
-
-      sleep 1 # race condition with webmock here, because report might not be finished earlier
-      expect(subject.send(:handle_request, "GET /view_report?report_id=#{id} HTTP/1.1")).to include('application/pdf')
     end
   end
 
@@ -654,7 +627,220 @@ default-document-attributes:
     subject { GrafanaReporter::Application::Application.new }
 
     it 'can configure and run' do
-      expect { subject.configure_and_run(['./spec/tests/demo_config.txt', '--test', 'default', '-d', 'FATAL']) }.to output("Admin\n").to_stdout
+      expect { subject.configure_and_run(['-c', './spec/tests/demo_config.txt', '--test', 'default', '-d', 'FATAL']) }.to output("Admin\n").to_stdout
+    end
+
+    it 'returns help' do
+      expect { subject.configure_and_run(['--help']) }.to output(/--debug/).to_stdout
+    end
+
+    it 'can handle wrong config files' do
+      expect { subject.configure_and_run(['-c', './spec/tests/demo_report.adoc']) }.to raise_error(ConfigurationError)
+    end
+
+    it 'can output version information' do
+      expect { subject.configure_and_run(['-v']) }.to output(/#{GRAFANA_REPORTER_VERSION.join('.*')}/).to_stdout
+    end
+
+    it 'expects default config file' do
+      expect { subject.configure_and_run([]) }.to output(/Config file.* does not exist/).to_stdout
+    end
+  end
+
+  context 'command line single rendering' do
+    subject { GrafanaReporter::Application::Application.new }
+
+    before do
+      File.delete('./result.pdf') if File.exist?('./result.pdf')
+    end
+
+    after do
+      File.delete('./result.pdf') if File.exist?('./result.pdf')
+    end
+
+    it 'can single render a template' do
+      expect { subject.configure_and_run(['-c', './spec/tests/demo_config.txt', '-t', 'spec/tests/demo_report', '-o', './result.pdf']) }.not_to output(/ERROR/).to_stdout
+      expect(File.exist?('./result.pdf')).to be true
+    end
+
+    it 'can accept custom command line parameters' do
+      expect { subject.configure_and_run(['-c', './spec/tests/demo_config.txt', '-t', 'spec/tests/demo_report', '-o', './result.pdf', '-d', 'DEBUG', '-s', 'par1,test']) }.to output(/"par1"=>"test"/).to_stdout
+    end
+
+    it 'does not raise error on non existing template' do
+      expect { subject.configure_and_run(['-c', './spec/tests/demo_config.txt', '-t', 'does_not_exist']) }.to output(/report template .* is not a valid template/).to_stdout
+    end
+  end
+
+# TODO make sure that local config file is not modified by tests
+  context 'config wizard' do
+    subject { GrafanaReporter::Application::Application.new }
+    let(:folder) { './test_templates' }
+
+    before do
+      File.delete('grafana_reporter.config') if File.exist?('grafana_reporter.config')
+      File.delete("#{folder}/demo_report.adoc") if File.exist?("#{folder}/demo_report.adoc")
+      Dir.delete(folder) if Dir.exist?(folder)
+      @config = ["\n", "http://localhost\n", "a\n", "#{stub_key}\n", "\n", "i\n", "\n", "i\n", "\n", "i\n", "24\n"]
+      allow(subject).to receive(:puts)
+      allow(subject).to receive(:print)
+    end
+
+    after do
+      File.delete('grafana_reporter.config') if File.exist?('grafana_reporter.config')
+      File.delete("#{folder}/demo_report.adoc") if File.exist?("#{folder}/demo_report.adoc")
+      Dir.delete(folder) if Dir.exist?(folder)
+    end
+
+    it 'can create configured folders' do
+      @config.slice!(4, 2)
+      @config.insert(4, "#{folder}\n", "c\n")
+      allow(subject).to receive(:gets).and_return(*@config)
+      subject.configure_and_run(['-w'])
+      expect(Dir.exist?(folder)).to be true
+    end
+
+    it 'creates valid config file as admin' do
+      allow(subject).to receive(:gets).and_return(*@config)
+      subject.configure_and_run(['-w'])
+      expect(File.exist?('grafana_reporter.config')).to be true
+    end
+
+    it 'creates valid config file as non admin with manual datasource' do
+      @config.slice!(2,2)
+      @config.insert(2, "d\n", "demo\n", "1\n", "a\n", "d\n")
+      allow(subject).to receive(:gets).and_return(*@config)
+      subject.configure_and_run(['-w'])
+      expect(File.exist?('grafana_reporter.config')).to be true
+    end
+
+    it 'asks before overwriting config file' do
+      allow(subject).to receive(:gets).and_return(*@config)
+      subject.configure_and_run(['-w'])
+      expect(File.exist?('grafana_reporter.config')).to be true
+      modify_date = File.mtime('grafana_reporter.config')
+      #try to create config again
+      @config = ["\n"]
+      allow(subject).to receive(:gets).and_return(*@config)
+      subject.configure_and_run(['-w'])
+      expect(File.mtime('grafana_reporter.config')).to eq(modify_date)
+    end
+
+    it 'warns if grafana instance could not be accessed' do
+      @config.insert(1, "http://blabla:9999\n", "r\n")
+      allow(subject).to receive(:gets).and_return(*@config)
+      WebMock.disable_net_connect!(allow: ['http://blabla:9999'])
+      subject.configure_and_run(['-w'])
+      WebMock.enable!
+      expect(File.exist?('grafana_reporter.config')).to be true
+    end
+  end
+
+  context 'webserver' do
+    before(:context) do
+      WebMock.disable!
+      config = Configuration.new
+      yaml = "grafana-reporter:
+  webservice-port: 8033
+  templates-folder: ./spec/tests
+  reports-folder: .
+
+grafana:
+  default:
+    host: http://localhost
+    api_key: #{stub_key}
+
+default-document-attributes:
+  imagesdir: ."
+
+      config.config = YAML.load(yaml)
+      app = GrafanaReporter::Application::Application.new
+      app.config = config
+      webserver = Thread.new { app.run }
+      sleep 1
+    end
+
+    after(:context) do
+      WebMock.enable!
+      # TODO: kill thread
+    end
+
+    it 'responds to overview' do
+      res = Net::HTTP.get(URI('http://localhost:8033/overview'))
+      expect(res).to include("<th>Execution time</th>")
+    end
+
+    it 'can handle invalid web requests' do
+      res = Net::HTTP.get(URI('http://localhost:8033/rend'))
+      expect(res).to include("calls an unknown path for this webservice.")
+      res = Net::HTTP.get(URI('http://localhost:8033/overview2'))
+      expect(res).to include("calls an unknown path for this webservice")
+    end
+
+    it 'can properly cancel demo report' do
+      url = URI('http://localhost:8033/render?var-template=demo_report')
+      http = Net::HTTP.new(url.host, url.port)
+      res = http.request_get(url.request_uri)
+      expect(res.code).to eq("302")
+      expect(res['location']).to include("/view_report?report_id=")
+
+      id = res['location'].gsub(/.*report_id=([^\r\n]*).*/, '\1')
+      res = Net::HTTP.get(URI("http://localhost:8033/view_report?report_id=#{id}"))
+      expect(res).to include("in progress")
+      res = http.request_get("/cancel_report?report_id=#{id}")
+      expect(res.code).to eq("302")
+      res = Net::HTTP.get(URI("http://localhost:8033/view_log?report_id=#{id}"))
+      expect(res).to include("Cancelling report generation invoked.")
+      res = Net::HTTP.get(URI('http://localhost:8033/overview'))
+      expect(res).to include(id)
+    end
+
+    it 'can properly create demo pdf report' do
+      url = URI('http://localhost:8033/render?var-template=demo_report')
+      http = Net::HTTP.new(url.host, url.port)
+      res = http.request_get(url.request_uri)
+      expect(res.code).to eq("302")
+      expect(res['location']).to include("/view_report?report_id=")
+
+      id = res['location'].gsub(/.*report_id=([^\r\n]*).*/, '\1')
+      res = http.request_get("/view_report?report_id=#{id}")
+      expect(res.body).to include("in progress")
+      res = http.request_get("/view_log?report_id=#{id}")
+      expect(res.body).not_to include("Cancelling report generation invoked.")
+      res = http.request_get('/overview')
+      expect(res.body).to include(id)
+
+      sleep 1 # race condition with webmock here, because report might not be finished earlier
+      res = http.request_get("/view_report?report_id=#{id}")
+      expect(res['content-type']).to include('application/pdf')
+    end
+
+    it 'can properly create demo html report' do
+      url = URI('http://localhost:8033/render?var-template=demo_report&convert-backend=html')
+      http = Net::HTTP.new(url.host, url.port)
+      res = http.request_get(url.request_uri)
+      expect(res.code).to eq("302")
+      expect(res['location']).to include("/view_report?report_id=")
+
+      id = res['location'].gsub(/.*report_id=([^\r\n]*).*/, '\1')
+      res = http.request_get("/view_report?report_id=#{id}")
+      expect(res.body).to include("in progress")
+      res = http.request_get("/view_log?report_id=#{id}")
+      expect(res.body).not_to include("Cancelling report generation invoked.")
+      res = http.request_get('/overview')
+      expect(res.body).to include(id)
+
+      sleep 1 # race condition with webmock here, because report might not be finished earlier
+      res = http.request_get("/view_report?report_id=#{id}")
+      expect(res['content-type']).to include('application/octet-stream')
+      expect(res['content-disposition']).to include('.zip')
+    end
+
+    it 'returns error on render without proper template' do
+      res = Net::HTTP.get(URI('http://localhost:8033/render'))
+      expect(res).to include("is not a valid template.")
+      res = Net::HTTP.get(URI('http://localhost:8033/render?var-template=does_not_exist'))
+      expect(res).to include("is not a valid template.")
     end
   end
 end
@@ -692,7 +878,7 @@ end
 describe PanelQueryValueInlineMacro do
   before do
     config = Configuration.new
-    config.load_config({ 'grafana' => { 'default' => { 'host' => stub_url, 'api_key' => stub_key } } })
+    config.config = { 'grafana' => { 'default' => { 'host' => stub_url, 'api_key' => stub_key } } }
     report = Report.new(config, './spec/tests/demo_report.adoc')
     Asciidoctor::Extensions.unregister_all
     Asciidoctor::Extensions.register do
@@ -729,7 +915,7 @@ end
 describe PanelImageBlockMacro do
   before do
     config = Configuration.new
-    config.load_config({ 'grafana' => { 'default' => { 'host' => stub_url, 'api_key' => stub_key } } })
+    config.config = { 'grafana' => { 'default' => { 'host' => stub_url, 'api_key' => stub_key } } }
     report = Report.new(config, './spec/tests/demo_report.adoc')
     Asciidoctor::Extensions.unregister_all
     Asciidoctor::Extensions.register do
@@ -738,14 +924,14 @@ describe PanelImageBlockMacro do
   end
 
   it 'can be processed' do
-    expect(Asciidoctor.convert("grafana_panel_image::#{stub_panel}[dashboard=\"#{stub_dashboard}\"]", to_file: false)).to include('<img src="gf_image_').and match (/(?!Error)/)
+    expect(Asciidoctor.convert("grafana_panel_image::#{stub_panel}[dashboard=\"#{stub_dashboard}\"]", to_file: false)).to include('<img src="gf_image_').and match(/(?!Error)/)
   end
 end
 
 describe PanelImageInlineMacro do
   before do
     config = Configuration.new
-    config.load_config({ 'grafana' => { 'default' => { 'host' => stub_url, 'api_key' => stub_key } } })
+    config.config = { 'grafana' => { 'default' => { 'host' => stub_url, 'api_key' => stub_key } } }
     report = Report.new(config, './spec/tests/demo_report.adoc')
     Asciidoctor::Extensions.unregister_all
     Asciidoctor::Extensions.register do
@@ -768,7 +954,7 @@ end
 describe SqlTableIncludeProcessor do
   before do
     config = Configuration.new
-    config.load_config({ 'grafana' => { 'default' => { 'host' => stub_url, 'api_key' => stub_key } } })
+    config.config = { 'grafana' => { 'default' => { 'host' => stub_url, 'api_key' => stub_key } } }
     report = Report.new(config, './spec/tests/demo_report.adoc')
     Asciidoctor::Extensions.unregister_all
     Asciidoctor::Extensions.register do
@@ -784,7 +970,7 @@ end
 describe SqlValueInlineMacro do
   before do
     config = Configuration.new
-    config.load_config({ 'grafana' => { 'default' => { 'host' => stub_url, 'api_key' => stub_key } } })
+    config.config = { 'grafana' => { 'default' => { 'host' => stub_url, 'api_key' => stub_key } } }
     report = Report.new(config, './spec/tests/demo_report.adoc')
     Asciidoctor::Extensions.unregister_all
     Asciidoctor::Extensions.register do
@@ -814,7 +1000,7 @@ end
 describe PanelPropertyInlineMacro do
   before do
     config = Configuration.new
-    config.load_config({ 'grafana' => { 'default' => { 'host' => stub_url, 'api_key' => stub_key } } })
+    config.config = { 'grafana' => { 'default' => { 'host' => stub_url, 'api_key' => stub_key } } }
     report = Report.new(config, './spec/tests/demo_report.adoc')
     Asciidoctor::Extensions.unregister_all
     Asciidoctor::Extensions.register do
@@ -835,7 +1021,7 @@ end
 describe PanelQueryTableIncludeProcessor do
   before do
     config = Configuration.new
-    config.load_config({ 'grafana' => { 'default' => { 'host' => stub_url, 'api_key' => stub_key } } })
+    config.config = { 'grafana' => { 'default' => { 'host' => stub_url, 'api_key' => stub_key } } }
     report = Report.new(config, './spec/tests/demo_report.adoc')
     Asciidoctor::Extensions.unregister_all
     Asciidoctor::Extensions.register do
@@ -870,11 +1056,11 @@ describe PanelQueryTableIncludeProcessor do
   it 'can format values' do
     expect(Asciidoctor.convert("include::grafana_panel_query_table:#{stub_panel}[query=\"#{stub_panel_query}\",dashboard=\"#{stub_dashboard}\",format=\",%.2f\"]", to_file: false)).to match(/<p>\| 1594308060000 \| 43.90/)
   end
-  
+
   it 'handles column and row divider' do
     expect(Asciidoctor.convert("include::grafana_panel_query_table:#{stub_panel}[query=\"#{stub_panel_query}\",dashboard=\"#{stub_dashboard}\",column_divider=\" col \",row_divider=\"row \"]", to_file: false)).to match(/<p>row 1594308060000 col 43.9/)
   end
-  
+
   it 'can transpose results' do
     expect(Asciidoctor.convert("include::grafana_panel_query_table:#{stub_panel}[query=\"#{stub_panel_query}\",dashboard=\"#{stub_dashboard}\",transpose=\"true\"]", to_file: false)).to match(/<p>\| 1594308060000 \| 1594308030000 \|/)
   end
@@ -883,7 +1069,7 @@ end
 describe AnnotationsTableIncludeProcessor do
   before do
     config = Configuration.new
-    config.load_config({ 'grafana' => { 'default' => { 'host' => stub_url, 'api_key' => stub_key } } })
+    config.config = { 'grafana' => { 'default' => { 'host' => stub_url, 'api_key' => stub_key } } }
     report = Report.new(config, './spec/tests/demo_report.adoc')
     Asciidoctor::Extensions.unregister_all
     Asciidoctor::Extensions.register do
@@ -912,7 +1098,7 @@ end
 describe AlertsTableIncludeProcessor do
   before do
     config = Configuration.new
-    config.load_config({ 'grafana' => { 'default' => { 'host' => stub_url, 'api_key' => stub_key } } })
+    config.config = { 'grafana' => { 'default' => { 'host' => stub_url, 'api_key' => stub_key } } }
     report = Report.new(config, './spec/tests/demo_report.adoc')
     Asciidoctor::Extensions.unregister_all
     Asciidoctor::Extensions.register do
@@ -933,7 +1119,7 @@ end
 describe ValueAsVariableIncludeProcessor do
   before do
     config = Configuration.new
-    config.load_config({ 'grafana' => { 'default' => { 'host' => stub_url, 'api_key' => stub_key } } })
+    config.config = { 'grafana' => { 'default' => { 'host' => stub_url, 'api_key' => stub_key } } }
     report = Report.new(config, './spec/tests/demo_report.adoc')
     Asciidoctor::Extensions.unregister_all
     Asciidoctor::Extensions.register do
@@ -952,12 +1138,12 @@ describe ValueAsVariableIncludeProcessor do
     expect(@report.logger).to receive(:error).with("Missing mandatory attribute 'call' or 'variable_name'.")
     Asciidoctor.convert("include::grafana_value_as_variable[variable_name=\"test\",panel=\"#{stub_panel}\",dashboard=\"#{stub_dashboard}\"]", to_file: false)
   end
-  
+
   it 'shows error if mandatory variable_name attributes is missing' do
     expect(@report.logger).to receive(:error).with("Missing mandatory attribute 'call' or 'variable_name'.")
     Asciidoctor.convert("include::grafana_value_as_variable[call=\"test:1\",panel=\"#{stub_panel}\",dashboard=\"#{stub_dashboard}\"]", to_file: false)
   end
-  
+
   it 'shows error if mandatory call attributes is malformed' do
     expect(@report.logger).to receive(:error).with("Could not find inline macro extension for 'test'.")
     Asciidoctor.convert("include::grafana_value_as_variable[call=\"test\",variable_name=\"test\",panel=\"#{stub_panel}\",dashboard=\"#{stub_dashboard}\"]", to_file: false)
@@ -967,7 +1153,7 @@ end
 describe ShowEnvironmentIncludeProcessor do
   before do
     config = Configuration.new
-    config.load_config({ 'grafana' => { 'default' => { 'host' => stub_url, 'api_key' => stub_key } } })
+    config.config = { 'grafana' => { 'default' => { 'host' => stub_url, 'api_key' => stub_key } } }
     report = Report.new(config, './spec/tests/demo_report.adoc')
     Asciidoctor::Extensions.unregister_all
     Asciidoctor::Extensions.register do
@@ -984,7 +1170,7 @@ end
 describe ShowHelpIncludeProcessor do
   before do
     config = Configuration.new
-    config.load_config({ 'grafana' => { 'default' => { 'host' => stub_url, 'api_key' => stub_key } } })
+    config.config = { 'grafana' => { 'default' => { 'host' => stub_url, 'api_key' => stub_key } } }
     report = Report.new(config, './spec/tests/demo_report.adoc')
     Asciidoctor::Extensions.unregister_all
     Asciidoctor::Extensions.register do

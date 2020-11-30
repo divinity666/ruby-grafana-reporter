@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'net/http'
 require 'fileutils'
 require 'yaml'
@@ -14,7 +16,7 @@ require 'asciidoctor'
 require 'asciidoctor/extensions'
 require 'asciidoctor-pdf'
 require 'zip'
-require_relative 'VERSION.rb'
+require_relative 'VERSION'
 
 folders = [
   %w[grafana],

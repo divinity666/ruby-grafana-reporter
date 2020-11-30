@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # In this namespace all objects needed for the grafana reporter are collected.
 module GrafanaReporter
   # Used to store the whole settings, which are necessary to run the reporter.
@@ -8,7 +10,6 @@ module GrafanaReporter
   #
   # Using this class is embedded in the {Application::Application#configure_and_run}.
   #
-  # TODO add config example
   class Configuration
     # @return [AbstractReport] specific report class, which should be used.
     attr_accessor :report_class
@@ -20,25 +21,36 @@ module GrafanaReporter
     # Returned by {#mode} if the default webservice shall be started.
     MODE_SERVICE = 'webservice'
 
+    # Used to access the configuration hash. To make sure, that the configuration is
+    # valid, call {#validate}.
+    #
+    # NOTE: This function overwrites all existing configurations
+    attr_accessor :config
+
     def initialize
       @config = {}
-      @logger = ::Logger.new(STDERR, level: :unknown)
+      @logger = ::Logger.new($stderr, level: :unknown)
       # TODO: set report class somewhere else, but make it known here
       self.report_class = Asciidoctor::Report
     end
 
-    attr_reader :logger
+    attr_accessor :logger
 
-    # @return [String] mode, in which the reporting shall be executed. One of {MODE_CONNECTION_TEST}, {MODE_SINGLE_RENDER} and {MODE_SERVICE}.
+    # @return [String] mode, in which the reporting shall be executed. One of {MODE_CONNECTION_TEST},
+    #   {MODE_SINGLE_RENDER} and {MODE_SERVICE}.
     def mode
-      return MODE_SERVICE if get_config('grafana-reporter:run-mode') != MODE_CONNECTION_TEST and get_config('grafana-reporter:run-mode') != MODE_SINGLE_RENDER
+      if (get_config('grafana-reporter:run-mode') != MODE_CONNECTION_TEST) &&
+         (get_config('grafana-reporter:run-mode') != MODE_SINGLE_RENDER)
+        return MODE_SERVICE
+      end
 
-      return get_config('grafana-reporter:run-mode')
+      get_config('grafana-reporter:run-mode')
     end
 
-    # @return [String] configured report template. Only needed in {MODE_SINGLE_RENDER}.
+    # @return [String] full path of configured report template. Only needed in {MODE_SINGLE_RENDER}.
     def template
-      get_config('default-document-attributes:var-template')
+      return nil if get_config('default-document-attributes:var-template').nil?
+      "#{templates_folder}#{get_config('default-document-attributes:var-template')}.adoc"
     end
 
     # @return [String] destination filename for the report in {MODE_SINGLE_RENDER}.
@@ -70,7 +82,8 @@ module GrafanaReporter
     end
 
     # @param instance [String] grafana instance name, for which the value shall be retrieved.
-    # @return [Hash<String,Integer>] configured datasources for the requested grafana instance. Name as key, ID as value.
+    # @return [Hash<String,Integer>] configured datasources for the requested grafana instance. Name as key,
+    #   ID as value.
     def grafana_datasources(instance = 'default')
       hash = get_config("grafana:#{instance}:datasources")
       return nil if hash.nil?
@@ -78,10 +91,12 @@ module GrafanaReporter
       hash.map { |k, v| [k, v] }.to_h
     end
 
-    # @return [String] configured folder, in which the report templates are stored including trailing slash. By default: current folder.
+    # @return [String] configured folder, in which the report templates are stored including trailing slash.
+    #   By default: current folder.
     def templates_folder
       result = get_config('grafana-reporter:templates-folder') || '.'
-      result.sub!(%r{[/]*$}, '/') unless result.empty?
+      return result.sub(%r{/*$}, '/') unless result.empty?
+
       result
     end
 
@@ -91,8 +106,12 @@ module GrafanaReporter
     # @return [String] configured folder, in which temporary images shall be stored.
     def images_folder
       img_path = templates_folder
-      img_path = img_path.empty? ? get_config('default-document-attributes:imagesdir').to_s : img_path + get_config('default-document-attributes:imagesdir').to_s
-      img_path.empty? ? './' : img_path.sub(%r{[/]*$}, '/')
+      img_path = if img_path.empty?
+                   get_config('default-document-attributes:imagesdir').to_s
+                 else
+                   img_path + get_config('default-document-attributes:imagesdir').to_s
+                 end
+      img_path.empty? ? './' : img_path.sub(%r{/*$}, '/')
     end
 
     # @return [String] name of grafana instance, against which a test shall be executed
@@ -100,14 +119,17 @@ module GrafanaReporter
       get_config('grafana-reporter:test-instance')
     end
 
-    # @return [String] configured folder, in which the reports shall be stored including trailing slash. By default: current folder.
+    # @return [String] configured folder, in which the reports shall be stored including trailing slash.
+    #   By default: current folder.
     def reports_folder
       result = get_config('grafana-reporter:reports-folder') || '.'
-      result.sub!(%r{[/]*$}, '/') unless result.empty?
+      return result.sub(%r{/*$}, '/') unless result.empty?
+
       result
     end
 
-    # @return [Integer] how many hours a generated report shall be retained, before it shall be deleted. By default: 24.
+    # @return [Integer] how many hours a generated report shall be retained, before it shall be deleted.
+    #   By default: 24.
     def report_retention
       get_config('grafana-reporter:report-retention') || 24
     end
@@ -125,78 +147,6 @@ module GrafanaReporter
       get_config('default-document-attributes') || {}
     end
 
-    # Used to load the configuration of a file or a manually created Hash to this
-    # object. To make sure, that the configuration is valid, call {#validate}.
-    #
-    # NOTE: This function overwrites all existing configurations
-    # @param hash [Hash] configuration settings
-    # @return [void]
-    def load_config(hash)
-      @config = hash
-    end
-
-    # Used to do the configuration by a command line call. Therefore also help will
-    # be shown, in case no parameter has been given.
-    # @param params [Array<String>] command line parameters, mainly ARGV can be used.
-    # @return [Integer] 0 if everything is fine, -1 if execution shall be aborted.
-    def configure_by_command_line(params = [])
-      params << '--help' if params.empty?
-
-      parser = OptionParser.new do |opts|
-        opts.banner = "Usage: ruby #{$0} CONFIG_FILE [options]"
-
-        opts.on('-d', '--debug LEVEL', 'Specify detail level: FATAL, ERROR, WARN, INFO, DEBUG.') do |level|
-          @logger.level = Object.const_get("::Logger::Severity::#{level}") if level =~ /(?:FATAL|ERROR|WARN|INFO|DEBUG)/
-        end
-
-        opts.on('--test GRAFANA_INSTANCE', 'test current configuration against given GRAFANA_INSTANCE') do |instance|
-          if get_config('grafana-reporter')
-            @config['grafana-reporter']['run-mode'] = 'test'
-          else
-            @config.merge!({'grafana-reporter' => {'run-mode' => 'test'} })
-	  end
-          @config['grafana-reporter']['test-instance'] = instance
-        end
-
-        opts.on('-t', '--template TEMPLATE', 'Render a single ASCIIDOC template to PDF and exit') do |template|
-          if get_config('grafana-reporter')
-            @config['grafana-reporter']['run-mode'] = 'single-render'
-          else
-            @config.merge!({'grafana-reporter' => {'run-mode' => 'single-render'} })
-	  end
-          @config['default-document-attributes']['var-template'] = template
-        end
-
-        opts.on('-o', '--output FILE', 'Output filename if only a single file is rendered') do |file|
-          @config.merge!({ 'to_file' => file })
-        end
-
-        opts.on('-v', '--version', 'Version information') do
-          puts GRAFANA_REPORTER_VERSION.join('.')
-          return -1
-        end
-
-        opts.on('-h', '--help', 'Show this message') do
-          puts opts
-          return -1
-        end
-      end
-
-      unless params.empty?
-        if File.exist?(params[0])
-          config_file = params.slice!(0)
-          begin
-            load_config(YAML.load_file(config_file))
-          rescue StandardError => e
-            raise ConfigurationError, "Could not read CONFIG_FILE '#{config_file}' (Error: #{e.message})"
-          end
-        end
-      end
-      parser.parse!(params)
-
-      0
-    end
-
     # This function shall be called, before the configuration object is used in the
     # {Application::Application#run}. It ensures, that everything is setup properly
     # and all necessary folders exist. Appropriate errors are raised in case of errors.
@@ -206,8 +156,8 @@ module GrafanaReporter
 
       # check if set folders exist
       raise FolderDoesNotExistError.new(reports_folder, 'reports-folder') unless File.directory?(reports_folder)
-      raise FolderDoesNotExistError.new(templates - folder, 'templates-folder') unless File.directory?(templates_folder)
-      raise FolderDoesNotExistError.new(images - folder, 'images-folder') unless File.directory?(images_folder)
+      raise FolderDoesNotExistError.new(templates_folder, 'templates-folder') unless File.directory?(templates_folder)
+      raise FolderDoesNotExistError.new(images_folder, 'images-folder') unless File.directory?(images_folder)
     end
 
     private
@@ -232,7 +182,8 @@ module GrafanaReporter
 
         if key.nil?
           # apply to all on this level
-          if subject.is_a?(Hash)
+          case
+          when subject.is_a?(Hash)
             if subject.length < min_occurence
               raise ConfigurationDoesNotMatchSchemaError.new(key, 'occur', min_occurence, subject.length)
             end
@@ -243,46 +194,26 @@ module GrafanaReporter
               validate_schema(sub_scheme, subject)
             end
 
-          elsif subject.is_a?(Array)
-            if subject.length < min_occurence
-              raise ConfigurationDoesNotMatchSchemaError.new(key, 'occur', min_occurence, subject.length)
-            end
-
-            subject.each_index do |i|
-              sub_scheme = {}
-              sub_scheme[i] = schema[nil]
-              validate_schema(sub_scheme, subject)
-            end
-
           else
             raise ConfigurationError, "Unhandled configuration data type '#{subject.class}'."
           end
+
+        # apply to single item
+        elsif subject.is_a?(Hash)
+          if !subject.key?(key) && min_occurence.positive?
+            raise ConfigurationDoesNotMatchSchemaError.new(key, 'occur', min_occurence, 0)
+          end
+          if !subject[key].is_a?(type) && subject.key?(key)
+            raise ConfigurationDoesNotMatchSchemaError.new(key, 'be a', type, subject[key].class)
+          end
+
         else
-          # apply to single item
-          if subject.is_a?(Hash)
-            if !subject.key?(key) && (min_occurence > 0)
-              raise ConfigurationDoesNotMatchSchemaError.new(key, 'occur', min_occurence, 0)
-            end
-            if !subject[key].is_a?(type) && subject.key?(key)
-              raise ConfigurationDoesNotMatchSchemaError.new(key, 'be a', type, subject[key].class)
-            end
-
-          elsif subject.is_a?(Array)
-            if (subject.length < key) && (min_occurence > subject.length)
-              raise ConfigurationDoesNotMatchSchemaError.new(key, 'occur', min_occurence, subject.length)
-            end
-            if !subject[key].is_a?(type) && (subject.length >= key)
-              raise ConfigurationDoesNotMatchSchemaError.new(key, 'be a', type, subject[key].class)
-            end
-
-          else
-            raise ConfigurationError, "Unhandled configuration data type '#{subject.class}'."
-          end
+          raise ConfigurationError, "Unhandled configuration data type '#{subject.class}'."
         end
       end
 
       # validate also if subject has further configurations, which are not known by the reporter
-      subject.each do |item, subitems|
+      subject.each do |item, _subitems|
         schema_config = schema[item] || schema[nil]
         if schema_config.nil?
           logger.warn("Item '#{item}' in configuration is unknown to the reporter and will be ignored")

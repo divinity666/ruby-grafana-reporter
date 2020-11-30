@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Grafana
   # A top level alarm for all other errors in current module.
   class GrafanaError < StandardError
@@ -28,14 +30,16 @@ module Grafana
     # @param query_letter [String] query letter name, which could not be found on the panel
     # @param panel [Panel] panel object on which the query could not be found
     def initialize(query_letter, panel)
-      super("The specified query '#{query_letter}' does not exist in the panel '#{panel.id}' in dashboard '#{panel.dashboard}'.")
+      super("The specified query '#{query_letter}' does not exist in the panel '#{panel.id}' "\
+        "in dashboard '#{panel.dashboard}'.")
     end
   end
 
   # Raised if a given datasource does not exist in a specific {Grafana} instance.
   class DatasourceDoesNotExistError < GrafanaError
     # @param field [String] specifies, how the datasource has been searched, e.g. 'id' or 'name'
-    # @param datasource_identifier [String] identifier of the datasource, which could not be found, e.g. the specifiy id or name
+    # @param datasource_identifier [String] identifier of the datasource, which could not be found,
+    #   e.g. the specifiy id or name
     def initialize(field, datasource_identifier)
       super("Datasource with #{field} '#{datasource_identifier}' does not exist.")
     end
@@ -48,7 +52,8 @@ module Grafana
   class ImageCouldNotBeRenderedError < GrafanaError
     # @param panel [Panel] panel object, which could not be rendered
     def initialize(panel)
-      super("The specified panel '#{panel.id}' from dashboard '#{panel.dashboard.id} could not be rendered to an image.")
+      super("The specified panel '#{panel.id}' from dashboard '#{panel.dashboard.id} could not be "\
+        'rendered to an image.')
     end
   end
 

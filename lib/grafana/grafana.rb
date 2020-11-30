@@ -1,12 +1,16 @@
+# frozen_string_literal: true
+
 # Contains all objects for creating structured objects for interfacing grafana.
 #
-# The intention is, that these represent the business logic contained within grafana in an appropriate object model for the reporter to work with.
+# The intention is, that these represent the business logic contained within grafana
+# in an appropriate object model for the reporter to work with.
 #
 # For details, see also {https://grafana.com/docs/grafana/latest/http_api Grafana API}.
 module Grafana
   # Main class for handling the interaction with one specific Grafana instance.
   class Grafana
-    # @param base_uri [String] full URI pointing to the specific grafana instance without trailing slash, e.g. +https://localhost:3000+.
+    # @param base_uri [String] full URI pointing to the specific grafana instance without
+    #   trailing slash, e.g. +https://localhost:3000+.
     # @param key [String] API key for the grafana instance, if required
     # @param opts [Hash] additional options.
     #   Currently supporting +:logger+ and +:datasources+.
@@ -28,21 +32,17 @@ module Grafana
     #
     # @return [String] +Admin+, +NON-Admin+ or +Failed+ is returned, depending on the test results
     def test_connection
-      res = execute_http_request('/api/datasources')
-      if res.is_a?(Net::HTTPOK)
+      if execute_http_request('/api/datasources').is_a?(Net::HTTPOK)
         # we have admin rights
         @logger.info('Reporter is running with Admin privileges on grafana.')
         return 'Admin'
-      else
-        # check if we have lower rights
-        res = execute_http_request('/api/dashboards/home')
-        if res.is_a?(Net::HTTPOK)
-          @logger.warn('Reporter is running with NON-Admin privileges on grafana. Make sure that necessary datasources are specified in CONFIG_FILE, otherwise operation will fail')
-          return 'NON-Admin'
-        end
       end
+      # check if we have lower rights
+      return 'Failed' unless execute_http_request('/api/dashboards/home').is_a?(Net::HTTPOK)
 
-      'Failed'
+      @logger.warn('Reporter is running with NON-Admin privileges on grafana. Make sure that necessary'\
+                   'datasources are specified in CONFIG_FILE, otherwise operation will fail')
+      'NON-Admin'
     end
 
     # Returns the ID of a datasource, which has been queried by the datasource name.
@@ -67,7 +67,7 @@ module Grafana
     def dashboard(dashboard_uid)
       return @dashboards[dashboard_uid] unless @dashboards[dashboard_uid].nil?
 
-      response = execute_http_request('/api/dashboards/uid/' + dashboard_uid)
+      response = execute_http_request("/api/dashboards/uid/#{dashboard_uid}")
       model = JSON.parse(response.body)['dashboard']
 
       raise DashboardDoesNotExistError, dashboard_uid if model.nil?
@@ -103,12 +103,11 @@ module Grafana
       request = options[:request].new(uri.request_uri)
       request['Accept'] = options[:accept]
       request['Content-Type'] = options[:content_type]
-      request['Authorization'] = 'Bearer ' + @key unless @key.nil?
+      request['Authorization'] = "Bearer #{@key}" unless @key.nil?
       request.body = options[:body]
 
       @logger.debug("Requesting #{relative_uri} with '#{options[:body]}' and timeout '#{http.read_timeout}'")
-      resp = http.request(request)
-      resp
+      http.request(request)
     end
 
     private
