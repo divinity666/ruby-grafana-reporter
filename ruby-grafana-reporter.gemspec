@@ -35,7 +35,7 @@ Gem::Specification.new do |s|
     'bug_tracker_uri' => 'https://github.com/divinity666/ruby-grafana-reporter/issues'
   }
 
-  #  s.required_ruby_version = '~>2.5.5'
+  s.required_ruby_version = '>=1.9.3'
   s.extra_rdoc_files = ['README.md', 'LICENSE']
 
   s.bindir = 'bin'
