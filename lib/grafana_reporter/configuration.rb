@@ -10,7 +10,6 @@ module GrafanaReporter
   #
   # Using this class is embedded in the {Application::Application#configure_and_run}.
   #
-  # TODO add config example
   class Configuration
     # @return [AbstractReport] specific report class, which should be used.
     attr_accessor :report_class

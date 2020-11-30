@@ -2,5 +2,4 @@
 # frozen_string_literal: true
 
 require_relative '../lib/ruby-grafana-reporter'
-
 GrafanaReporter::Application::Application.new.configure_and_run(ARGV)
