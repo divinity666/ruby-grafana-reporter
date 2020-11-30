@@ -15,14 +15,12 @@ Gem::Specification.new do |s|
   s.version     = GRAFANA_REPORTER_VERSION.join('.')
   s.date        = GRAFANA_REPORTER_RELEASE_DATE
   s.summary     = 'Reporter Service for Grafana'
-  s.description = <<~DONE
-    Provides a standalone and a webservice frontend for creating reports
-    based on asciidoctor, including interfaces to integrate dynamic content
-    captured from grafana.
-
-    By default the reports will be converted to PDF documents, whereas other
-    target formats can be used as well.
-  DONE
+  s.description = 'Provides a standalone and a webservice frontend for creating reports'\
+                  'based on asciidoctor, including interfaces to integrate dynamic content'\
+                  'captured from grafana.'\
+                  ''\
+                  'By default the reports will be converted to PDF documents, whereas other'\
+                  'target formats can be used as well.'
   s.author      = 'Christian Kohlmeyer'
   s.email       = 'kohly@gmx.de'
   s.files       = folders.collect { |folder| Dir[File.join(__dir__, 'lib', *folder, '*.rb')].sort }.flatten << 'LICENSE' << 'README.md'
@@ -49,5 +47,6 @@ Gem::Specification.new do |s|
 
   s.add_development_dependency 'rspec', '~>3.9'
   s.add_development_dependency 'simplecov', '~>0.16'
+  s.add_development_dependency 'coveralls', '~>0.8' if ENV['TRAVIS']
   s.add_development_dependency 'webmock', '~>3.9'
 end
