@@ -33,7 +33,8 @@ Gem::Specification.new do |s|
     'bug_tracker_uri' => 'https://github.com/divinity666/ruby-grafana-reporter/issues'
   }
 
-  s.required_ruby_version = '>=1.9.3'
+  # the required ruby version is determined from the base docker image, currently debian stretch
+  s.required_ruby_version = '>=2.3.3'
   s.extra_rdoc_files = ['README.md', 'LICENSE']
 
   s.bindir = 'bin'
