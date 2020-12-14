@@ -382,6 +382,9 @@ describe Configuration do
     end
 
     it 'is valid' do
+      allow(subject.logger).to receive(:debug)
+      allow(subject.logger).to receive(:info)
+      allow(subject.logger).to receive(:warn)
       expect { subject.validate }.not_to raise_error
     end
   end
@@ -652,6 +655,9 @@ default-document-attributes:
 
     before do
       File.delete('./result.pdf') if File.exist?('./result.pdf')
+      allow(subject.config.logger).to receive(:debug)
+      allow(subject.config.logger).to receive(:info)
+      allow(subject.config.logger).to receive(:warn)
     end
 
     after do
@@ -659,12 +665,14 @@ default-document-attributes:
     end
 
     it 'can single render a template' do
-      expect { subject.configure_and_run(['-c', './spec/tests/demo_config.txt', '-t', 'spec/tests/demo_report', '-o', './result.pdf']) }.not_to output(/ERROR/).to_stdout
+      expect(subject.config.logger).not_to receive(:error)
+      expect { subject.configure_and_run(['-c', './spec/tests/demo_config.txt', '-t', 'spec/tests/demo_report', '-o', './result.pdf', '-d', 'ERROR']) }.not_to output(/ERROR/).to_stderr
       expect(File.exist?('./result.pdf')).to be true
     end
 
     it 'can accept custom command line parameters' do
-      expect { subject.configure_and_run(['-c', './spec/tests/demo_config.txt', '-t', 'spec/tests/demo_report', '-o', './result.pdf', '-d', 'DEBUG', '-s', 'par1,test']) }.to output(/"par1"=>"test"/).to_stdout
+      expect(subject.config.logger).to receive(:debug).with(/"par1"=>"test"/)
+      expect { subject.configure_and_run(['-c', './spec/tests/demo_config.txt', '-t', 'spec/tests/demo_report', '-o', './result.pdf', '-d', 'DEBUG', '-s', 'par1,test']) }.not_to output(/ERROR/).to_stderr
     end
 
     it 'does not raise error on non existing template' do
@@ -684,6 +692,9 @@ default-document-attributes:
       @config = ["\n", "http://localhost\n", "a\n", "#{stub_key}\n", "\n", "i\n", "\n", "i\n", "\n", "i\n", "24\n"]
       allow(subject).to receive(:puts)
       allow(subject).to receive(:print)
+      allow(subject.config.logger).to receive(:debug)
+      allow(subject.config.logger).to receive(:info)
+      allow(subject.config.logger).to receive(:warn)
     end
 
     after do
@@ -701,8 +712,9 @@ default-document-attributes:
     end
 
     it 'creates valid config file as admin' do
+      expect(subject.config.logger).not_to receive(:error)
       allow(subject).to receive(:gets).and_return(*@config)
-      subject.configure_and_run(['-w'])
+      subject.configure_and_run(['-w', '-d', 'ERROR'])
       expect(File.exist?('grafana_reporter.config')).to be true
     end
 
@@ -738,7 +750,7 @@ default-document-attributes:
 
   context 'webserver' do
     before(:context) do
-      WebMock.disable!
+      WebMock.disable_net_connect!(allow: ['http://localhost:8033'])
       config = Configuration.new
       yaml = "grafana-reporter:
   webservice-port: 8033
@@ -754,10 +766,12 @@ default-document-attributes:
   imagesdir: ."
 
       config.config = YAML.load(yaml)
+      config.logger.level = ::Logger::Severity::WARN
       app = GrafanaReporter::Application::Application.new
       app.config = config
       webserver = Thread.new { app.run }
-      sleep 1
+      sleep 0.5
+      @app = app
     end
 
     after(:context) do
@@ -766,11 +780,13 @@ default-document-attributes:
     end
 
     it 'responds to overview' do
+      expect(@app.config.logger).not_to receive(:error)
       res = Net::HTTP.get(URI('http://localhost:8033/overview'))
       expect(res).to include("<th>Execution time</th>")
     end
 
     it 'can handle invalid web requests' do
+      expect(@app.config.logger).not_to receive(:error)
       res = Net::HTTP.get(URI('http://localhost:8033/rend'))
       expect(res).to include("calls an unknown path for this webservice.")
       res = Net::HTTP.get(URI('http://localhost:8033/overview2'))
@@ -778,6 +794,7 @@ default-document-attributes:
     end
 
     it 'can properly cancel demo report' do
+      expect(@app.config.logger).not_to receive(:error)
       url = URI('http://localhost:8033/render?var-template=demo_report')
       http = Net::HTTP.new(url.host, url.port)
       res = http.request_get(url.request_uri)
@@ -796,6 +813,7 @@ default-document-attributes:
     end
 
     it 'can properly create demo pdf report' do
+      expect(@app.config.logger).not_to receive(:error)
       url = URI('http://localhost:8033/render?var-template=demo_report')
       http = Net::HTTP.new(url.host, url.port)
       res = http.request_get(url.request_uri)
@@ -816,6 +834,7 @@ default-document-attributes:
     end
 
     it 'can properly create demo html report' do
+      expect(@app.config.logger).not_to receive(:error)
       url = URI('http://localhost:8033/render?var-template=demo_report&convert-backend=html')
       http = Net::HTTP.new(url.host, url.port)
       res = http.request_get(url.request_uri)
@@ -837,8 +856,11 @@ default-document-attributes:
     end
 
     it 'returns error on render without proper template' do
+      expect(@app.config.logger).to receive(:error).with(/is not a valid template\./)
       res = Net::HTTP.get(URI('http://localhost:8033/render'))
       expect(res).to include("is not a valid template.")
+
+      expect(@app.config.logger).to receive(:error).with(/is not a valid template\./)
       res = Net::HTTP.get(URI('http://localhost:8033/render?var-template=does_not_exist'))
       expect(res).to include("is not a valid template.")
     end
@@ -878,36 +900,51 @@ end
 describe PanelQueryValueInlineMacro do
   before do
     config = Configuration.new
+    config.logger.level = ::Logger::Severity::WARN
     config.config = { 'grafana' => { 'default' => { 'host' => stub_url, 'api_key' => stub_key } } }
     report = Report.new(config, './spec/tests/demo_report.adoc')
     Asciidoctor::Extensions.unregister_all
     Asciidoctor::Extensions.register do
       inline_macro PanelQueryValueInlineMacro.new.current_report(report)
     end
+    @report = report
   end
 
   it 'can be processed' do
+    expect(@report.logger).not_to receive(:error)
     expect(Asciidoctor.convert("grafana_panel_query_value:#{stub_panel}[query=\"#{stub_panel_query}\",dashboard=\"#{stub_dashboard}\"]", to_file: false)).not_to include('GrafanaReporterError')
     expect(Asciidoctor.convert("grafana_panel_query_value:#{stub_panel}[query=\"#{stub_panel_query}\",dashboard=\"#{stub_dashboard}\"]", to_file: false)).to include('<p>1594308060000')
   end
 
   it 'can replace values' do
+    expect(@report.logger).not_to receive(:error)
     expect(Asciidoctor.convert("grafana_panel_query_value:#{stub_panel}[query=\"#{stub_panel_query}\",dashboard=\"#{stub_dashboard}\",replace_values_1=\"1594308060000:geht\"]", to_file: false)).to include('<p>geht')
     expect(Asciidoctor.convert("grafana_panel_query_value:#{stub_panel}[query=\"#{stub_panel_query}\",dashboard=\"#{stub_dashboard}\",replace_values_2=\"1594308060000:geht\"]", to_file: false)).to include('<p>1594308060000')
   end
 
-  it 'raises error on malformed replace_values' do
+  it 'can replace value with proper escaped colons' do
+    expect(@report.logger).not_to receive(:error)
     expect(Asciidoctor.convert("grafana_panel_query_value:#{stub_panel}[query=\"#{stub_panel_query}\",dashboard=\"#{stub_dashboard}\",replace_values_1=\"" + '159430\:8060000\::ge\:ht' + '"]', to_file: false)).not_to include('The specified replace_values statement')
+  end
+
+  it 'raises error on replace_values without unescaped colon' do
+    expect(@report.logger).to receive(:error).with(/The specified replace_values statement/)
     expect(Asciidoctor.convert("grafana_panel_query_value:#{stub_panel}[query=\"#{stub_panel_query}\",dashboard=\"#{stub_dashboard}\",replace_values_1=\"" + '159430\:8060000\:\:ge\:ht' + '"]', to_file: false)).to include('The specified replace_values statement')
+  end
+
+  it 'raises error on replace_values with multiple unescaped colons' do
+    expect(@report.logger).to receive(:error).with(/The specified replace_values statement/)
     expect(Asciidoctor.convert("grafana_panel_query_value:#{stub_panel}[query=\"#{stub_panel_query}\",dashboard=\"#{stub_dashboard}\",replace_values_1=\"" + '159430:8060000:\:ge\:ht' + '"]', to_file: false)).to include('The specified replace_values statement')
   end
 
   it 'can filter columns' do
+    expect(@report.logger).not_to receive(:error)
     expect(Asciidoctor.convert("grafana_panel_query_value:#{stub_panel}[query=\"#{stub_panel_query}\",dashboard=\"#{stub_dashboard}\",filter_columns=\"time_sec\"]", to_file: false)).to include('<p>43.9')
     expect(Asciidoctor.convert("grafana_panel_query_value:#{stub_panel}[query=\"#{stub_panel_query}\",dashboard=\"#{stub_dashboard}\",filter_columns=\"Warmwasser\"]", to_file: false)).to include('<p>1594308060000')
   end
 
   it 'can filter columns and format values' do
+    expect(@report.logger).not_to receive(:error)
     expect(Asciidoctor.convert("grafana_panel_query_value:#{stub_panel}[query=\"#{stub_panel_query}\",dashboard=\"#{stub_dashboard}\",format=\",%.2f\",filter_columns=\"time_sec\"]", to_file: false)).to include('<p>43.90')
   end
 end
@@ -915,15 +952,18 @@ end
 describe PanelImageBlockMacro do
   before do
     config = Configuration.new
+    config.logger.level = ::Logger::Severity::WARN
     config.config = { 'grafana' => { 'default' => { 'host' => stub_url, 'api_key' => stub_key } } }
     report = Report.new(config, './spec/tests/demo_report.adoc')
     Asciidoctor::Extensions.unregister_all
     Asciidoctor::Extensions.register do
       block_macro PanelImageBlockMacro.new.current_report(report)
     end
+    @report = report
   end
 
   it 'can be processed' do
+    expect(@report.logger).not_to receive(:error)
     expect(Asciidoctor.convert("grafana_panel_image::#{stub_panel}[dashboard=\"#{stub_dashboard}\"]", to_file: false)).to include('<img src="gf_image_').and match(/(?!Error)/)
   end
 end
@@ -932,18 +972,22 @@ describe PanelImageInlineMacro do
   before do
     config = Configuration.new
     config.config = { 'grafana' => { 'default' => { 'host' => stub_url, 'api_key' => stub_key } } }
+    config.logger.level = ::Logger::Severity::WARN
     report = Report.new(config, './spec/tests/demo_report.adoc')
     Asciidoctor::Extensions.unregister_all
     Asciidoctor::Extensions.register do
       inline_macro PanelImageInlineMacro.new.current_report(report)
     end
+    @report = report
   end
 
   it 'retrieves images properly' do
+    expect(@report.logger).not_to receive(:error)
     expect(Asciidoctor.convert("grafana_panel_image:#{stub_panel}[dashboard=\"#{stub_dashboard}\"]", to_file: false)).to include('<img src="gf_image_').and match(/(?!Error)/)
   end
 
   it 'cleans up created temporary files' do
+    expect(@report.logger).not_to receive(:error)
     ts = Time.now.to_s
     result = Asciidoctor.convert("grafana_panel_image:#{stub_panel}[dashboard=\"#{stub_dashboard}\"]", to_file: false, attributes: { 'grafana-report-timestamp' => ts })
     tmp_file = result.to_s.gsub(/.*img src="([^"]+)".*/m, '\1')
@@ -954,15 +998,18 @@ end
 describe SqlTableIncludeProcessor do
   before do
     config = Configuration.new
+    config.logger.level = ::Logger::Severity::WARN
     config.config = { 'grafana' => { 'default' => { 'host' => stub_url, 'api_key' => stub_key } } }
     report = Report.new(config, './spec/tests/demo_report.adoc')
     Asciidoctor::Extensions.unregister_all
     Asciidoctor::Extensions.register do
       include_processor SqlTableIncludeProcessor.new.current_report(report)
     end
+    @report = report
   end
 
   it 'can be processed' do
+    expect(@report.logger).not_to receive(:error)
     expect(Asciidoctor.convert("include::grafana_sql_table:#{stub_datasource}[sql=\"SELECT 1\"]", to_file: false)).not_to include('GrafanaReporterError')
   end
 end
@@ -970,29 +1017,36 @@ end
 describe SqlValueInlineMacro do
   before do
     config = Configuration.new
+    config.logger.level = ::Logger::Severity::WARN
     config.config = { 'grafana' => { 'default' => { 'host' => stub_url, 'api_key' => stub_key } } }
     report = Report.new(config, './spec/tests/demo_report.adoc')
     Asciidoctor::Extensions.unregister_all
     Asciidoctor::Extensions.register do
       inline_macro SqlValueInlineMacro.new.current_report(report)
     end
+    @report = report
   end
 
   it 'can be processed' do
+    expect(@report.logger).not_to receive(:error)
     expect(Asciidoctor.convert("grafana_sql_value:#{stub_datasource}[sql=\"SELECT 1\"]", to_file: false)).not_to include('GrafanaReporterError')
     expect(Asciidoctor.convert("grafana_sql_value:#{stub_datasource}[sql=\"SELECT 1\"]", to_file: false)).to include('1')
   end
 
   it 'returns error message if no sql statement specified' do
+    expect(@report.logger).to receive(:fatal).with(/No SQL statement/)
     expect(Asciidoctor.convert("grafana_sql_value:#{stub_datasource}[test=\"bla\"]", to_file: false)).to include('MissingSqlQueryError')
+    expect(@report.logger).to receive(:fatal).with(/No SQL statement/)
     expect(Asciidoctor.convert("grafana_sql_value:#{stub_datasource}[]", to_file: false)).to include('MissingSqlQueryError')
   end
 
   it 'returns error message if invalid datasource id is specified' do
+    expect(@report.logger).to receive(:fatal).with(/Datasource/)
     expect(Asciidoctor.convert('grafana_sql_value:99[sql="SELECT 1"]', to_file: false)).to include('GrafanaError: Datasource')
   end
 
   it 'replaces grafana variables in sql query' do
+    expect(@report.logger).not_to receive(:error)
     expect(Asciidoctor.convert("grafana_sql_value:#{stub_datasource}[sql=\"SELECT $my-var\"]", to_file: false, attributes: { 'var-my-var' => 1 })).to include('1')
   end
 end
@@ -1000,20 +1054,24 @@ end
 describe PanelPropertyInlineMacro do
   before do
     config = Configuration.new
+    config.logger.level = ::Logger::Severity::WARN
     config.config = { 'grafana' => { 'default' => { 'host' => stub_url, 'api_key' => stub_key } } }
     report = Report.new(config, './spec/tests/demo_report.adoc')
     Asciidoctor::Extensions.unregister_all
     Asciidoctor::Extensions.register do
       inline_macro PanelPropertyInlineMacro.new.current_report(report)
     end
+    @report = report
   end
 
   it 'can be processed' do
+    expect(@report.logger).not_to receive(:error)
     expect(Asciidoctor.convert("grafana_panel_property:#{stub_panel}[\"title\",dashboard=\"#{stub_dashboard}\"]", to_file: false)).not_to include('GrafanaError')
     expect(Asciidoctor.convert("grafana_panel_property:#{stub_panel}[\"title\",dashboard=\"#{stub_dashboard}\"]", to_file: false)).to include(stub_panel_title)
   end
 
   it 'replaces grafana variables in result' do
+    expect(@report.logger).not_to receive(:error)
     expect(Asciidoctor.convert("grafana_panel_property:#{stub_panel}[\"description\",dashboard=\"#{stub_dashboard}\"]", to_file: false, attributes: { 'var-my-var' => 'Meine Ersetzung' })).to include('Meine Ersetzung')
   end
 end
@@ -1021,47 +1079,57 @@ end
 describe PanelQueryTableIncludeProcessor do
   before do
     config = Configuration.new
+    config.logger.level = ::Logger::Severity::WARN
     config.config = { 'grafana' => { 'default' => { 'host' => stub_url, 'api_key' => stub_key } } }
     report = Report.new(config, './spec/tests/demo_report.adoc')
     Asciidoctor::Extensions.unregister_all
     Asciidoctor::Extensions.register do
       include_processor PanelQueryTableIncludeProcessor.new.current_report(report)
     end
+    @report = report
   end
 
   it 'can return full results' do
+    expect(@report.logger).not_to receive(:error)
     expect(Asciidoctor.convert("include::grafana_panel_query_table:#{stub_panel}[query=\"#{stub_panel_query}\",dashboard=\"#{stub_dashboard}\"]", to_file: false)).not_to include('GrafanaReporterError')
     expect(Asciidoctor.convert("include::grafana_panel_query_table:#{stub_panel}[query=\"#{stub_panel_query}\",dashboard=\"#{stub_dashboard}\"]", to_file: false)).to match(/<p>\| 1594308060000 \| 43.9/)
   end
 
   it 'can replace values' do
+    expect(@report.logger).not_to receive(:error)
     expect(Asciidoctor.convert("include::grafana_panel_query_table:#{stub_panel}[query=\"#{stub_panel_query}\",dashboard=\"#{stub_dashboard}\",replace_values_1=\"1594308060000:geht\"]", to_file: false)).to match(/<p>\| geht \| 43.9/)
     expect(Asciidoctor.convert("include::grafana_panel_query_table:#{stub_panel}[query=\"#{stub_panel_query}\",dashboard=\"#{stub_dashboard}\",replace_values_2=\"1594308060000:geht\"]", to_file: false)).to match(/<p>\| 1594308060000 \| 43.9/)
   end
 
   it 'can replace regex values' do
+    expect(@report.logger).not_to receive(:error)
     expect(Asciidoctor.convert("include::grafana_panel_query_table:#{stub_panel}[query=\"#{stub_panel_query}\",dashboard=\"#{stub_dashboard}\",format=\",%.2f\",filter_columns=\"time_sec\",replace_values_2=\"^(43)\..*$:geht - \\1\"]", to_file: false)).to include('| geht - 43').and include('| 44.00')
   end
 
   it 'can replace values with value comparison' do
+    expect(@report.logger).not_to receive(:error)
     expect(Asciidoctor.convert("include::grafana_panel_query_table:#{stub_panel}[query=\"#{stub_panel_query}\",dashboard=\"#{stub_dashboard}\",format=\",%.2f\",filter_columns=\"time_sec\",replace_values_2=\"<44:geht\"]", to_file: false)).to include('| geht').and include('| 44.00')
     expect(Asciidoctor.convert("include::grafana_panel_query_table:#{stub_panel}[query=\"#{stub_panel_query}\",dashboard=\"#{stub_dashboard}\",format=\",%.2f\",filter_columns=\"time_sec\",replace_values_2=\"<44:\\1 zu klein\"]", to_file: false)).to include('| 43.90 zu klein').and include('| 44.00')
   end
 
   it 'can filter columns' do
+    expect(@report.logger).not_to receive(:error)
     expect(Asciidoctor.convert("include::grafana_panel_query_table:#{stub_panel}[query=\"#{stub_panel_query}\",dashboard=\"#{stub_dashboard}\",filter_columns=\"time_sec\"]", to_file: false)).to match(/<p>\| 43.9/)
     expect(Asciidoctor.convert("include::grafana_panel_query_table:#{stub_panel}[query=\"#{stub_panel_query}\",dashboard=\"#{stub_dashboard}\",filter_columns=\"Warmwasser\"]", to_file: false)).to match(/<p>\| 1594308060000\n/)
   end
 
   it 'can format values' do
+    expect(@report.logger).not_to receive(:error)
     expect(Asciidoctor.convert("include::grafana_panel_query_table:#{stub_panel}[query=\"#{stub_panel_query}\",dashboard=\"#{stub_dashboard}\",format=\",%.2f\"]", to_file: false)).to match(/<p>\| 1594308060000 \| 43.90/)
   end
 
   it 'handles column and row divider' do
+    expect(@report.logger).not_to receive(:error)
     expect(Asciidoctor.convert("include::grafana_panel_query_table:#{stub_panel}[query=\"#{stub_panel_query}\",dashboard=\"#{stub_dashboard}\",column_divider=\" col \",row_divider=\"row \"]", to_file: false)).to match(/<p>row 1594308060000 col 43.9/)
   end
 
   it 'can transpose results' do
+    expect(@report.logger).not_to receive(:error)
     expect(Asciidoctor.convert("include::grafana_panel_query_table:#{stub_panel}[query=\"#{stub_panel_query}\",dashboard=\"#{stub_dashboard}\",transpose=\"true\"]", to_file: false)).to match(/<p>\| 1594308060000 \| 1594308030000 \|/)
   end
 end
@@ -1069,28 +1137,34 @@ end
 describe AnnotationsTableIncludeProcessor do
   before do
     config = Configuration.new
+    config.logger.level = ::Logger::Severity::WARN
     config.config = { 'grafana' => { 'default' => { 'host' => stub_url, 'api_key' => stub_key } } }
     report = Report.new(config, './spec/tests/demo_report.adoc')
     Asciidoctor::Extensions.unregister_all
     Asciidoctor::Extensions.register do
       include_processor AnnotationsTableIncludeProcessor.new.current_report(report)
     end
+    @report = report
   end
 
   it 'can be processed' do
+    expect(@report.logger).not_to receive(:error)
     expect(Asciidoctor.convert("include::grafana_annotations[columns=\"time,id,alertName\",panel=\"#{stub_panel}\",dashboard=\"#{stub_dashboard}\"]", to_file: false)).not_to include('GrafanaReporterError')
     expect(Asciidoctor.convert("include::grafana_annotations[columns=\"time,id,alertName\",panel=\"#{stub_panel}\",dashboard=\"#{stub_dashboard}\"]", to_file: false)).to include('Panel Title alert')
   end
 
   it 'shows error if unknown columns are specified' do
+    expect(@report.logger).to receive(:error).with(/key/)
     expect(Asciidoctor.convert("include::grafana_annotations[columns=\"time,id,alert_name\",panel=\"#{stub_panel}\",dashboard=\"#{stub_dashboard}\"]", to_file: false)).to include('key')
   end
 
   it 'shows error if columns attribute is missing' do
+    expect(@report.logger).to receive(:error).with(/Missing mandatory attribute 'columns'/)
     expect(Asciidoctor.convert("include::grafana_annotations[panel=\"#{stub_panel}\",dashboard=\"#{stub_dashboard}\"]", to_file: false)).to include("Missing mandatory attribute 'columns'.")
   end
 
   it 'shows error if time range is unknown' do
+    expect(@report.logger).to receive(:error).with(/The specified time range/)
     expect(Asciidoctor.convert("include::grafana_annotations[columns=\"time,id,alert_name\",panel=\"#{stub_panel}\",dashboard=\"#{stub_dashboard}\",from=\"unknown\"]", to_file: false)).to include('The specified time range')
   end
 end
@@ -1098,20 +1172,24 @@ end
 describe AlertsTableIncludeProcessor do
   before do
     config = Configuration.new
+    config.logger.level = ::Logger::Severity::WARN
     config.config = { 'grafana' => { 'default' => { 'host' => stub_url, 'api_key' => stub_key } } }
     report = Report.new(config, './spec/tests/demo_report.adoc')
     Asciidoctor::Extensions.unregister_all
     Asciidoctor::Extensions.register do
       include_processor AlertsTableIncludeProcessor.new.current_report(report)
     end
+    @report = report
   end
 
   it 'can be processed' do
+    expect(@report.logger).not_to receive(:error)
     expect(Asciidoctor.convert("include::grafana_alerts[columns=\"newStateDate,name,state\",panel=\"#{stub_panel}\",dashboard=\"#{stub_dashboard}\"]", to_file: false)).not_to include('GrafanaReporterError')
     expect(Asciidoctor.convert("include::grafana_alerts[columns=\"newStateDate,name,state\",panel=\"#{stub_panel}\",dashboard=\"#{stub_dashboard}\"]", to_file: false)).to include('Panel Title alert')
   end
 
   it 'shows error if unknown columns are specified' do
+    expect(@report.logger).to receive(:error).with(/key not found: "stated"/)
     expect(Asciidoctor.convert("include::grafana_alerts[columns=\"newStateDate,name,stated\",panel=\"#{stub_panel}\",dashboard=\"#{stub_dashboard}\"]", to_file: false)).to include('key')
   end
 end
@@ -1119,6 +1197,7 @@ end
 describe ValueAsVariableIncludeProcessor do
   before do
     config = Configuration.new
+    config.logger.level = ::Logger::Severity::WARN
     config.config = { 'grafana' => { 'default' => { 'host' => stub_url, 'api_key' => stub_key } } }
     report = Report.new(config, './spec/tests/demo_report.adoc')
     Asciidoctor::Extensions.unregister_all
@@ -1130,6 +1209,7 @@ describe ValueAsVariableIncludeProcessor do
   end
 
   it 'can be processed' do
+    expect(@report.logger).not_to receive(:error)
     expect(Asciidoctor.convert("include::grafana_value_as_variable[call=\"grafana_sql_value:#{stub_datasource}\",sql=\"SELECT 1\",variable_name=\"test\",panel=\"#{stub_panel}\",dashboard=\"#{stub_dashboard}\"]", to_file: false)).not_to include('1')
     expect(Asciidoctor.convert("include::grafana_value_as_variable[call=\"grafana_sql_value:#{stub_datasource}\",sql=\"SELECT 1\",variable_name=\"test\",panel=\"#{stub_panel}\",dashboard=\"#{stub_dashboard}\"]\n{test}", to_file: false)).to include('1')
   end
@@ -1153,33 +1233,41 @@ end
 describe ShowEnvironmentIncludeProcessor do
   before do
     config = Configuration.new
+    config.logger.level = ::Logger::Severity::WARN
     config.config = { 'grafana' => { 'default' => { 'host' => stub_url, 'api_key' => stub_key } } }
     report = Report.new(config, './spec/tests/demo_report.adoc')
     Asciidoctor::Extensions.unregister_all
     Asciidoctor::Extensions.register do
       include_processor ShowEnvironmentIncludeProcessor.new.current_report(report)
     end
+    @report = report
   end
 
   it 'can be processed' do
-    expect(Asciidoctor.convert('include::grafana_environment[]', to_file: false)).not_to include('GrafanaReporterError')
-    expect(Asciidoctor.convert('include::grafana_environment[]', to_file: false)).to include('doctype-article')
+    expect(@report.logger).not_to receive(:error)
+    result = Asciidoctor.convert('include::grafana_environment[]', to_file: false)
+    expect(result).not_to include('GrafanaReporterError')
+    expect(result).to include('doctype-article')
   end
 end
 
 describe ShowHelpIncludeProcessor do
   before do
     config = Configuration.new
+    config.logger.level = ::Logger::Severity::WARN
     config.config = { 'grafana' => { 'default' => { 'host' => stub_url, 'api_key' => stub_key } } }
     report = Report.new(config, './spec/tests/demo_report.adoc')
     Asciidoctor::Extensions.unregister_all
     Asciidoctor::Extensions.register do
       include_processor ShowHelpIncludeProcessor.new.current_report(report)
     end
+    @report = report
   end
 
   it 'can be processed' do
-    expect(Asciidoctor.convert('include::grafana_help[]', to_file: false)).not_to include('GrafanaReporterError')
-    expect(Asciidoctor.convert('include::grafana_help[]', to_file: false)).to include('grafana_panel_image')
+    expect(@report.logger).not_to receive(:error)
+    result = Asciidoctor.convert('include::grafana_help[]', to_file: false)
+    expect(result).not_to include('GrafanaReporterError')
+    expect(result).to include('grafana_panel_image')
   end
 end
