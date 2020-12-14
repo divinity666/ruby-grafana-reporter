@@ -33,6 +33,7 @@ module GrafanaReporter
         cli_config = {}
         cli_config ['grafana-reporter'] = {}
         cli_config ['default-document-attributes'] = {}
+        action_wizard = false
 
         parser = OptionParser.new do |opts|
           opts.banner = "Usage: ruby #{$PROGRAM_NAME} [options]"
@@ -69,7 +70,7 @@ module GrafanaReporter
           end
 
           opts.on('-w', '--wizard', 'Configuration wizard to prepare environment for the reporter.') do
-            return config_wizard
+            action_wizard = true
           end
 
           opts.on('-v', '--version', 'Version information') do
@@ -85,6 +86,7 @@ module GrafanaReporter
 
         begin
           parser.parse!(params)
+          return config_wizard(config_file) if action_wizard
         rescue ApplicationError => e
           puts e.message
           return -1
@@ -150,11 +152,11 @@ module GrafanaReporter
 
       # Provides a command line configuration wizard for setting up the necessary configuration
       # file.
-      def config_wizard
-        if File.exist?(CONFIG_FILE)
+      def config_wizard(config_file)
+        if File.exist?(config_file)
           input = nil
           until input
-            input = user_input("Configuration file '#{CONFIG_FILE}' already exists. Do you want to overwrite it?", 'yN')
+            input = user_input("Configuration file '#{config_file}' already exists. Do you want to overwrite it?", 'yN')
             return if input =~ /^(?:n|N|yN)$/
           end
         end
@@ -164,6 +166,8 @@ module GrafanaReporter
              ' in the current folder. Please make sure to specify necessary paths'\
              ' either with a relative or an absolute path properly.'
         puts
+	puts "Wizard is creating configuration file '#{config_file}'."
+	puts
         port = ui_config_port
         grafana = ui_config_grafana
         templates = ui_config_templates_folder
@@ -187,7 +191,7 @@ default-document-attributes:
 )
 
         begin
-          File.write(CONFIG_FILE, config_yaml, mode: 'w')
+          File.write(config_file, config_yaml, mode: 'w')
           puts 'Configuration file successfully created.'
         rescue StandardError => e
           raise e
@@ -195,11 +199,11 @@ default-document-attributes:
 
         config = Configuration.new
         begin
-          config.config = YAML.load_file(CONFIG_FILE)
+          config.config = YAML.load_file(config_file)
           puts 'Configuration file validated successfully.'
         rescue StandardError => e
-          raise ConfigurationError, "Could not read config file '#{CONFIG_FILE}' (Error: #{e.message})\n"\
-                "Source:\n#{File.read(CONFIG_FILE)}"
+          raise ConfigurationError, "Could not read config file '#{config_file}' (Error: #{e.message})\n"\
+                "Source:\n#{File.read(config_file)}"
         end
 
         # create a demo report
