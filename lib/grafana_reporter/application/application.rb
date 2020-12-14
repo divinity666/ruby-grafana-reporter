@@ -16,12 +16,12 @@ module GrafanaReporter
       # Default file name for grafana reporter configuration file
       CONFIG_FILE = 'grafana_reporter.config'
 
-      def initialize
-        @logger = ::Logger.new($stdout, level: :unknown)
-      end
-
       # Contains the {Configuration} object of the application.
       attr_accessor :config
+
+      def initialize
+        @config = Configuration.new
+      end
 
       # This is the main method, which is called, if the application is
       # run in standalone mode.
@@ -29,6 +29,7 @@ module GrafanaReporter
       # @return [Integer] 0 if everything is fine, -1 if execution aborted.
       def configure_and_run(params = [])
         config_file = CONFIG_FILE
+        # TODO store cli_config in configuration object and merge with config file for cleaner code
         cli_config = {}
         cli_config ['grafana-reporter'] = {}
         cli_config ['default-document-attributes'] = {}
@@ -42,8 +43,9 @@ module GrafanaReporter
           end
 
           opts.on('-d', '--debug LEVEL', 'Specify detail level: FATAL, ERROR, WARN, INFO, DEBUG.') do |level|
+            # TODO: add as configuration option
             if level =~ /(?:FATAL|ERROR|WARN|INFO|DEBUG)/
-              @logger.level = Object.const_get("::Logger::Severity::#{level}")
+              config.logger.level = Object.const_get("::Logger::Severity::#{level}")
             end
           end
 
@@ -96,8 +98,8 @@ module GrafanaReporter
         end
 
         # read config file
-        @config = GrafanaReporter::Configuration.new
-        config.logger = @logger
+        new_config = GrafanaReporter::Configuration.new
+        new_config.logger = @config.logger
         config_hash = nil
         begin
           config_hash = YAML.load_file(config_file)
@@ -107,7 +109,8 @@ module GrafanaReporter
 
         # merge command line configuration with read config file
         config_hash.merge!(cli_config) { |_key, v1, v2| Hash === v1 && Hash === v2 ? v1.merge(v2) : v2 }
-        config.config = config_hash
+        new_config.config = config_hash
+        @config = new_config
 
         run
       end
@@ -242,7 +245,7 @@ include::grafana_environment[])
           begin
             res = Grafana::Grafana.new(url,
                                        api_key,
-                                       logger: @logger).test_connection
+                                       logger: config.logger).test_connection
           rescue StandardError => e
             puts
             puts e.message
