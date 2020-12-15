@@ -769,14 +769,14 @@ default-document-attributes:
       config.logger.level = ::Logger::Severity::WARN
       app = GrafanaReporter::Application::Application.new
       app.config = config
-      webserver = Thread.new { app.run }
+      @webserver = Thread.new { app.run }
       sleep 0.5
       @app = app
     end
 
     after(:context) do
       WebMock.enable!
-      # TODO: kill thread
+      @webserver.kill
     end
 
     it 'responds to overview' do
