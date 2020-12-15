@@ -55,13 +55,8 @@ wizard, which leads you through all necessary steps:
 
     ruby-grafana-reporter -w
 
-Now you're ready to go! Let's check it out!
-
-    ruby-grafana-reporter -t demo_report -o my_first_render.pdf
-
-If everything works as expected, you should find a file named `my_first_render.pdf`
-in the current folder, which contains a detailed explanation of all available
-commands as well as your available configuration options.
+It is strongly recommended, to also create the demo PDF file, as stated at the end
+of the procedure, to get a detailed documentation of all the reporter capabilities.
 
 To run the reporter as a service, you only need to call it like this:
 

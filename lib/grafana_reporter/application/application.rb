@@ -230,9 +230,14 @@ include::grafana_environment[])
         end
 
         puts
-        puts 'Now everything is setup properly. Run the grafana reporter without any command to start the service.'
+        puts 'Now everything is setup properly. To create an initial report including a manual of all reporter '\
+             'capabilities with the newly created configuration, call the following command:'
         puts
-        puts '   ruby-grafana-reporter'
+        puts "   ruby-grafana-reporter -c #{config_file} -t #{demo_report_file} -o demo_report_with_help.pdf"
+        puts
+        puts 'To start the reporter as a service, call the following command:'
+        puts
+        puts "   ruby-grafana-reporter -c #{config_file}"
         puts
         puts "Open 'http://localhost:#{config.webserver_port}/render?var-template=demo_report' in a webbrowser to"
         puts 'verify your configuration.'
