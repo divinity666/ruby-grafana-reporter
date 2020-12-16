@@ -87,7 +87,7 @@ module Grafana
           # only set ticks if value is string
           variable = var_name.gsub(/^var-/, '')
           res = res.gsub(/(?:\$\{#{variable}(?::(?<format>\w+))?\}|(?<!\.)\$#{variable}(?!\.))/) do
-            obj.value_formatted($LAST_MATCH_INFO[:format])
+            obj.value_formatted($LAST_MATCH_INFO ? $LAST_MATCH_INFO[:format] : nil)
           end
         end
         repeat = true if res.include?('$')
