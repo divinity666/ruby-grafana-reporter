@@ -43,8 +43,8 @@ Gem::Specification.new do |s|
   s.add_runtime_dependency 'asciidoctor-pdf', '~>1.5'
   # the following package includes an interface to zip, which is also needed here
   # make sure that supported zip versions match - look in sub-dependency 'gepub'
-  #  s.add_runtime_dependency 'asciidoctor-epub3', '~>1.5.0.alpha.18'
-  s.add_runtime_dependency 'rubyzip', '>1.1.1', '<2.3'
+  #  s.add_runtime_dependency 'asciidoctor-epub3', '~>1.5.0'
+  s.add_runtime_dependency 'rubyzip', '>1.1.1', '<2.4'
 
   s.add_development_dependency 'rspec', '~>3.9'
   s.add_development_dependency 'simplecov', '~>0.16'
