@@ -1,10 +1,14 @@
 if ENV['TRAVIS']
   require 'coveralls'
-  Coveralls.wear!
+  Coveralls.wear! do
+    add_filter "spec/"
+  end
 else
   require 'simplecov'
-  SimpleCov.start
+  SimpleCov.start do
+    add_filter "spec/"
+  end
 end
 
 require_relative '../lib/ruby-grafana-reporter'
-require_relative 'ruby-grafana-reporter_spec'
+require_relative 'ruby-grafana-reporter_spec.rb'
