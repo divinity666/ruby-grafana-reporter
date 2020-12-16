@@ -35,12 +35,20 @@ task :build do
 
   # build new versions
   require_relative 'lib/VERSION'
+
+  # build gem
   sh 'gem build ruby-grafana-reporter.gemspec'
+
+  # build single file application
   require_relative 'bin/get_single_file_application'
-  File.write("ruby-grafana-reporter-#{GRAFANA_REPORTER_VERSION.join('.')}.rb", get_result)
+  File.write("ruby-grafana-reporter-#{GRAFANA_REPORTER_VERSION.join('.')}.rb", get_result('bin'))
 
   # run single file application to see it is running without issues
   ruby "ruby-grafana-reporter-#{GRAFANA_REPORTER_VERSION.join('.')}.rb -h"
+
+  # build single library file for validation
+  File.write("spec/tmp_single_file_lib_ruby-grafana-reporter.rb", get_result('lib'))
+  sh 'bundle exec rspec spec/test_single_file.rb'
 end
 
 task :clean do
@@ -49,5 +57,5 @@ end
 
 task :test do
   Rake::Task['check'].invoke if ENV['TRAVIS']
-  sh 'bundle exec rspec spec/ruby-grafana-reporter_spec.rb'
+  sh 'bundle exec rspec spec/test_default.rb'
 end
