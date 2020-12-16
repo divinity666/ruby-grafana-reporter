@@ -44,10 +44,7 @@ module GrafanaReporter
           end
 
           opts.on('-d', '--debug LEVEL', 'Specify detail level: FATAL, ERROR, WARN, INFO, DEBUG.') do |level|
-            # TODO: add as configuration option
-            if level =~ /(?:FATAL|ERROR|WARN|INFO|DEBUG)/
-              config.logger.level = Object.const_get("::Logger::Severity::#{level}")
-            end
+            cli_config['grafana-reporter']['debug-level'] = level
           end
 
           opts.on('-o', '--output FILE', 'Output filename if only a single file is rendered') do |file|

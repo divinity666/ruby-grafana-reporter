@@ -1,12 +1,3 @@
-if ENV['TRAVIS']
-  require 'coveralls'
-  Coveralls.wear!
-else
-  require 'simplecov'
-  SimpleCov.start
-end
-
-require_relative '../lib/ruby-grafana-reporter'
 require 'webmock/rspec'
 
 include Grafana
@@ -337,6 +328,18 @@ describe SqlFirstValueQuery do
 end
 
 describe Configuration do
+  context 'set individual parameters' do
+    subject { Configuration.new }
+
+    it 'can set single parameters' do
+      expect(subject.templates_folder).to eq('./')
+      subject.set_param('grafana-reporter:templates-folder', 'test')
+      subject.set_param('grafana-reporter:report-retention', 666)
+      expect(subject.templates_folder).to eq('test/')
+      expect(subject.report_retention).to eq(666)
+    end
+  end
+
   context 'with config file' do
     subject do
       obj = Configuration.new

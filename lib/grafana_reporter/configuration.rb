@@ -23,9 +23,7 @@ module GrafanaReporter
 
     # Used to access the configuration hash. To make sure, that the configuration is
     # valid, call {#validate}.
-    #
-    # NOTE: This function overwrites all existing configurations
-    attr_accessor :config
+    attr_reader :config
 
     def initialize
       @config = {}
@@ -35,6 +33,12 @@ module GrafanaReporter
     end
 
     attr_accessor :logger
+
+    # USed to overwrite the current configuration.
+    def config=(new_config)
+      @config = new_config
+      update_configuration
+    end
 
     # @return [String] mode, in which the reporting shall be executed. One of {MODE_CONNECTION_TEST},
     #   {MODE_SINGLE_RENDER} and {MODE_SERVICE}.
@@ -50,6 +54,7 @@ module GrafanaReporter
     # @return [String] full path of configured report template. Only needed in {MODE_SINGLE_RENDER}.
     def template
       return nil if get_config('default-document-attributes:var-template').nil?
+
       "#{templates_folder}#{get_config('default-document-attributes:var-template')}.adoc"
     end
 
@@ -160,7 +165,37 @@ module GrafanaReporter
       raise FolderDoesNotExistError.new(images_folder, 'images-folder') unless File.directory?(images_folder)
     end
 
+    # Can be used to configure or overwrite single parameters.
+    #
+    # @pararm path [String] path of the paramter to set, e.g. +grafana-reporter:webservice-port+
+    # @param value [Object] value to set
+    def set_param(path, value)
+      return if path.nil?
+
+      levels = path.split(':')
+      last_level = levels.pop
+
+      cur_pos = @config
+      levels.each do |subpath|
+        if cur_pos[subpath]
+          cur_pos = cur_pos[subpath]
+        else
+          cur_pos[subpath] = {}
+          cur_pos = cur_pos[subpath]
+        end
+      end
+
+      cur_pos[last_level] = value
+      update_configuration
+    end
+
     private
+
+    def update_configuration
+      return unless get_config('grafana-reporter:debug-level')  =~ /DEBUG|INFO|WARN|ERROR|FATAL|UNKNOWN/
+
+      @logger.level = Object.const_get("::Logger::Severity::#{get_config('grafana-reporter:debug-level')}")
+    end
 
     def get_config(path)
       return if path.nil?
@@ -243,6 +278,7 @@ module GrafanaReporter
         [
           Hash, 0,
           {
+            'debug-level' => [String, 0],
             'run-mode' => [String, 0],
             'test-instance' => [String, 0],
             'templates-folder' => [String, 0],
