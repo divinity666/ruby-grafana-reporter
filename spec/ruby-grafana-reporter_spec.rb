@@ -547,7 +547,7 @@ RSpec.configure do |config|
                                                                     .to_return(status: 200, body: '{"message":"Dashboard not found"}', headers: {})
 
     stub_request(:post, 'http://localhost/api/tsdb/query').with(
-      body: /.*SELECT 1.*/,
+      body: /.*SELECT 1[^\d]*/,
       headers: {
         'Accept' => 'application/json',
         'Accept-Encoding' => 'gzip;q=1.0,deflate;q=0.6,identity;q=0.3',
@@ -557,6 +557,18 @@ RSpec.configure do |config|
       }
     )
                                                           .to_return(status: 200, body: '{"results":{"A":{"refId":"A","meta":{"rowCount":1,"sql":"SELECT 1"},"series":null,"tables":[{"columns":[{"text":"1"}],"rows":[[1]]}],"dataframes":null}}}', headers: {})
+
+    stub_request(:post, 'http://localhost/api/tsdb/query').with(
+      body: /.*SELECT 1000[^\d]*/,
+      headers: {
+        'Accept' => 'application/json',
+        'Accept-Encoding' => 'gzip;q=1.0,deflate;q=0.6,identity;q=0.3',
+        'Authorization' => 'Bearer xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx',
+        'Content-Type' => 'application/json',
+        'User-Agent' => 'Ruby'
+      }
+    )
+                                                          .to_return(status: 200, body: lambda { sleep 2; '{"results":{"A":{"refId":"A","meta":{"rowCount":1,"sql":"SELECT 1000"},"series":null,"tables":[{"columns":[{"text":"1000"}],"rows":[[1]]}],"dataframes":null}}}' }, headers: {})
 
     stub_request(:get, %r{http://localhost/render/d-solo/IDBRfjSmz\?from=\d+&fullscreen=true&panelId=11&theme=light&timeout=60(?:&var-[^&]+)*}).with(
       headers: {
@@ -798,15 +810,15 @@ default-document-attributes:
 
     it 'can properly cancel demo report' do
       expect(@app.config.logger).not_to receive(:error)
-      url = URI('http://localhost:8033/render?var-template=demo_report')
+      url = URI('http://localhost:8033/render?var-template=demo_report_slow')
       http = Net::HTTP.new(url.host, url.port)
       res = http.request_get(url.request_uri)
       expect(res.code).to eq("302")
       expect(res['location']).to include("/view_report?report_id=")
 
       id = res['location'].gsub(/.*report_id=([^\r\n]*).*/, '\1')
-      res = Net::HTTP.get(URI("http://localhost:8033/view_report?report_id=#{id}"))
-      expect(res).to include("in progress")
+      res = http.request_get("/view_report?report_id=#{id}")
+      expect(res.body).to include("in progress")
       res = http.request_get("/cancel_report?report_id=#{id}")
       expect(res.code).to eq("302")
       res = Net::HTTP.get(URI("http://localhost:8033/view_log?report_id=#{id}"))
