@@ -38,6 +38,7 @@ task :build do
   # build single library file for validation
   File.write("spec/tmp_single_file_lib_ruby-grafana-reporter.rb", get_result('lib'))
   sh 'bundle exec rspec spec/test_single_file.rb'
+  rm "spec/tmp_single_file_lib_ruby-grafana-reporter.rb"
 
   # build new versions
   require_relative 'lib/VERSION'
@@ -53,7 +54,7 @@ task :build do
 end
 
 task :clean do
-  rm Dir['*.gem'] << Dir['ruby-grafana-reporter-*.rb']
+  rm Dir['*.gem'] << Dir['ruby-grafana-reporter-*.rb'] << Dir["spec/tmp_single_file_lib_ruby-grafana-reporter.rb"]
 end
 
 task :test do
