@@ -9,9 +9,7 @@ module GrafanaReporter
       # @return [void]
       def merge_hash_variables(document_hash, item_hash)
         merge_variables(document_hash.select { |k, _v| k =~ /^var-/ || k == 'grafana-report-timestamp' }.each_with_object({}) { |(k,v), h| h[k] = ::Grafana::Variable.new(v) })
-        # TODO: add documentation for transpose, column_divider and row_divider
         merge_variables(item_hash.select { |k, _v| k =~ /^var-/ || k =~ /^render-/ || k =~ /filter_columns|format|replace_values_.*|transpose|column_divider|row_divider/ }.each_with_object({}) { |(k,v), h| h[k] = ::Grafana::Variable.new(v) })
-        # TODO: add documentation for timeout and grafana-default-timeout
         self.timeout = item_hash['timeout'] || document_hash['grafana-default-timeout'] || timeout
         self.from = item_hash['from'] || document_hash['from'] || from
         self.to = item_hash['to'] || document_hash['to'] || to
