@@ -593,19 +593,6 @@ RSpec.configure do |config|
     )
     .to_return(status: 200, body: File.read('./spec/tests/sample_sql_response.json'), headers: {})
 
-    # TODO add tests for this series query
-    stub_request(:post, 'http://localhost/api/tsdb/query').with(
-      body: %r{.*SELECT\n    time as time_sec,\n    MAX(value / 10) as max_temperature,\n    AVG(value / 10) as avg_temperature,\n    MIN(value / 10) as min_temperatureq\n  FROM rm_temperatur\n  WHERE $__unixEpochFilter(time)\n  GROUP BY YEAR(FROM_UNIXTIME(time)), MONTH(FROM_UNIXTIME(time)), DAY(FROM_UNIXTIME(time))\n},
-      headers: {
-        'Accept' => 'application/json',
-        'Accept-Encoding' => 'gzip;q=1.0,deflate;q=0.6,identity;q=0.3',
-        'Authorization' => 'Bearer xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx',
-        'Content-Type' => 'application/json',
-        'User-Agent' => 'Ruby'
-      }
-    )
-    .to_return(status: 200, body: File.read('./spec/tests/sample_sql_series_response.json'), headers: {})
-
     stub_request(:get, %r{http://localhost/api/annotations(?:\?.*)?}).with(
       headers: {
         'Accept' => 'application/json',
@@ -1160,13 +1147,6 @@ describe PanelQueryTableIncludeProcessor do
     it 'can transpose results' do
       expect(@report.logger).not_to receive(:error)
       expect(Asciidoctor.convert("include::grafana_panel_query_table:#{stub_panel}[query=\"#{stub_panel_query}\",dashboard=\"#{stub_dashboard}\",transpose=\"true\"]", to_file: false)).to match(/<p>\| 1594308060000 \| 1594308030000 \|/)
-    end
-  end
-
-  context 'series' do
-    it 'can return full results' do
-      expect(@report.logger).not_to receive(:error)
-      expect(Asciidoctor.convert("include::grafana_panel_query_table:21[query=\"#{stub_panel_query}\",dashboard=\"#{stub_dashboard}\"]", to_file: false)).to match(/<p>\| 1604187780000 \| 16.7/)
     end
   end
 end

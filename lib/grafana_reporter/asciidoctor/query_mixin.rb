@@ -28,7 +28,6 @@ module GrafanaReporter
       #   }
       # @param raw_result [Hash] query result hash from grafana
       # @return [Hash] sql result formatted as stated above
-      # TODO: support series query results properly
       def preformat_sql_result(raw_result)
         results = {}
         results.default = []
@@ -37,26 +36,13 @@ module GrafanaReporter
           if query_result.key?('error')
             results[:header] = results[:header] << ['SQL Error']
             results[:content] = [[query_result['error']]]
+
           elsif query_result['tables']
             query_result['tables'].each do |table|
               results[:header] = results[:header] << table['columns'].map { |header| header['text'] }
               results[:content] = table['rows']
             end
-          else
-            # TODO: add test for series results
-            results[:header] = 'time'
-            query_result['series'].each do |table|
-              results[:header] << table[:name]
-              results[:content] = []
-              content_position = results[:header].length - 1
-              table[:points].each do |point|
-                result = []
-                result << point[1]
-                (content_position - 1).times { result << nil }
-                result << point[0]
-                results[:content][0] << result
-              end
-            end
+
           end
         end
 
