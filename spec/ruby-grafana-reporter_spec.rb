@@ -21,7 +21,7 @@ describe Dashboard do
   let(:dashboard) { Dashboard.new(JSON.parse(File.read('./spec/tests/demo_dashboard.json'))['dashboard'], Grafana::Grafana.new('')) }
 
   it 'contains panels' do
-    expect(dashboard.panels.length).to eq(6)
+    expect(dashboard.panels.length).to eq(7)
     expect(dashboard.panel(11)).to be_a(Panel)
     expect(dashboard.panel(11).field('id')).to eq(11)
     expect(dashboard.panel(11).field('no_field_exists')).to eq('')
@@ -501,7 +501,7 @@ RSpec.configure do |config|
         'User-Agent' => 'Ruby'
       }
     )
-                                                          .to_return(status: 403, body: '{"message":"Permission denied"}', headers: {})
+    .to_return(status: 403, body: '{"message":"Permission denied"}', headers: {})
 
     stub_request(:get, 'http://localhost/api/datasources').with(
       headers: {
@@ -512,7 +512,7 @@ RSpec.configure do |config|
         'User-Agent' => 'Ruby'
       }
     )
-                                                          .to_return(status: 200, body: '[{"id":1,"orgId":1,"name":"demo","type":"mysql","typeLogoUrl":"public/app/plugins/datasource/mysql/img/mysql_logo.svg","access":"proxy","url":"localhost:3306","password":"demo","user":"demo","database":"demo","basicAuth":false,"isDefault":true,"jsonData":{},"readOnly":false}]', headers: {})
+    .to_return(status: 200, body: '[{"id":1,"orgId":1,"name":"demo","type":"mysql","typeLogoUrl":"public/app/plugins/datasource/mysql/img/mysql_logo.svg","access":"proxy","url":"localhost:3306","password":"demo","user":"demo","database":"demo","basicAuth":false,"isDefault":true,"jsonData":{},"readOnly":false}]', headers: {})
 
     stub_request(:get, "http://localhost/api/dashboards/uid/#{stub_dashboard}").with(
       headers: {
@@ -523,7 +523,7 @@ RSpec.configure do |config|
         'User-Agent' => 'Ruby'
       }
     )
-                                                                               .to_return(status: 200, body: File.read('./spec/tests/demo_dashboard.json'), headers: {})
+    .to_return(status: 200, body: File.read('./spec/tests/demo_dashboard.json'), headers: {})
 
     stub_request(:get, 'http://localhost/api/dashboards/home').with(
       headers: {
@@ -533,7 +533,7 @@ RSpec.configure do |config|
         'User-Agent' => 'Ruby'
       }
     )
-                                                              .to_return(status: 200, body: File.read('./spec/tests/demo_dashboard.json'), headers: {})
+    .to_return(status: 200, body: File.read('./spec/tests/demo_dashboard.json'), headers: {})
 
     stub_request(:get, 'http://localhost/api/dashboards/uid/blabla').with(
       headers: {
@@ -544,7 +544,7 @@ RSpec.configure do |config|
         'User-Agent' => 'Ruby'
       }
     )
-                                                                    .to_return(status: 200, body: '{"message":"Dashboard not found"}', headers: {})
+    .to_return(status: 200, body: '{"message":"Dashboard not found"}', headers: {})
 
     stub_request(:post, 'http://localhost/api/tsdb/query').with(
       body: /.*SELECT 1[^\d]*/,
@@ -556,7 +556,7 @@ RSpec.configure do |config|
         'User-Agent' => 'Ruby'
       }
     )
-                                                          .to_return(status: 200, body: '{"results":{"A":{"refId":"A","meta":{"rowCount":1,"sql":"SELECT 1"},"series":null,"tables":[{"columns":[{"text":"1"}],"rows":[[1]]}],"dataframes":null}}}', headers: {})
+    .to_return(status: 200, body: '{"results":{"A":{"refId":"A","meta":{"rowCount":1,"sql":"SELECT 1"},"series":null,"tables":[{"columns":[{"text":"1"}],"rows":[[1]]}],"dataframes":null}}}', headers: {})
 
     stub_request(:post, 'http://localhost/api/tsdb/query').with(
       body: /.*SELECT 1000[^\d]*/,
@@ -568,7 +568,7 @@ RSpec.configure do |config|
         'User-Agent' => 'Ruby'
       }
     )
-                                                          .to_return(status: 200, body: lambda { sleep 2; '{"results":{"A":{"refId":"A","meta":{"rowCount":1,"sql":"SELECT 1000"},"series":null,"tables":[{"columns":[{"text":"1000"}],"rows":[[1]]}],"dataframes":null}}}' }, headers: {})
+    .to_return(status: 200, body: lambda { sleep 2; '{"results":{"A":{"refId":"A","meta":{"rowCount":1,"sql":"SELECT 1000"},"series":null,"tables":[{"columns":[{"text":"1000"}],"rows":[[1]]}],"dataframes":null}}}' }, headers: {})
 
     stub_request(:get, %r{http://localhost/render/d-solo/IDBRfjSmz\?from=\d+&fullscreen=true&panelId=11&theme=light&timeout=60(?:&var-[^&]+)*}).with(
       headers: {
@@ -579,7 +579,7 @@ RSpec.configure do |config|
         'User-Agent' => 'Ruby'
       }
     )
-                                                                                                                                               .to_return(status: 200, body: File.read('./spec/tests/sample_image.png'), headers: {})
+    .to_return(status: 200, body: File.read('./spec/tests/sample_image.png'), headers: {})
 
     stub_request(:post, 'http://localhost/api/tsdb/query').with(
       body: %r{.*SELECT   time as time_sec,   value / 10 as Ist FROM istwert_hk1 WHERE \$__unixEpochFilter\(time\) ORDER BY time DESC.*},
@@ -591,7 +591,20 @@ RSpec.configure do |config|
         'User-Agent' => 'Ruby'
       }
     )
-                                                          .to_return(status: 200, body: File.read('./spec/tests/sample_sql_response.json'), headers: {})
+    .to_return(status: 200, body: File.read('./spec/tests/sample_sql_response.json'), headers: {})
+
+    # TODO add tests for this series query
+    stub_request(:post, 'http://localhost/api/tsdb/query').with(
+      body: %r{.*SELECT\n    time as time_sec,\n    MAX(value / 10) as max_temperature,\n    AVG(value / 10) as avg_temperature,\n    MIN(value / 10) as min_temperatureq\n  FROM rm_temperatur\n  WHERE $__unixEpochFilter(time)\n  GROUP BY YEAR(FROM_UNIXTIME(time)), MONTH(FROM_UNIXTIME(time)), DAY(FROM_UNIXTIME(time))\n},
+      headers: {
+        'Accept' => 'application/json',
+        'Accept-Encoding' => 'gzip;q=1.0,deflate;q=0.6,identity;q=0.3',
+        'Authorization' => 'Bearer xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx',
+        'Content-Type' => 'application/json',
+        'User-Agent' => 'Ruby'
+      }
+    )
+    .to_return(status: 200, body: File.read('./spec/tests/sample_sql_series_response.json'), headers: {})
 
     stub_request(:get, %r{http://localhost/api/annotations(?:\?.*)?}).with(
       headers: {
@@ -602,7 +615,7 @@ RSpec.configure do |config|
         'User-Agent' => 'Ruby'
       }
     )
-                                                                     .to_return(status: 200, body: File.read('./spec/tests/sample_annotations_response.json'), headers: {})
+    .to_return(status: 200, body: File.read('./spec/tests/sample_annotations_response.json'), headers: {})
 
     stub_request(:get, %r{http://localhost/api/alerts(?:\?.*)?}).with(
       headers: {
@@ -613,7 +626,7 @@ RSpec.configure do |config|
         'User-Agent' => 'Ruby'
       }
     )
-                                                                .to_return(status: 200, body: File.read('./spec/tests/sample_alerts_response.json'), headers: {})
+    .to_return(status: 200, body: File.read('./spec/tests/sample_alerts_response.json'), headers: {})
   end
 end
 
@@ -1104,48 +1117,57 @@ describe PanelQueryTableIncludeProcessor do
     @report = report
   end
 
-  it 'can return full results' do
-    expect(@report.logger).not_to receive(:error)
-    expect(Asciidoctor.convert("include::grafana_panel_query_table:#{stub_panel}[query=\"#{stub_panel_query}\",dashboard=\"#{stub_dashboard}\"]", to_file: false)).not_to include('GrafanaReporterError')
-    expect(Asciidoctor.convert("include::grafana_panel_query_table:#{stub_panel}[query=\"#{stub_panel_query}\",dashboard=\"#{stub_dashboard}\"]", to_file: false)).to match(/<p>\| 1594308060000 \| 43.9/)
+  context 'table' do
+    it 'can return full results' do
+      expect(@report.logger).not_to receive(:error)
+      expect(Asciidoctor.convert("include::grafana_panel_query_table:#{stub_panel}[query=\"#{stub_panel_query}\",dashboard=\"#{stub_dashboard}\"]", to_file: false)).not_to include('GrafanaReporterError')
+      expect(Asciidoctor.convert("include::grafana_panel_query_table:#{stub_panel}[query=\"#{stub_panel_query}\",dashboard=\"#{stub_dashboard}\"]", to_file: false)).to match(/<p>\| 1594308060000 \| 43.9/)
+    end
+
+    it 'can replace values' do
+      expect(@report.logger).not_to receive(:error)
+      expect(Asciidoctor.convert("include::grafana_panel_query_table:#{stub_panel}[query=\"#{stub_panel_query}\",dashboard=\"#{stub_dashboard}\",replace_values_1=\"1594308060000:geht\"]", to_file: false)).to match(/<p>\| geht \| 43.9/)
+      expect(Asciidoctor.convert("include::grafana_panel_query_table:#{stub_panel}[query=\"#{stub_panel_query}\",dashboard=\"#{stub_dashboard}\",replace_values_2=\"1594308060000:geht\"]", to_file: false)).to match(/<p>\| 1594308060000 \| 43.9/)
+    end
+
+    it 'can replace regex values' do
+      expect(@report.logger).not_to receive(:error)
+      expect(Asciidoctor.convert("include::grafana_panel_query_table:#{stub_panel}[query=\"#{stub_panel_query}\",dashboard=\"#{stub_dashboard}\",format=\",%.2f\",filter_columns=\"time_sec\",replace_values_2=\"^(43)\..*$:geht - \\1\"]", to_file: false)).to include('| geht - 43').and include('| 44.00')
+    end
+
+    it 'can replace values with value comparison' do
+      expect(@report.logger).not_to receive(:error)
+      expect(Asciidoctor.convert("include::grafana_panel_query_table:#{stub_panel}[query=\"#{stub_panel_query}\",dashboard=\"#{stub_dashboard}\",format=\",%.2f\",filter_columns=\"time_sec\",replace_values_2=\"<44:geht\"]", to_file: false)).to include('| geht').and include('| 44.00')
+      expect(Asciidoctor.convert("include::grafana_panel_query_table:#{stub_panel}[query=\"#{stub_panel_query}\",dashboard=\"#{stub_dashboard}\",format=\",%.2f\",filter_columns=\"time_sec\",replace_values_2=\"<44:\\1 zu klein\"]", to_file: false)).to include('| 43.90 zu klein').and include('| 44.00')
+    end
+
+    it 'can filter columns' do
+      expect(@report.logger).not_to receive(:error)
+      expect(Asciidoctor.convert("include::grafana_panel_query_table:#{stub_panel}[query=\"#{stub_panel_query}\",dashboard=\"#{stub_dashboard}\",filter_columns=\"time_sec\"]", to_file: false)).to match(/<p>\| 43.9/)
+      expect(Asciidoctor.convert("include::grafana_panel_query_table:#{stub_panel}[query=\"#{stub_panel_query}\",dashboard=\"#{stub_dashboard}\",filter_columns=\"Warmwasser\"]", to_file: false)).to match(/<p>\| 1594308060000\n/)
+    end
+
+    it 'can format values' do
+      expect(@report.logger).not_to receive(:error)
+      expect(Asciidoctor.convert("include::grafana_panel_query_table:#{stub_panel}[query=\"#{stub_panel_query}\",dashboard=\"#{stub_dashboard}\",format=\",%.2f\"]", to_file: false)).to match(/<p>\| 1594308060000 \| 43.90/)
+    end
+
+    it 'handles column and row divider' do
+      expect(@report.logger).not_to receive(:error)
+      expect(Asciidoctor.convert("include::grafana_panel_query_table:#{stub_panel}[query=\"#{stub_panel_query}\",dashboard=\"#{stub_dashboard}\",column_divider=\" col \",row_divider=\"row \"]", to_file: false)).to match(/<p>row 1594308060000 col 43.9/)
+    end
+
+    it 'can transpose results' do
+      expect(@report.logger).not_to receive(:error)
+      expect(Asciidoctor.convert("include::grafana_panel_query_table:#{stub_panel}[query=\"#{stub_panel_query}\",dashboard=\"#{stub_dashboard}\",transpose=\"true\"]", to_file: false)).to match(/<p>\| 1594308060000 \| 1594308030000 \|/)
+    end
   end
 
-  it 'can replace values' do
-    expect(@report.logger).not_to receive(:error)
-    expect(Asciidoctor.convert("include::grafana_panel_query_table:#{stub_panel}[query=\"#{stub_panel_query}\",dashboard=\"#{stub_dashboard}\",replace_values_1=\"1594308060000:geht\"]", to_file: false)).to match(/<p>\| geht \| 43.9/)
-    expect(Asciidoctor.convert("include::grafana_panel_query_table:#{stub_panel}[query=\"#{stub_panel_query}\",dashboard=\"#{stub_dashboard}\",replace_values_2=\"1594308060000:geht\"]", to_file: false)).to match(/<p>\| 1594308060000 \| 43.9/)
-  end
-
-  it 'can replace regex values' do
-    expect(@report.logger).not_to receive(:error)
-    expect(Asciidoctor.convert("include::grafana_panel_query_table:#{stub_panel}[query=\"#{stub_panel_query}\",dashboard=\"#{stub_dashboard}\",format=\",%.2f\",filter_columns=\"time_sec\",replace_values_2=\"^(43)\..*$:geht - \\1\"]", to_file: false)).to include('| geht - 43').and include('| 44.00')
-  end
-
-  it 'can replace values with value comparison' do
-    expect(@report.logger).not_to receive(:error)
-    expect(Asciidoctor.convert("include::grafana_panel_query_table:#{stub_panel}[query=\"#{stub_panel_query}\",dashboard=\"#{stub_dashboard}\",format=\",%.2f\",filter_columns=\"time_sec\",replace_values_2=\"<44:geht\"]", to_file: false)).to include('| geht').and include('| 44.00')
-    expect(Asciidoctor.convert("include::grafana_panel_query_table:#{stub_panel}[query=\"#{stub_panel_query}\",dashboard=\"#{stub_dashboard}\",format=\",%.2f\",filter_columns=\"time_sec\",replace_values_2=\"<44:\\1 zu klein\"]", to_file: false)).to include('| 43.90 zu klein').and include('| 44.00')
-  end
-
-  it 'can filter columns' do
-    expect(@report.logger).not_to receive(:error)
-    expect(Asciidoctor.convert("include::grafana_panel_query_table:#{stub_panel}[query=\"#{stub_panel_query}\",dashboard=\"#{stub_dashboard}\",filter_columns=\"time_sec\"]", to_file: false)).to match(/<p>\| 43.9/)
-    expect(Asciidoctor.convert("include::grafana_panel_query_table:#{stub_panel}[query=\"#{stub_panel_query}\",dashboard=\"#{stub_dashboard}\",filter_columns=\"Warmwasser\"]", to_file: false)).to match(/<p>\| 1594308060000\n/)
-  end
-
-  it 'can format values' do
-    expect(@report.logger).not_to receive(:error)
-    expect(Asciidoctor.convert("include::grafana_panel_query_table:#{stub_panel}[query=\"#{stub_panel_query}\",dashboard=\"#{stub_dashboard}\",format=\",%.2f\"]", to_file: false)).to match(/<p>\| 1594308060000 \| 43.90/)
-  end
-
-  it 'handles column and row divider' do
-    expect(@report.logger).not_to receive(:error)
-    expect(Asciidoctor.convert("include::grafana_panel_query_table:#{stub_panel}[query=\"#{stub_panel_query}\",dashboard=\"#{stub_dashboard}\",column_divider=\" col \",row_divider=\"row \"]", to_file: false)).to match(/<p>row 1594308060000 col 43.9/)
-  end
-
-  it 'can transpose results' do
-    expect(@report.logger).not_to receive(:error)
-    expect(Asciidoctor.convert("include::grafana_panel_query_table:#{stub_panel}[query=\"#{stub_panel_query}\",dashboard=\"#{stub_dashboard}\",transpose=\"true\"]", to_file: false)).to match(/<p>\| 1594308060000 \| 1594308030000 \|/)
+  context 'series' do
+    it 'can return full results' do
+      expect(@report.logger).not_to receive(:error)
+      expect(Asciidoctor.convert("include::grafana_panel_query_table:21[query=\"#{stub_panel_query}\",dashboard=\"#{stub_dashboard}\"]", to_file: false)).to match(/<p>\| 1604187780000 \| 16.7/)
+    end
   end
 end
 
