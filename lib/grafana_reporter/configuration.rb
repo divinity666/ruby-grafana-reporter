@@ -28,8 +28,6 @@ module GrafanaReporter
     def initialize
       @config = {}
       @logger = ::Logger.new($stderr, level: :unknown)
-      # TODO: set report class somewhere else, but make it known here
-      self.report_class = Asciidoctor::Report
     end
 
     attr_accessor :logger
@@ -192,9 +190,13 @@ module GrafanaReporter
     private
 
     def update_configuration
-      return unless get_config('grafana-reporter:debug-level')  =~ /DEBUG|INFO|WARN|ERROR|FATAL|UNKNOWN/
+      if get_config('grafana-reporter:debug-level') =~ /DEBUG|INFO|WARN|ERROR|FATAL|UNKNOWN/
+        @logger.level = Object.const_get("::Logger::Severity::#{get_config('grafana-reporter:debug-level')}")
+      end
 
-      @logger.level = Object.const_get("::Logger::Severity::#{get_config('grafana-reporter:debug-level')}")
+      if get_config('grafana-reporter:report-class')
+        self.report_class = Object.const_get(get_config('grafana-reporter:report-class'))
+      end
     end
 
     def get_config(path)
@@ -282,6 +284,8 @@ module GrafanaReporter
             'run-mode' => [String, 0],
             'test-instance' => [String, 0],
             'templates-folder' => [String, 0],
+            # TODO: show warning if report-class is not set, but has to be in future
+            'report-class' => [String, 0],
             'reports-folder' => [String, 0],
             'report-retention' => [Integer, 0],
             'webservice-port' => [Integer, 0]

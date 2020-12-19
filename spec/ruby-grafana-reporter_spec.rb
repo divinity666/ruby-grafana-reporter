@@ -421,28 +421,32 @@ describe Configuration do
 
     it 'validates required fields' do
       subject.config = {
-                            'grafana' => { 'default' => { 'host' => 'test' } }
+                            'grafana' => { 'default' => { 'host' => 'test' } },
+                            'grafana-reporter' => { 'report-class' => 'GrafanaReporter::Asciidoctor::Report' }
                           }
       expect { subject.validate }.not_to raise_error
     end
 
     it 'validates optional datasources' do
       subject.config = {
-                            'grafana' => { 'default' => { 'host' => 'test', 'datasources' => { 'test' => 1 } } }
+                            'grafana' => { 'default' => { 'host' => 'test', 'datasources' => { 'test' => 1 } } },
+                            'grafana-reporter' => { 'report-class' => 'GrafanaReporter::Asciidoctor::Report' }
                           }
       expect { subject.validate }.not_to raise_error
     end
 
     it 'raises error if item exists without required subitem' do
       subject.config = {
-                            'grafana' => { 'default' => { 'host' => 'test', 'datasources' => {} } }
+                            'grafana' => { 'default' => { 'host' => 'test', 'datasources' => {} } },
+                            'grafana-reporter' => { 'report-class' => 'GrafanaReporter::Asciidoctor::Report' }
                           }
       expect { subject.validate }.to raise_error(ConfigurationDoesNotMatchSchemaError)
     end
 
     it 'raises error on wrong datasource type' do
       subject.config = {
-                            'grafana' => { 'default' => { 'host' => 'test', 'datasources' => { 'test' => 'bla' } } }
+                            'grafana' => { 'default' => { 'host' => 'test', 'datasources' => { 'test' => 'bla' } } },
+                            'grafana-reporter' => { 'report-class' => 'GrafanaReporter::Asciidoctor::Report' }
                           }
       expect { subject.validate }.to raise_error(ConfigurationDoesNotMatchSchemaError)
     end
@@ -450,7 +454,7 @@ describe Configuration do
     it 'raises error if folder does not exist' do
       subject.config = {
                             'grafana' => { 'default' => { 'host' => 'test' } },
-                            'grafana-reporter' => { 'reports-folder' => 'ewfhenwf8' }
+                            'grafana-reporter' => { 'report-class' => 'GrafanaReporter::Asciidoctor::Report', 'reports-folder' => 'ewfhenwf8' }
                           }
       expect { subject.validate }.to raise_error(FolderDoesNotExistError)
     end
@@ -458,7 +462,7 @@ describe Configuration do
     it 'warns if not evaluated configurations exist' do
       subject.config = {
                             'grafana' => { 'default' => { 'host' => 'test' } },
-                            'grafana-reporter' => { 'repots-folder' => 'ewfhenwf8' }
+                            'grafana-reporter' => { 'report-class' => 'GrafanaReporter::Asciidoctor::Report', 'repots-folder' => 'ewfhenwf8' }
                           }
       expect(subject.logger).to receive(:warn).with("Item 'repots-folder' in configuration is unknown to the reporter and will be ignored")
       subject.validate
@@ -768,6 +772,7 @@ default-document-attributes:
       WebMock.disable_net_connect!(allow: ['http://localhost:8033'])
       config = Configuration.new
       yaml = "grafana-reporter:
+  report-class: GrafanaReporter::Asciidoctor::Report
   webservice-port: 8033
   templates-folder: ./spec/tests
   reports-folder: .
@@ -809,6 +814,7 @@ default-document-attributes:
     end
 
     it 'can properly cancel demo report' do
+print 'TODO'
       expect(@app.config.logger).not_to receive(:error)
       url = URI('http://localhost:8033/render?var-template=demo_report_slow')
       http = Net::HTTP.new(url.host, url.port)

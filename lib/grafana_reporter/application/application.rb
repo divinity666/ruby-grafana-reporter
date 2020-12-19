@@ -32,6 +32,7 @@ module GrafanaReporter
         # TODO store cli_config in configuration object and merge with config file for cleaner code
         cli_config = {}
         cli_config ['grafana-reporter'] = {}
+        cli_config ['grafana-reporter']['report-class'] = 'GrafanaReporter::Asciidoctor::Report'
         cli_config ['default-document-attributes'] = {}
         action_wizard = false
 
@@ -177,6 +178,7 @@ module GrafanaReporter
 #{grafana}
 
 grafana-reporter:
+  report-class: GrafanaReporter::Asciidoctor::Report
   templates-folder: #{templates}
   reports-folder: #{reports}
   report-retention: #{retention}
