@@ -814,7 +814,7 @@ default-document-attributes:
     end
 
     it 'can properly cancel demo report' do
-print 'TODO'
+print 'cancel' if ENV['TRAVIS']
       expect(@app.config.logger).not_to receive(:error)
       url = URI('http://localhost:8033/render?var-template=demo_report_slow')
       http = Net::HTTP.new(url.host, url.port)
@@ -834,6 +834,7 @@ print 'TODO'
     end
 
     it 'can properly create demo pdf report' do
+print 'pdf' if ENV['TRAVIS']
       expect(@app.config.logger).not_to receive(:error)
       url = URI('http://localhost:8033/render?var-template=demo_report')
       http = Net::HTTP.new(url.host, url.port)
@@ -855,6 +856,7 @@ print 'TODO'
     end
 
     it 'can properly create demo html report' do
+print 'html' if ENV['TRAVIS']
       expect(@app.config.logger).not_to receive(:error)
       url = URI('http://localhost:8033/render?var-template=demo_report&convert-backend=html')
       http = Net::HTTP.new(url.host, url.port)
