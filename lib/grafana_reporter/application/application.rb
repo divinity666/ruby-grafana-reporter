@@ -29,11 +29,7 @@ module GrafanaReporter
       # @return [Integer] 0 if everything is fine, -1 if execution aborted.
       def configure_and_run(params = [])
         config_file = CONFIG_FILE
-        # TODO store cli_config in configuration object and merge with config file for cleaner code
-        cli_config = {}
-        cli_config ['grafana-reporter'] = {}
-        cli_config ['grafana-reporter']['report-class'] = 'GrafanaReporter::Asciidoctor::Report'
-        cli_config ['default-document-attributes'] = {}
+        tmp_config = Configuration.new
         action_wizard = false
 
         parser = OptionParser.new do |opts|
@@ -45,26 +41,26 @@ module GrafanaReporter
           end
 
           opts.on('-d', '--debug LEVEL', 'Specify detail level: FATAL, ERROR, WARN, INFO, DEBUG.') do |level|
-            cli_config['grafana-reporter']['debug-level'] = level
+            tmp_config.set_param('grafana-reporter:debug-level', level)
           end
 
           opts.on('-o', '--output FILE', 'Output filename if only a single file is rendered') do |file|
-            cli_config['to_file'] = file
+            tmp_config.set_param('to_file', file)
           end
 
           opts.on('-s', '--set VARIABLE,VALUE', Array, 'Set a variable value, which will be passed to the rendering') do |list|
             raise ParameterValueError.new(list.length) unless list.length == 2
-            cli_config['default-document-attributes'][list[0]] = list[1]
+            tmp_config.set_param("default-document-attributes:#{list[0]}", list[1])
           end
 
           opts.on('--test GRAFANA_INSTANCE', 'test current configuration against given GRAFANA_INSTANCE') do |instance|
-            cli_config['grafana-reporter']['run-mode'] = 'test'
-            cli_config['grafana-reporter']['test-instance'] = instance
+            tmp_config.set_param('grafana-reporter:run-mode', 'test')
+            tmp_config.set_param('grafana-reporter:test-instance', instance)
           end
 
           opts.on('-t', '--template TEMPLATE', 'Render a single ASCIIDOC template to PDF and exit') do |template|
-            cli_config['grafana-reporter']['run-mode'] = 'single-render'
-            cli_config['default-document-attributes']['var-template'] = template
+            tmp_config.set_param('grafana-reporter:run-mode', 'single-render')
+            tmp_config.set_param('default-document-attributes:var-template', template)
           end
 
           opts.on('-w', '--wizard', 'Configuration wizard to prepare environment for the reporter.') do
@@ -98,8 +94,6 @@ module GrafanaReporter
         end
 
         # read config file
-        new_config = GrafanaReporter::Configuration.new
-        new_config.logger = @config.logger
         config_hash = nil
         begin
           config_hash = YAML.load_file(config_file)
@@ -108,9 +102,8 @@ module GrafanaReporter
         end
 
         # merge command line configuration with read config file
-        config_hash.merge!(cli_config) { |_key, v1, v2| Hash === v1 && Hash === v2 ? v1.merge(v2) : v2 }
-        new_config.config = config_hash
-        @config = new_config
+        @config.config = config_hash
+        @config.merge!(tmp_config)
 
         run
       end
