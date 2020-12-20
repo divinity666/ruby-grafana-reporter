@@ -17,11 +17,6 @@ module GrafanaReporter
         results = format_columns(results, @variables['format'])
         results = replace_values(results, @variables.select { |k, _v| k =~ /^replace_values_\d+/ })
         results = filter_columns(results, @variables['filter_columns'])
-        if @variables['filter_column']
-          @report.logger.warn("DEPRECATED: Call of  no longer supported function 'filter_column' has been found."\
-                              " Rename to 'filter_columns'")
-          results = filter_columns(results, @variables['filter_column'])
-        end
         results = transpose(results, @variables['transpose'])
         row_divider = '| '
         row_divider = @variables['row_divider'].raw_value if @variables['row_divider'].is_a?(Grafana::Variable)

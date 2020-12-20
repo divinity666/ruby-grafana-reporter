@@ -5,8 +5,33 @@ require_relative 'processor_mixin'
 module GrafanaReporter
   module Asciidoctor
     module Extensions
-      # TODO: add documentation
-      class ValueAsVariableIncludeProcessor < ::Asciidoctor::Extensions::IncludeProcessor
+      # Implements the hook
+      #   include::grafana_value_as_variable[<options>]
+      #
+      # Returns an attribute definition in asciidoctor format. This is needed if you want to refer to values of
+      # a grafana query within a variable in asciidoctor. As this works without this function for the
+      # `IncludeProcessor`s values, it will not work for all the other processors.
+      #
+      # This method is just a proxy for all other hooks and will forward parameters accordingly.
+      #
+      # Example:
+      #
+      #   include:grafana_value_as_variable[call="grafana_sql_value:1",variable_name="my_variable",sql="SELECT 'looks good'",<any_other_option>]
+      #
+      # This will call the {SqlValueInlineMacro} with `datasource_id` set to `1` and store the result in the
+      # variable. The resulting asciidoctor variable definition will be created as:
+      #
+      #   :my_variable: looks good
+      #
+      # and can be refered to in your document easily as
+      #
+      #   {my_variable}
+      #
+      # == Supported options
+      # +call+ - regular call to the reporter hook (*mandatory*)
+      #
+      # +variable_name+ - name of the variable, to which the result shall be assigned (*mandatory*)
+     class ValueAsVariableIncludeProcessor < ::Asciidoctor::Extensions::IncludeProcessor
         include ProcessorMixin
 
         # :nodoc:

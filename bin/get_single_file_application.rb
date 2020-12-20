@@ -1,5 +1,3 @@
-# TODO: build single file application properly
-
 module Kernel
   alias orig_req_rel require_relative
 
@@ -28,7 +26,13 @@ module Kernel
   end
 end
 
-def get_result
-  require_relative '/../lib/ruby-grafana-reporter'
-  [File.read('./LICENSE').gsub(/^/, '# '), required_contents, 'GrafanaReporter::Application::Application.new.configure_and_run(ARGV)'].join("\n")
+def get_result(type)
+  unless @result
+    require_relative '/../lib/ruby-grafana-reporter'
+    @result = [File.read('./LICENSE').gsub(/^/, '# '), required_contents]
+  end
+
+  return (@result + ['GrafanaReporter::Application::Application.new.configure_and_run(ARGV)']).join("\n") if type == 'bin'
+
+  @result.join("\n")
 end

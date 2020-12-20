@@ -40,7 +40,7 @@ module Grafana
       # check if we have lower rights
       return 'Failed' unless execute_http_request('/api/dashboards/home').is_a?(Net::HTTPOK)
 
-      @logger.warn('Reporter is running with NON-Admin privileges on grafana. Make sure that necessary'\
+      @logger.info('Reporter is running with NON-Admin privileges on grafana. Make sure that necessary '\
                    'datasources are specified in CONFIG_FILE, otherwise operation will fail')
       'NON-Admin'
     end

@@ -16,12 +16,12 @@ module GrafanaReporter
       # Default file name for grafana reporter configuration file
       CONFIG_FILE = 'grafana_reporter.config'
 
-      def initialize
-        @logger = ::Logger.new($stdout, level: :unknown)
-      end
-
       # Contains the {Configuration} object of the application.
       attr_accessor :config
+
+      def initialize
+        @config = Configuration.new
+      end
 
       # This is the main method, which is called, if the application is
       # run in standalone mode.
@@ -29,9 +29,8 @@ module GrafanaReporter
       # @return [Integer] 0 if everything is fine, -1 if execution aborted.
       def configure_and_run(params = [])
         config_file = CONFIG_FILE
-        cli_config = {}
-        cli_config ['grafana-reporter'] = {}
-        cli_config ['default-document-attributes'] = {}
+        tmp_config = Configuration.new
+        action_wizard = false
 
         parser = OptionParser.new do |opts|
           opts.banner = "Usage: ruby #{$PROGRAM_NAME} [options]"
@@ -42,32 +41,30 @@ module GrafanaReporter
           end
 
           opts.on('-d', '--debug LEVEL', 'Specify detail level: FATAL, ERROR, WARN, INFO, DEBUG.') do |level|
-            if level =~ /(?:FATAL|ERROR|WARN|INFO|DEBUG)/
-              @logger.level = Object.const_get("::Logger::Severity::#{level}")
-            end
+            tmp_config.set_param('grafana-reporter:debug-level', level)
           end
 
           opts.on('-o', '--output FILE', 'Output filename if only a single file is rendered') do |file|
-            cli_config['to_file'] = file
+            tmp_config.set_param('to_file', file)
           end
 
           opts.on('-s', '--set VARIABLE,VALUE', Array, 'Set a variable value, which will be passed to the rendering') do |list|
             raise ParameterValueError.new(list.length) unless list.length == 2
-            cli_config['default-document-attributes'][list[0]] = list[1]
+            tmp_config.set_param("default-document-attributes:#{list[0]}", list[1])
           end
 
           opts.on('--test GRAFANA_INSTANCE', 'test current configuration against given GRAFANA_INSTANCE') do |instance|
-            cli_config['grafana-reporter']['run-mode'] = 'test'
-            cli_config['grafana-reporter']['test-instance'] = instance
+            tmp_config.set_param('grafana-reporter:run-mode', 'test')
+            tmp_config.set_param('grafana-reporter:test-instance', instance)
           end
 
           opts.on('-t', '--template TEMPLATE', 'Render a single ASCIIDOC template to PDF and exit') do |template|
-            cli_config['grafana-reporter']['run-mode'] = 'single-render'
-            cli_config['default-document-attributes']['var-template'] = template
+            tmp_config.set_param('grafana-reporter:run-mode', 'single-render')
+            tmp_config.set_param('default-document-attributes:var-template', template)
           end
 
           opts.on('-w', '--wizard', 'Configuration wizard to prepare environment for the reporter.') do
-            return config_wizard
+            action_wizard = true
           end
 
           opts.on('-v', '--version', 'Version information') do
@@ -83,6 +80,7 @@ module GrafanaReporter
 
         begin
           parser.parse!(params)
+          return config_wizard(config_file) if action_wizard
         rescue ApplicationError => e
           puts e.message
           return -1
@@ -96,8 +94,6 @@ module GrafanaReporter
         end
 
         # read config file
-        @config = GrafanaReporter::Configuration.new
-        config.logger = @logger
         config_hash = nil
         begin
           config_hash = YAML.load_file(config_file)
@@ -106,8 +102,8 @@ module GrafanaReporter
         end
 
         # merge command line configuration with read config file
-        config_hash.merge!(cli_config) { |_key, v1, v2| Hash === v1 && Hash === v2 ? v1.merge(v2) : v2 }
-        config.config = config_hash
+        @config.config = config_hash
+        @config.merge!(tmp_config)
 
         run
       end
@@ -147,11 +143,11 @@ module GrafanaReporter
 
       # Provides a command line configuration wizard for setting up the necessary configuration
       # file.
-      def config_wizard
-        if File.exist?(CONFIG_FILE)
+      def config_wizard(config_file)
+        if File.exist?(config_file)
           input = nil
           until input
-            input = user_input("Configuration file '#{CONFIG_FILE}' already exists. Do you want to overwrite it?", 'yN')
+            input = user_input("Configuration file '#{config_file}' already exists. Do you want to overwrite it?", 'yN')
             return if input =~ /^(?:n|N|yN)$/
           end
         end
@@ -161,6 +157,8 @@ module GrafanaReporter
              ' in the current folder. Please make sure to specify necessary paths'\
              ' either with a relative or an absolute path properly.'
         puts
+	puts "Wizard is creating configuration file '#{config_file}'."
+	puts
         port = ui_config_port
         grafana = ui_config_grafana
         templates = ui_config_templates_folder
@@ -173,6 +171,7 @@ module GrafanaReporter
 #{grafana}
 
 grafana-reporter:
+  report-class: GrafanaReporter::Asciidoctor::Report
   templates-folder: #{templates}
   reports-folder: #{reports}
   report-retention: #{retention}
@@ -184,7 +183,7 @@ default-document-attributes:
 )
 
         begin
-          File.write(CONFIG_FILE, config_yaml, mode: 'w')
+          File.write(config_file, config_yaml, mode: 'w')
           puts 'Configuration file successfully created.'
         rescue StandardError => e
           raise e
@@ -192,11 +191,11 @@ default-document-attributes:
 
         config = Configuration.new
         begin
-          config.config = YAML.load_file(CONFIG_FILE)
+          config.config = YAML.load_file(config_file)
           puts 'Configuration file validated successfully.'
         rescue StandardError => e
-          raise ConfigurationError, "Could not read config file '#{CONFIG_FILE}' (Error: #{e.message})\n"\
-                "Source:\n#{File.read(CONFIG_FILE)}"
+          raise ConfigurationError, "Could not read config file '#{config_file}' (Error: #{e.message})\n"\
+                "Source:\n#{File.read(config_file)}"
         end
 
         # create a demo report
@@ -223,9 +222,14 @@ include::grafana_environment[])
         end
 
         puts
-        puts 'Now everything is setup properly. Run the grafana reporter without any command to start the service.'
+        puts 'Now everything is setup properly. To create an initial report including a manual of all reporter '\
+             'capabilities with the newly created configuration, call the following command:'
         puts
-        puts '   ruby-grafana-reporter'
+        puts "   ruby-grafana-reporter -c #{config_file} -t #{demo_report_file} -o demo_report_with_help.pdf"
+        puts
+        puts 'To start the reporter as a service, call the following command:'
+        puts
+        puts "   ruby-grafana-reporter -c #{config_file}"
         puts
         puts "Open 'http://localhost:#{config.webserver_port}/render?var-template=demo_report' in a webbrowser to"
         puts 'verify your configuration.'
@@ -242,7 +246,7 @@ include::grafana_environment[])
           begin
             res = Grafana::Grafana.new(url,
                                        api_key,
-                                       logger: @logger).test_connection
+                                       logger: config.logger).test_connection
           rescue StandardError => e
             puts
             puts e.message

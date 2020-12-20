@@ -1,4 +1,5 @@
 grafana-reporter:
+  report-class: GrafanaReporter::Asciidoctor::Report
   templates-folder: .
   reports-folder: .
   webservice-port: 8050

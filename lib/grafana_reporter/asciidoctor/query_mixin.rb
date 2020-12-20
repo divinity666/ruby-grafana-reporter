@@ -8,10 +8,8 @@ module GrafanaReporter
       # @param item_hash [Hash] variables from item configuration level, i.e. specific call, which may override document
       # @return [void]
       def merge_hash_variables(document_hash, item_hash)
-        merge_variables(document_hash.select { |k, _v| k =~ /^var-/ || k == 'grafana-report-timestamp' }.transform_values { |item| ::Grafana::Variable.new(item) })
-        # TODO: add documentation for transpose, column_divider and row_divider
-        merge_variables(item_hash.select { |k, _v| k =~ /^var-/ || k =~ /^render-/ || k =~ /filter_columns|format|replace_values_.*|transpose|column_divider|row_divider/ }.transform_values { |item| ::Grafana::Variable.new(item) })
-        # TODO: add documentation for timeout and grafana-default-timeout
+        merge_variables(document_hash.select { |k, _v| k =~ /^var-/ || k == 'grafana-report-timestamp' }.each_with_object({}) { |(k,v), h| h[k] = ::Grafana::Variable.new(v) })
+        merge_variables(item_hash.select { |k, _v| k =~ /^var-/ || k =~ /^render-/ || k =~ /filter_columns|format|replace_values_.*|transpose|column_divider|row_divider/ }.each_with_object({}) { |(k,v), h| h[k] = ::Grafana::Variable.new(v) })
         self.timeout = item_hash['timeout'] || document_hash['grafana-default-timeout'] || timeout
         self.from = item_hash['from'] || document_hash['from'] || from
         self.to = item_hash['to'] || document_hash['to'] || to
@@ -30,7 +28,6 @@ module GrafanaReporter
       #   }
       # @param raw_result [Hash] query result hash from grafana
       # @return [Hash] sql result formatted as stated above
-      # TODO: support series query results properly
       def preformat_sql_result(raw_result)
         results = {}
         results.default = []
@@ -39,26 +36,13 @@ module GrafanaReporter
           if query_result.key?('error')
             results[:header] = results[:header] << ['SQL Error']
             results[:content] = [[query_result['error']]]
+
           elsif query_result['tables']
             query_result['tables'].each do |table|
               results[:header] = results[:header] << table['columns'].map { |header| header['text'] }
               results[:content] = table['rows']
             end
-          else
-            # TODO: add test for series results
-            results[:header] = 'time'
-            query_result['series'].each do |table|
-              results[:header] << table[:name]
-              results[:content] = []
-              content_position = results[:header].length - 1
-              table[:points].each do |point|
-                result = []
-                result << point[1]
-                (content_position - 1).times { result << nil }
-                result << point[0]
-                results[:content][0] << result
-              end
-            end
+
           end
         end
 

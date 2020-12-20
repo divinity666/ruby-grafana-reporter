@@ -1,6 +1,7 @@
 [![MIT License](https://img.shields.io/github/license/divinity666/ruby-grafana-reporter.svg?style=flat-square)](https://github.com/divinity666/ruby-grafana-reporter/blob/master/LICENSE)
 [![Build Status](https://travis-ci.org/divinity666/ruby-grafana-reporter.svg?branch=master)](https://travis-ci.org/github/divinity666/ruby-grafana-reporter?branch=master)
 [![Coverage Status](https://coveralls.io/repos/github/divinity666/ruby-grafana-reporter/badge.svg?branch=master)](https://coveralls.io/github/divinity666/ruby-grafana-reporter?branch=master)
+[![Gem Version](https://badge.fury.io/rb/ruby-grafana-reporter.svg)](https://badge.fury.io/rb/ruby-grafana-reporter)
 
 # Ruby Grafana Reporter
 Reporting Service for Grafana
@@ -54,13 +55,8 @@ wizard, which leads you through all necessary steps:
 
     ruby-grafana-reporter -w
 
-Now you're ready to go! Let's check it out!
-
-    ruby-grafana-reporter -t demo_report -o my_first_render.pdf
-
-If everything works as expected, you should find a file named `my_first_render.pdf`
-in the current folder, which contains a detailed explanation of all available
-commands as well as your available configuration options.
+It is strongly recommended, to also create the demo PDF file, as stated at the end
+of the procedure, to get a detailed documentation of all the reporter capabilities.
 
 To run the reporter as a service, you only need to call it like this:
 

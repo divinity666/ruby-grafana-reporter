@@ -198,10 +198,10 @@ module Grafana
                                     h{1,2}|k{1,2}|m{1,2}|s{1,2}|S+|X)/x)
         if tmp.empty?
           matches << work_string[0]
-          work_string.delete_prefix!(work_string[0])
+          work_string.sub!(/^#{work_string[0]}/, '')
         else
           matches << tmp[0]
-          work_string.delete_prefix!(tmp[0])
+          work_string.sub!(/^#{tmp[0]}/, '')
         end
       end
 

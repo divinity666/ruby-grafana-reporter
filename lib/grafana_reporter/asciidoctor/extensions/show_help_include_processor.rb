@@ -26,14 +26,20 @@ module GrafanaReporter
           # return if @report.cancel
           @report.next_step
           @report.logger.debug('Processing ShowHelpIncludeProcessor')
+          exec_order = 'Execution is applied in the following order: `format`, `replace_values`, `filter_columns`, `transpose`.'
 
           param_instance = '| `instance="<instance_name>"` | can be used to override global grafana instance, set in the report with `grafana_default_instance`. If nothing is set, the configured grafana instance with name `default` will be used.'
           param_dashboard = '| `dashboard="<dashboard_uid>"` | Specifies the dashboard to be used. If `grafana_default_dashboard` is specified in the report template, this value can be overridden with this option.'
           param_from = '| `from="<from_timestamp>"` | can be used to override default `from` time'
           param_to = '| `to="<to_timestamp>"` | can be used to override default `to` time'
-          param_format = '| `format="<format_col1>,<format_col2>,..."` | Specify format in which the results shall be returned, e.g. `%.2f` for only two digit decimals of a float. Several columns are separated by `,`. For details see https://ruby-doc.org/core-2.4.0/Kernel.html#method-i-sprintf[Ruby documentation]. This action is always performed *before* `replace_values`and `filter_columns`.'
-          param_replace_values = '| `replace_values="<replace_1>:<with_1>,<replace_2>:<with_2>,..."` | Specify result values which shall be replaced, e.g. `2:OK` will replace query values `2` with value `OK`. Replacing several values is possible by separating by `,`. Matches with regular expressions are also supported, but must be full matches, i.e. have to start with `^` and end with `$`, e.g. `^[012]$:OK`. For details see https://ruby-doc.org/core-2.7.1/Regexp.html#class-Regexp-label-Character+Classes[Ruby Regexp class]. Number replacements can also be performed, e.g. `<8.2` or `<>3`. This action if always performed *after* `format`and *before* `filter_columns`.'
-          param_filter_columns = '| `filter_columns="<column_name_1>,<column_name_2>,..."` | Removes specified columns from result. This action is always performed *after* `format` and `replace_values`.'
+  
+          param_format = '| `format="<format_col1>,<format_col2>,..."` | Specify format in which the results shall be returned, e.g. `%.2f` for only two digit decimals of a float. Several columns are separated by `,`. For details see https://ruby-doc.org/core-2.4.0/Kernel.html#method-i-sprintf[Ruby documentation].'
+          param_replace_values = "| `replace_values=\"<replace_1>:<with_1>,<replace_2>:<with_2>,...\"` | Specify result values which shall be replaced, e.g. `2:OK` will replace query values `2` with value `OK`. Replacing several values is possible by separating by `,`. Matches with regular expressions are also supported, but must be full matches, i.e. have to start with `^` and end with `$`, e.g. `^[012]$:OK`. For details see https://ruby-doc.org/core-2.7.1/Regexp.html#class-Regexp-label-Character+Classes[Ruby Regexp class]. Number replacements can also be performed, e.g. `<8.2` or `<>3`. #{exec_order}"
+          param_filter_columns = '| `filter_columns="<column_name_1>,<column_name_2>,..."` | Removes specified columns from result.'
+          param_transpose = '| `transpose="true"` | Transposes the query result, i.e. columns become rows and rows become columnns.'
+          param_column_divider = '| `column_divider="<divider>"` | Replace the default column divider with another one. Defaults to ` | ` for being interpreted as a asciidoctor column.'
+          param_row_divider = '| `row_divider="<divider>"` | Replace the default row divider with another one. Defaults to `| ` for being interpreted as a asciidoctor row.'
+          param_timeout = '| `timeout="<timeout_in_seconds>" | Set a timeout for the current query. If not overridden with `grafana-default-timeout` in the report template, this defaults to 60 seconds.'
 
           help = "
 == Grafana Reporter Functions
@@ -60,14 +66,18 @@ module GrafanaReporter
 [%autowidth.stretch, options=\"header\"]
 |===
 | Option | Description
+#{param_column_divider}
 #{param_dashboard} If this option, or the global option `grafana_default_dashboard` is set, the resulting alerts will be limited to this dashboard. To show all alerts in this case, specify `dashboard=\"\"` as option.
-#{param_filter_columns}
-#{param_format}
+#{param_filter_columns} #{exec_order}
+#{param_format} #{exec_order}
 #{param_from}
 #{param_instance}
 | `panel=\"<panel_id>\"` | If specified, the resulting alerts are filtered for this panel. This option will only work, if a `dashboard` or `grafana_default_dashboard` is set.
-#{param_replace_values}
+#{param_replace_values} #{exec_order}
+#{param_row_divider}
+#{param_timeout}
 #{param_to}
+#{param_transpose} #{exec_order}
 |===
 Additionally all query parameters from the https://grafana.com/docs/grafana/latest/http_api/alerting/#get-alerts[Grafana Alerting API], such as `query`, `state`, `limit`, `folderId` and others are supported.
 
@@ -80,14 +90,18 @@ Additionally all query parameters from the https://grafana.com/docs/grafana/late
 [%autowidth.stretch, options=\"header\"]
 |===
 | Option | Description
+#{param_column_divider}
 #{param_dashboard} If this option, or the global option `grafana_default_dashboard` is set, the resulting annotations will be limited to this dashboard. To show all annotations in this case, specify `dashboard=\"\"` as option.
-#{param_filter_columns}
-#{param_format}
+#{param_filter_columns} #{exec_order}
+#{param_format} #{exec_order}
 #{param_from}
 #{param_instance}
 | `panel=\"<panel_id>\"` | If specified, the resulting annotations are filtered for this panel. This option will only work, if a `dashboard` or `grafana_default_dashboard` is set.
-#{param_replace_values}
+#{param_replace_values} #{exec_order}
+#{param_row_divider}
+#{param_timeout}
 #{param_to}
+#{param_transpose} #{exec_order}
 |===
 Additionally all quer parameters from the https://grafana.com/docs/grafana/latest/http_api/annotations/#find_annotations[Grafana Alerting API], such as `limit`, `alertId`, `panelId` and others are supported.
 
@@ -117,6 +131,7 @@ Additionally all quer parameters from the https://grafana.com/docs/grafana/lates
 #{param_dashboard}
 #{param_from}
 #{param_instance}
+#{param_timeout}
 #{param_to}
 | `render-height=\"<height>\"` | can be used to override default `height` in which the panel shall be rendered
 | `render-width=\"<width>\"` | can be used to override default `width` in which the panel shall be rendered
@@ -133,13 +148,17 @@ Additionally all quer parameters from the https://grafana.com/docs/grafana/lates
 [%autowidth.stretch, options=\"header\"]
 |===
 | Option | Description
+#{param_column_divider}
 #{param_dashboard}
-#{param_filter_columns}
-#{param_format}
+#{param_filter_columns} #{exec_order}
+#{param_format} #{exec_order}
 #{param_from}
 #{param_instance}
-#{param_replace_values}
+#{param_replace_values} #{exec_order}
+#{param_row_divider}
+#{param_timeout}
 #{param_to}
+#{param_transpose} #{exec_order}
 |===
 
 === `grafana_panel_query_value`
@@ -152,11 +171,13 @@ Additionally all quer parameters from the https://grafana.com/docs/grafana/lates
 |===
 | Option | Description
 #{param_dashboard}
-#{param_filter_columns}
-#{param_format}
+#{param_filter_columns} #{exec_order}
+#{param_format} #{exec_order}
 #{param_from}
 #{param_instance}
-#{param_replace_values}
+#{param_replace_values} #{exec_order}
+#{param_row_divider}
+#{param_timeout}
 #{param_to}
 |===
 
@@ -169,12 +190,16 @@ Additionally all quer parameters from the https://grafana.com/docs/grafana/lates
 [%autowidth.stretch, options=\"header\"]
 |===
 | Option | Description
-#{param_filter_columns}
-#{param_format}
+#{param_column_divider}
+#{param_filter_columns} #{exec_order}
+#{param_format} #{exec_order}
 #{param_from}
 #{param_instance}
-#{param_replace_values}
+#{param_replace_values} #{exec_order}
+#{param_row_divider}
+#{param_timeout}
 #{param_to}
+#{param_transpose} #{exec_order}
 |===
 
 === `grafana_sql_value`
@@ -186,11 +211,12 @@ Additionally all quer parameters from the https://grafana.com/docs/grafana/lates
 [%autowidth.stretch, options=\"header\"]
 |===
 | Option | Description
-#{param_filter_columns}
-#{param_format}
+#{param_filter_columns} #{exec_order}
+#{param_format} #{exec_order}
 #{param_from}
 #{param_instance}
-#{param_replace_values}
+#{param_replace_values} #{exec_order}
+#{param_timeout}
 #{param_to}
 |==="
 

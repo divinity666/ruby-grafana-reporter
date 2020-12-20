@@ -12,7 +12,7 @@ module GrafanaReporter
         @from = translate_date(@from, @variables['grafana-report-timestamp'], false)
         @to = translate_date(@to, @variables['grafana-report-timestamp'], true)
         # rename "render-" variables
-        @variables.transform_keys! { |k| k.gsub(/^render-/, '') }
+        @variables = @variables.each_with_object({}) { |(k,v), h| h[k.gsub(/^render-/, '')] = v }
       end
 
       # Returns the body of the http query, which contains the raw image.

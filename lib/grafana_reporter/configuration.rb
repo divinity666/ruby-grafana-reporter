@@ -23,18 +23,20 @@ module GrafanaReporter
 
     # Used to access the configuration hash. To make sure, that the configuration is
     # valid, call {#validate}.
-    #
-    # NOTE: This function overwrites all existing configurations
-    attr_accessor :config
+    attr_reader :config
 
     def initialize
       @config = {}
       @logger = ::Logger.new($stderr, level: :unknown)
-      # TODO: set report class somewhere else, but make it known here
-      self.report_class = Asciidoctor::Report
     end
 
     attr_accessor :logger
+
+    # Used to overwrite the current configuration.
+    def config=(new_config)
+      @config = new_config
+      update_configuration
+    end
 
     # @return [String] mode, in which the reporting shall be executed. One of {MODE_CONNECTION_TEST},
     #   {MODE_SINGLE_RENDER} and {MODE_SERVICE}.
@@ -50,6 +52,7 @@ module GrafanaReporter
     # @return [String] full path of configured report template. Only needed in {MODE_SINGLE_RENDER}.
     def template
       return nil if get_config('default-document-attributes:var-template').nil?
+
       "#{templates_folder}#{get_config('default-document-attributes:var-template')}.adoc"
     end
 
@@ -152,6 +155,7 @@ module GrafanaReporter
     # and all necessary folders exist. Appropriate errors are raised in case of errors.
     # @return [void]
     def validate
+      check_deprecation
       validate_schema(schema, @config)
 
       # check if set folders exist
@@ -160,7 +164,59 @@ module GrafanaReporter
       raise FolderDoesNotExistError.new(images_folder, 'images-folder') unless File.directory?(images_folder)
     end
 
+    # Can be used to configure or overwrite single parameters.
+    #
+    # @param path [String] path of the paramter to set, e.g. +grafana-reporter:webservice-port+
+    # @param value [Object] value to set
+    def set_param(path, value)
+      return if path.nil?
+
+      levels = path.split(':')
+      last_level = levels.pop
+
+      cur_pos = @config
+      levels.each do |subpath|
+        if cur_pos[subpath]
+          cur_pos = cur_pos[subpath]
+        else
+          cur_pos[subpath] = {}
+          cur_pos = cur_pos[subpath]
+        end
+      end
+
+      cur_pos[last_level] = value
+      update_configuration
+    end
+
+    # Merge the given configuration object settings with the current config, i.e. overwrite and add all
+    # settings from the given config, but keep the not specified configs from the current object.
+    #
+    # param other_config [Configuration] other configuration object
+    def merge!(other_config)
+      self.config.merge!(other_config.config) { |_key, v1, v2| Hash === v1 && Hash === v2 ? v1.merge(v2) : v2 }
+      update_configuration
+    end
+
     private
+
+    def check_deprecation
+      return if report_class
+
+      logger.warn('DEPRECATION WARNING: Your configuration explicitly needs to specify the \'grafana-reporter:report-class\' value. '\
+                  'Currently this defaults to \'GrafanaReporter::Asciidoctor::Report\'. You can get rid of this warning, if you explicitly '\
+                  'set this configuration in your configuration file. Setting this default will be removed in a future version.')
+      set_param('grafana-reporter:report-class', 'GrafanaReporter::Asciidoctor::Report')
+    end
+
+    def update_configuration
+      if get_config('grafana-reporter:debug-level') =~ /DEBUG|INFO|WARN|ERROR|FATAL|UNKNOWN/
+        @logger.level = Object.const_get("::Logger::Severity::#{get_config('grafana-reporter:debug-level')}")
+      end
+
+      if get_config('grafana-reporter:report-class')
+        self.report_class = Object.const_get(get_config('grafana-reporter:report-class'))
+      end
+    end
 
     def get_config(path)
       return if path.nil?
@@ -241,11 +297,13 @@ module GrafanaReporter
         'default-document-attributes' => [Hash, 0],
         'grafana-reporter' =>
         [
-          Hash, 0,
+          Hash, 1,
           {
+            'debug-level' => [String, 0],
             'run-mode' => [String, 0],
             'test-instance' => [String, 0],
             'templates-folder' => [String, 0],
+            'report-class' => [String, 1],
             'reports-folder' => [String, 0],
             'report-retention' => [Integer, 0],
             'webservice-port' => [Integer, 0]
