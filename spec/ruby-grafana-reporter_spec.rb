@@ -412,6 +412,9 @@ describe Configuration do
     end
 
     it 'is invalid' do
+      allow(subject.logger).to receive(:debug)
+      allow(subject.logger).to receive(:info)
+      allow(subject.logger).to receive(:warn)
       expect { subject.validate }.to raise_error(ConfigurationDoesNotMatchSchemaError)
     end
   end
@@ -465,6 +468,14 @@ describe Configuration do
                             'grafana-reporter' => { 'report-class' => 'GrafanaReporter::Asciidoctor::Report', 'repots-folder' => 'ewfhenwf8' }
                           }
       expect(subject.logger).to receive(:warn).with("Item 'repots-folder' in configuration is unknown to the reporter and will be ignored")
+      subject.validate
+    end
+
+    it 'deprecation warning if report-class is not specified' do
+      subject.config = {
+                            'grafana' => { 'default' => { 'host' => 'test' } }
+                          }
+      expect(subject.logger).to receive(:warn).with(/DEPRECATION WARNING.*report-class./)
       subject.validate
     end
   end
@@ -622,29 +633,6 @@ RSpec.configure do |config|
 end
 
 describe Application do
-  context 'with config file' do
-    subject do
-      config = Configuration.new
-      yaml = "grafana-reporter:
-  webservice-port: 8050
-  templates-folder: ./spec/tests
-  reports-folder: .
-
-grafana:
-  default:
-    host: http://localhost
-    api_key: #{stub_key}
-
-default-document-attributes:
-  imagesdir: images/"
-
-      config.config = YAML.load(yaml)
-      app = GrafanaReporter::Application::Application.new
-      app.config = config
-      app
-    end
-  end
-
   context 'command line' do
     subject { GrafanaReporter::Application::Application.new }
 
