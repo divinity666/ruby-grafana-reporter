@@ -802,7 +802,6 @@ default-document-attributes:
     end
 
     it 'can properly cancel demo report' do
-print 'cancel' if ENV['TRAVIS']
       expect(@app.config.logger).not_to receive(:error)
       url = URI('http://localhost:8033/render?var-template=demo_report_slow')
       http = Net::HTTP.new(url.host, url.port)
