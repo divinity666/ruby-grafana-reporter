@@ -583,7 +583,7 @@ RSpec.configure do |config|
         'User-Agent' => 'Ruby'
       }
     )
-    .to_return(status: 200, body: lambda { sleep 2; '{"results":{"A":{"refId":"A","meta":{"rowCount":1,"sql":"SELECT 1000"},"series":null,"tables":[{"columns":[{"text":"1000"}],"rows":[[1]]}],"dataframes":null}}}' }, headers: {})
+    .to_return { |req| sleep 2; {status: 200, body: '{"results":{"A":{"refId":"A","meta":{"rowCount":1,"sql":"SELECT 1000"},"series":null,"tables":[{"columns":[{"text":"1000"}],"rows":[[1]]}],"dataframes":null}}}', headers: {} } }
 
     stub_request(:get, %r{http://localhost/render/d-solo/IDBRfjSmz\?from=\d+&fullscreen=true&panelId=11&theme=light&timeout=60(?:&var-[^&]+)*}).with(
       headers: {
@@ -822,7 +822,6 @@ print 'cancel' if ENV['TRAVIS']
     end
 
     it 'can properly create demo pdf report' do
-print 'pdf' if ENV['TRAVIS']
       expect(@app.config.logger).not_to receive(:error)
       url = URI('http://localhost:8033/render?var-template=demo_report')
       http = Net::HTTP.new(url.host, url.port)
@@ -844,7 +843,6 @@ print 'pdf' if ENV['TRAVIS']
     end
 
     it 'can properly create demo html report' do
-print 'html' if ENV['TRAVIS']
       expect(@app.config.logger).not_to receive(:error)
       url = URI('http://localhost:8033/render?var-template=demo_report&convert-backend=html')
       http = Net::HTTP.new(url.host, url.port)
