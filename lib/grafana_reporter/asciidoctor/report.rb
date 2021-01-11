@@ -63,16 +63,19 @@ module GrafanaReporter
 
           # build zip file
           zip_file = Tempfile.new('gf_zip')
-          Zip::File.open(zip_file.path, Zip::File::CREATE) do |zipfile|
+          buffer = Zip::OutputStream.write_buffer do |zipfile|
             # add report file
-            zipfile.get_output_stream("#{dest_path.gsub(@config.reports_folder, '')}.#{attrs['convert-backend']}") do |f|
-              f.puts File.read(dest_path)
-            end
+            zipfile.put_next_entry("#{dest_path.gsub(@config.reports_folder, '')}.#{attrs['convert-backend']}")
+            zipfile.write File.read(dest_path)
 
             # add image files
             @image_files.each do |file|
-              zipfile.get_output_stream(file.path.gsub(@config.images_folder, '')) { |f| f.puts File.read(file.path) }
+              zipfile.put_next_entry(file.path.gsub(@config.images_folder, ''))
+              zipfile.write File.read(file.path)
             end
+          end
+          File.open(zip_file, 'wb') do |f|
+            f.write buffer.string
           end
 
           # replace original file with zip file
