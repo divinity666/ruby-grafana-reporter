@@ -287,7 +287,10 @@ module GrafanaReporter
           date = date.next_year if is_to_time
         end
 
-        (date.to_time.to_i * 1000).to_s
+        # step back one second, if this is the 'to' time
+        date = (date.to_time - 1).to_datetime if is_to_time
+
+        (Time.at(date.to_time.to_i).to_i * 1000).to_s
       end
     end
   end

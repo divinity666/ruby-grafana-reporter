@@ -29,6 +29,16 @@ module GrafanaReporter
           end.join(column_divider)
         end
       end
+
+      # Translates the from and to times.
+      # @see Grafana::AbstractSqlQuery#pre_process
+      # @param grafana [Grafana::Grafana] grafana instance against which the query shall be executed
+      # @return [void]
+      def pre_process(grafana)
+        super(grafana)
+        @from = translate_date(@from, @variables['grafana-report-timestamp'], false)
+        @to = translate_date(@to, @variables['grafana-report-timestamp'], true)
+      end
     end
   end
 end
