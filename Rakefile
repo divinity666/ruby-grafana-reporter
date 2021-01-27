@@ -40,6 +40,9 @@ task :build do
   sh 'bundle exec rspec spec/test_single_file.rb'
   rm "spec/tmp_single_file_lib_ruby-grafana-reporter.rb"
 
+  # update help documentation
+  File.write('FUNCTION_CALLS.md', GrafanaReporter::Asciidoctor::Help.new.github)
+
   # build new versions
   require_relative 'lib/VERSION'
 
