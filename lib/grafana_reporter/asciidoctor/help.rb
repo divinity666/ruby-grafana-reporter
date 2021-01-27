@@ -2,8 +2,6 @@
 
 require 'yaml'
 
-# TODO: show 'see' information
-
 module GrafanaReporter
   module Asciidoctor
     class Help
@@ -12,7 +10,7 @@ module GrafanaReporter
       end
 
       def github(headline_level = 2)
-        help_text(github_options.merge(level: headline_level))
+        "#{toc}\n\n#{help_text(github_options.merge(level: headline_level))}"
       end
 
       private
@@ -30,6 +28,23 @@ module GrafanaReporter
 #{global_options_as_text(opts.merge(level: opts[:level] + 1))}
 #{opts[:headline_separator] * opts[:level]} Functions
 #{functions_as_text(opts.merge(level: opts[:level] + 1))})
+      end
+
+      def toc(opts = {})
+        result = []
+
+        result << "Table of contents"
+        result << "* [Global options](#global-options)"
+        prepared_help[:global_options].sort.map do |k, v|
+          result << "  * [#{k}](##{k.downcase})"
+        end
+
+        result << "* [Functions](#functions)"
+        prepared_help[:functions].sort.map do |k, v|
+          result << "  * [#{k}](##{k.downcase})"
+        end
+
+        result.join("\n")
       end
 
       def global_options_as_text(opts = {})
@@ -57,10 +72,10 @@ Usage: #{opts[:code_begin]}#{v['call']}#{opts[:code_end]}
 #{opts[:headline_separator] * opts[:level]} #{opts[:code_begin]}#{k}#{opts[:code_end]}
 Usage: #{opts[:code_begin]}#{v[:call]}#{opts[:code_end]}
 
-#{v[:description]}#{unless v[:options].empty?
+#{v[:description]}#{"\n\nSee also: #{v[:see]}" if v[:see]}#{unless v[:options].empty?
 %(
 #{opts[:table_begin]}| Option | Description#{"\n#{opts[:head_postfix_col] * 2}" if opts[:head_postfix_col]}
-#{v[:options].sort.map { |_opt_k, opt_v| "| #{opts[:code_begin]}#{opt_v[:call]}#{opts[:code_end]} | #{opt_v[:description].gsub('ˋ').with_index(1){|_,i| i.odd? ? 'ˋ+' : '+ˋ'}.gsub('|', '\|')}}" }.join("\n") }#{opts[:table_end]})
+#{v[:options].sort.map { |_opt_k, opt_v| "| #{opts[:code_begin]}#{opt_v[:call]}#{opts[:code_end]} | #{opt_v[:description].gsub('|', '\|')}" }.join("\n") }#{opts[:table_end]})
 end}
 )
         end
@@ -151,7 +166,7 @@ standard_options:
 
   to:
     call: to="<to_timestamp>"
-    description: can be used to override default `to` time'
+    description: can be used to override default `to` time
 
   format:
     call: format="<format_col1>,<format_col2>,..."
@@ -280,7 +295,7 @@ grafana_panel_description:
     Returns a description field for the specified panel. ˋ<type>ˋ can either be ˋtitleˋ or ˋdescriptionˋ.
     Grafana variables will be replaced in the returned value.
   call: 'grafana_panel_description:<panel_id>["<type>",options]'
-#  see: https://grafana.com/docs/grafana/latest/variables/templates-and-variables/#variable-syntax
+  see: https://grafana.com/docs/grafana/latest/variables/templates-and-variables/#variable-syntax
   standard_options:
     dashboard:
     instance:
@@ -312,7 +327,7 @@ grafana_panel_query_table:
   description: >-
     Returns the results of a query, which is configured in a grafana panel, as a table in asciidoctor.
     Grafana variables will be replaced in the panel's SQL statement.
-  call: 'include:grafana_panel_query_table:<panel_id>[query="<query_letter>",options]'
+  call: 'include::grafana_panel_query_table:<panel_id>[query="<query_letter>",options]'
   see: https://grafana.com/docs/grafana/latest/variables/templates-and-variables/#variable-syntax
   options:
     query:
@@ -388,5 +403,3 @@ YAML_HELP
     end
   end
 end
-
-#puts GrafanaReporter::Asciidoctor::Help.new.asciidoctor
