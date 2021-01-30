@@ -13,8 +13,8 @@ module Grafana
       @grafana = grafana
       @model = model
 
-      initialize_panels
-      initialize_variables
+      init_panels
+      init_variables
     end
 
     # @return [String] +from+ time configured in the dashboard.
@@ -42,35 +42,35 @@ module Grafana
 
       panels.first
     end
-  end
 
-  private
+    private
 
-  # store variables in array as objects of type Variable
-  def initialize_variables
-    @variables = []
-    return unless @model.key?('templating')
+    # store variables in array as objects of type Variable
+    def init_variables
+      @variables = []
+      return unless @model.key?('templating')
 
-    list = @model['templating']['list']
-    return unless list.is_a? Array
+      list = @model['templating']['list']
+      return unless list.is_a? Array
 
-    list.each do |item|
-      @variables << Variable.new(item)
+      list.each do |item|
+        @variables << Variable.new(item)
+      end
     end
-  end
 
-  # read panels
-  def initialize_panels
-    @panels = []
-    return unless @model.key?('panels')
+    # read panels
+    def init_panels
+      @panels = []
+      return unless @model.key?('panels')
 
-    @model['panels'].each do |panel|
-      if panel.key?('panels')
-        panel['panels'].each do |subpanel|
-          @panels << Panel.new(subpanel, self)
+      @model['panels'].each do |panel|
+        if panel.key?('panels')
+          panel['panels'].each do |subpanel|
+            @panels << Panel.new(subpanel, self)
+          end
+        else
+          @panels << Panel.new(panel, self)
         end
-      else
-        @panels << Panel.new(panel, self)
       end
     end
   end

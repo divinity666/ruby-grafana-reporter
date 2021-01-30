@@ -244,71 +244,91 @@ describe PanelImageQuery do
   context 'translate date' do
     it 'can translate now' do
       expect(subject.translate_date('now', Variable.new('2020-07-28T20:58:03.005+0200'), false)).to eq('1595962683000')
-      expect(subject.translate_date('now', Variable.new('2020-07-28T20:58:03.005+0200'), true)).to eq('1595962683000')
+      expect(subject.translate_date('now', Variable.new('2020-07-28T20:58:03.005+0200'), true)).to eq('1595962682000')
     end
 
     it 'can translate now rounded seconds' do
       expect(subject.translate_date('now/s', Variable.new('2020-07-28T20:58:03.005+0200'), false)).to eq('1595962683000')
-      expect(subject.translate_date('now/s', Variable.new('2020-07-28T20:58:03.005+0200'), true)).to eq('1595962684000')
+      expect(subject.translate_date('now/s', Variable.new('2020-07-28T20:58:03.005+0200'), true)).to eq('1595962683000')
       expect(subject.translate_date('now-s', Variable.new('2020-07-28T20:58:03.005+0200'), false)).to eq('1595962682000')
-      expect(subject.translate_date('now-s', Variable.new('2020-07-28T20:58:03.005+0200'), true)).to eq('1595962682000')
+      expect(subject.translate_date('now-s', Variable.new('2020-07-28T20:58:03.005+0200'), true)).to eq('1595962681000')
       expect(subject.translate_date('now-s/s', Variable.new('2020-07-28T20:58:03.005+0200'), false)).to eq('1595962682000')
-      expect(subject.translate_date('now-s/s', Variable.new('2020-07-28T20:58:03.005+0200'), true)).to eq('1595962683000')
+      expect(subject.translate_date('now-s/s', Variable.new('2020-07-28T20:58:03.005+0200'), true)).to eq('1595962682000')
     end
 
     it 'can translate now rounded minutes' do
       expect(subject.translate_date('now/m', Variable.new('2020-07-28T20:58:03.005+0200'), false)).to eq('1595962680000')
-      expect(subject.translate_date('now/m', Variable.new('2020-07-28T20:58:03.005+0200'), true)).to eq('1595962740000')
+      expect(subject.translate_date('now/m', Variable.new('2020-07-28T20:58:03.005+0200'), true)).to eq('1595962739000')
       expect(subject.translate_date('now-m', Variable.new('2020-07-28T20:58:03.005+0200'), false)).to eq('1595962623000')
-      expect(subject.translate_date('now-m', Variable.new('2020-07-28T20:58:03.005+0200'), true)).to eq('1595962623000')
+      expect(subject.translate_date('now-m', Variable.new('2020-07-28T20:58:03.005+0200'), true)).to eq('1595962622000')
       expect(subject.translate_date('now-m/m', Variable.new('2020-07-28T20:58:03.005+0200'), false)).to eq('1595962620000')
-      expect(subject.translate_date('now-m/m', Variable.new('2020-07-28T20:58:03.005+0200'), true)).to eq('1595962680000')
+      expect(subject.translate_date('now-m/m', Variable.new('2020-07-28T20:58:03.005+0200'), true)).to eq('1595962679000')
     end
 
     it 'can translate now rounded hours' do
       expect(subject.translate_date('now/h', Variable.new('2020-07-28T20:58:03.005+0200'), false)).to eq('1595959200000')
-      expect(subject.translate_date('now/h', Variable.new('2020-07-28T20:58:03.005+0200'), true)).to eq('1595962800000')
+      expect(subject.translate_date('now/h', Variable.new('2020-07-28T20:58:03.005+0200'), true)).to eq('1595962799000')
       expect(subject.translate_date('now-h', Variable.new('2020-07-28T20:58:03.005+0200'), false)).to eq('1595959083000')
-      expect(subject.translate_date('now-h', Variable.new('2020-07-28T20:58:03.005+0200'), true)).to eq('1595959083000')
+      expect(subject.translate_date('now-h', Variable.new('2020-07-28T20:58:03.005+0200'), true)).to eq('1595959082000')
       expect(subject.translate_date('now-h/h', Variable.new('2020-07-28T20:58:03.005+0200'), false)).to eq('1595955600000')
-      expect(subject.translate_date('now-h/h', Variable.new('2020-07-28T20:58:03.005+0200'), true)).to eq('1595959200000')
+      expect(subject.translate_date('now-h/h', Variable.new('2020-07-28T20:58:03.005+0200'), true)).to eq('1595959199000')
     end
 
     it 'can translate now rounded days' do
       expect(subject.translate_date('now/d', Variable.new('2020-07-28T20:58:03.005+0200'), false)).to eq('1595887200000')
-      expect(subject.translate_date('now/d', Variable.new('2020-07-28T20:58:03.005+0200'), true)).to eq('1595973600000')
+      expect(subject.translate_date('now/d', Variable.new('2020-07-28T20:58:03.005+0200'), true)).to eq('1595973599000')
       expect(subject.translate_date('now-d', Variable.new('2020-07-28T20:58:03.005+0200'), false)).to eq('1595876283000')
-      expect(subject.translate_date('now-d', Variable.new('2020-07-28T20:58:03.005+0200'), true)).to eq('1595876283000')
+      expect(subject.translate_date('now-d', Variable.new('2020-07-28T20:58:03.005+0200'), true)).to eq('1595876282000')
       expect(subject.translate_date('now-d/d', Variable.new('2020-07-28T20:58:03.005+0200'), false)).to eq('1595800800000')
-      expect(subject.translate_date('now-d/d', Variable.new('2020-07-28T20:58:03.005+0200'), true)).to eq('1595887200000')
+      expect(subject.translate_date('now-d/d', Variable.new('2020-07-28T20:58:03.005+0200'), true)).to eq('1595887199000')
     end
 
     it 'can translate now rounded weeks' do
       expect(subject.translate_date('now/w', Variable.new('2020-07-28T20:58:03.005+0200'), false)).to eq('1595800800000')
-      expect(subject.translate_date('now/w', Variable.new('2020-07-28T20:58:03.005+0200'), true)).to eq('1596405600000')
+      expect(subject.translate_date('now/w', Variable.new('2020-07-28T20:58:03.005+0200'), true)).to eq('1596405599000')
       expect(subject.translate_date('now-w', Variable.new('2020-07-28T20:58:03.005+0200'), false)).to eq('1595357883000')
-      expect(subject.translate_date('now-w', Variable.new('2020-07-28T20:58:03.005+0200'), true)).to eq('1595357883000')
+      expect(subject.translate_date('now-w', Variable.new('2020-07-28T20:58:03.005+0200'), true)).to eq('1595357882000')
       expect(subject.translate_date('now-w/w', Variable.new('2020-07-28T20:58:03.005+0200'), false)).to eq('1595196000000')
-      expect(subject.translate_date('now-w/w', Variable.new('2020-07-28T20:58:03.005+0200'), true)).to eq('1595800800000')
+      expect(subject.translate_date('now-w/w', Variable.new('2020-07-28T20:58:03.005+0200'), true)).to eq('1595800799000')
     end
 
     it 'can translate now rounded months' do
       expect(subject.translate_date('now/M', Variable.new('2020-07-28T20:58:03.005+0200'), false)).to eq('1593554400000')
-      expect(subject.translate_date('now/M', Variable.new('2020-07-28T20:58:03.005+0200'), true)).to eq('1596232800000')
+      expect(subject.translate_date('now/M', Variable.new('2020-07-28T20:58:03.005+0200'), true)).to eq('1596232799000')
       expect(subject.translate_date('now-M', Variable.new('2020-07-28T20:58:03.005+0200'), false)).to eq('1593370683000')
-      expect(subject.translate_date('now-M', Variable.new('2020-07-28T20:58:03.005+0200'), true)).to eq('1593370683000')
+      expect(subject.translate_date('now-M', Variable.new('2020-07-28T20:58:03.005+0200'), true)).to eq('1593370682000')
       expect(subject.translate_date('now-M/M', Variable.new('2020-07-28T20:58:03.005+0200'), false)).to eq('1590962400000')
-      expect(subject.translate_date('now-M/M', Variable.new('2020-07-28T20:58:03.005+0200'), true)).to eq('1593554400000')
+      expect(subject.translate_date('now-M/M', Variable.new('2020-07-28T20:58:03.005+0200'), true)).to eq('1593554399000')
     end
 
     it 'can translate now rounded years' do
       expect(subject.translate_date('now/y', Variable.new('2020-07-28T20:58:03.005+0200'), false)).to eq('1577829600000')
-      expect(subject.translate_date('now/y', Variable.new('2020-07-28T20:58:03.005+0200'), true)).to eq('1609452000000')
+      expect(subject.translate_date('now/y', Variable.new('2020-07-28T20:58:03.005+0200'), true)).to eq('1609451999000')
       expect(subject.translate_date('now-y', Variable.new('2020-07-28T20:58:03.005+0200'), false)).to eq('1564340283000')
-      expect(subject.translate_date('now-y', Variable.new('2020-07-28T20:58:03.005+0200'), true)).to eq('1564340283000')
+      expect(subject.translate_date('now-y', Variable.new('2020-07-28T20:58:03.005+0200'), true)).to eq('1564340282000')
       expect(subject.translate_date('now-y/y', Variable.new('2020-07-28T20:58:03.005+0200'), false)).to eq('1546293600000')
-      expect(subject.translate_date('now-y/y', Variable.new('2020-07-28T20:58:03.005+0200'), true)).to eq('1577829600000')
+      expect(subject.translate_date('now-y/y', Variable.new('2020-07-28T20:58:03.005+0200'), true)).to eq('1577829599000')
     end
+
+    it 'can translate with specified timezone' do
+      expect(subject.translate_date('now/y', Variable.new('2020-07-28T20:58:03.005+0200'), false, Variable.new('CET'))).to eq('1577833200000')
+    end
+  end
+end
+
+describe Help do
+  subject { GrafanaReporter::Asciidoctor::Help.new }
+
+  it 'can build help for github' do
+    result = subject.github
+    expect(result).to include('grafana_panel_image')
+    expect(result).to include('| --')
+  end
+
+  it 'can build help for asciidoctor' do
+    result = subject.asciidoctor
+    expect(result).to include('grafana_panel_image')
+    expect(result).to include('|==')
   end
 end
 
@@ -671,7 +691,7 @@ describe Application do
       File.delete('./result.pdf') if File.exist?('./result.pdf')
     end
 
-    it 'can single render a template' do
+    it 'can single render a template and output to custom folder' do
       expect(subject.config.logger).not_to receive(:error)
       expect { subject.configure_and_run(['-c', './spec/tests/demo_config.txt', '-t', 'spec/tests/demo_report', '-o', './result.pdf', '-d', 'ERROR']) }.not_to output(/ERROR/).to_stderr
       expect(File.exist?('./result.pdf')).to be true
@@ -924,6 +944,13 @@ describe PanelQueryValueInlineMacro do
     expect(Asciidoctor.convert("grafana_panel_query_value:#{stub_panel}[query=\"#{stub_panel_query}\",dashboard=\"#{stub_dashboard}\"]", to_file: false)).to include('<p>1594308060000')
   end
 
+  it 'can translate times' do
+    @report.logger.level = ::Logger::Severity::DEBUG
+    expect(@report.logger).to receive(:debug).exactly(4).times.with(any_args)
+    expect(@report.logger).to receive(:debug).with(/"from":"#{Time.new(Time.new.year,1,1).to_i * 1000}".*"to":"#{(Time.new(Time.new.year + 1,1,1) - 1).to_i * 1000}"/)
+    expect(Asciidoctor.convert("grafana_panel_query_value:#{stub_panel}[query=\"#{stub_panel_query}\",dashboard=\"#{stub_dashboard}\",from=\"now/y\",to=\"now/y\"]", to_file: false)).not_to include('GrafanaReporterError')
+  end
+
   it 'can replace values' do
     expect(@report.logger).not_to receive(:error)
     expect(Asciidoctor.convert("grafana_panel_query_value:#{stub_panel}[query=\"#{stub_panel_query}\",dashboard=\"#{stub_dashboard}\",replace_values_1=\"1594308060000:geht\"]", to_file: false)).to include('<p>geht')
@@ -1020,6 +1047,14 @@ describe SqlTableIncludeProcessor do
     expect(@report.logger).not_to receive(:error)
     expect(Asciidoctor.convert("include::grafana_sql_table:#{stub_datasource}[sql=\"SELECT 1\"]", to_file: false)).not_to include('GrafanaReporterError')
   end
+
+  it 'can translate times' do
+    @report.logger.level = ::Logger::Severity::DEBUG
+    expect(@report.logger).to receive(:debug).exactly(3).times.with(any_args)
+    expect(@report.logger).to receive(:debug).with(/"from":"#{Time.new(Time.new.year,1,1).to_i * 1000}".*"to":"#{(Time.new(Time.new.year + 1,1,1) - 1).to_i * 1000}"/)
+    expect(Asciidoctor.convert("include::grafana_sql_table:#{stub_datasource}[sql=\"SELECT 1\",from=\"now/y\",to=\"now/y\"]", to_file: false)).not_to include('GrafanaReporterError')
+  end
+
 end
 
 describe SqlValueInlineMacro do
@@ -1039,6 +1074,13 @@ describe SqlValueInlineMacro do
     expect(@report.logger).not_to receive(:error)
     expect(Asciidoctor.convert("grafana_sql_value:#{stub_datasource}[sql=\"SELECT 1\"]", to_file: false)).not_to include('GrafanaReporterError')
     expect(Asciidoctor.convert("grafana_sql_value:#{stub_datasource}[sql=\"SELECT 1\"]", to_file: false)).to include('1')
+  end
+
+  it 'can translate times' do
+    @report.logger.level = ::Logger::Severity::DEBUG
+    expect(@report.logger).to receive(:debug).exactly(3).times.with(any_args)
+    expect(@report.logger).to receive(:debug).with(/"from":"#{Time.new(Time.new.year,1,1).to_i * 1000}".*"to":"#{(Time.new(Time.new.year + 1,1,1) - 1).to_i * 1000}"/)
+    expect(Asciidoctor.convert("grafana_sql_value:#{stub_datasource}[sql=\"SELECT 1\",from=\"now/y\",to=\"now/y\"]", to_file: false)).not_to include('GrafanaReporterError')
   end
 
   it 'returns error message if no sql statement specified' do
@@ -1102,6 +1144,13 @@ describe PanelQueryTableIncludeProcessor do
       expect(@report.logger).not_to receive(:error)
       expect(Asciidoctor.convert("include::grafana_panel_query_table:#{stub_panel}[query=\"#{stub_panel_query}\",dashboard=\"#{stub_dashboard}\"]", to_file: false)).not_to include('GrafanaReporterError')
       expect(Asciidoctor.convert("include::grafana_panel_query_table:#{stub_panel}[query=\"#{stub_panel_query}\",dashboard=\"#{stub_dashboard}\"]", to_file: false)).to match(/<p>\| 1594308060000 \| 43.9/)
+    end
+
+    it 'can translate times' do
+      @report.logger.level = ::Logger::Severity::DEBUG
+      expect(@report.logger).to receive(:debug).exactly(4).times.with(any_args)
+      expect(@report.logger).to receive(:debug).with(/"from":"#{Time.new(Time.new.year,1,1).to_i * 1000}".*"to":"#{(Time.new(Time.new.year + 1,1,1) - 1).to_i * 1000}"/)
+      expect(Asciidoctor.convert("include::grafana_panel_query_table:#{stub_panel}[query=\"#{stub_panel_query}\",dashboard=\"#{stub_dashboard}\",from=\"now/y\",to=\"now/y\"]", to_file: false)).not_to include('GrafanaReporterError')
     end
 
     it 'can replace values' do
