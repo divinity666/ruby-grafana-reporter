@@ -238,8 +238,6 @@ module GrafanaReporter
         raise TimeRangeUnknownError, orig_date unless date_splitted
 
         date = DateTime.parse(report_time.raw_value)
-# TODO: add test for timezone
-# TODO: allow timezone as URL parameter
 # TODO: allow from_translated or similar in ADOC template
         date = date.new_offset(timezone.raw_value) if timezone
 

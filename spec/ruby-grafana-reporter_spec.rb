@@ -309,6 +309,10 @@ describe PanelImageQuery do
       expect(subject.translate_date('now-y/y', Variable.new('2020-07-28T20:58:03.005+0200'), false)).to eq('1546293600000')
       expect(subject.translate_date('now-y/y', Variable.new('2020-07-28T20:58:03.005+0200'), true)).to eq('1577829599000')
     end
+
+    it 'can translate with specified timezone' do
+      expect(subject.translate_date('now/y', Variable.new('2020-07-28T20:58:03.005+0200'), false, Variable.new('CET'))).to eq('1577833200000')
+    end
   end
 end
 
