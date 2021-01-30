@@ -36,8 +36,8 @@ module GrafanaReporter
       # @return [void]
       def pre_process(grafana)
         super(grafana)
-        @from = translate_date(@from, @variables['grafana-report-timestamp'], false)
-        @to = translate_date(@to, @variables['grafana-report-timestamp'], true)
+        @from = translate_date(@from, @variables['grafana-report-timestamp'], false, @variables['from_timezone'] || @variables['grafana_default_from_timezone'])
+        @to = translate_date(@to, @variables['grafana-report-timestamp'], true, @variables['to_timezone'] || @variables['grafana_default_to_timezone'])
       end
     end
   end
