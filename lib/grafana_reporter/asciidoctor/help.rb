@@ -135,6 +135,14 @@ global_options:
     description: >-
       Specifies to which dashboard the queries shall be targeted by default.
 
+  grafana_default_from_timezone:
+    call: ":grafana_default_from_timezone: <timezone>"
+    description: Specifies which timezone shall be used for the `from` time, e.g. `CET` or `CEST`.
+
+  grafana_default_to_timezone:
+    call: ":grafana_default_to_timezone: <timezone>"
+    description: Specifies which timezone shall be used for the `to` time, e.g. `CET` or `CEST`.
+
   from:
     call: ":from: <from_timestamp>"
     description: >-
@@ -161,11 +169,19 @@ standard_options:
       this value can be overridden with this option.
 
   from:
-    call: from="<from_timestamp>"
+    call: from="<timestamp>"
     description: can be used to override default `from` time
 
+  from_timezone:
+    call: from_timezone="<timezone>"
+    description: can be used to override system timezone for `from` time and will also override `grafana_default_from_timezone` option
+
+  to_timezone:
+    call: to_timezone="<timezone>"
+    description: can be used to override system timezone for `to` time and will also override `grafana_default_to_timezone` option
+
   to:
-    call: to="<to_timestamp>"
+    call: to="<timestamp>"
     description: can be used to override default `to` time
 
   format:
@@ -257,6 +273,8 @@ grafana_alerts:
     timeout:
     to:
     transpose:
+    from_timezone:
+    to_timezone:
 
 grafana_annotations:
   description: >-
@@ -289,10 +307,12 @@ grafana_annotations:
     timeout:
     to:
     transpose:
+    from_timezone:
+    to_timezone:
 
 grafana_panel_description:
   description: >-
-    Returns a description field for the specified panel. ˋ<type>ˋ can either be ˋtitleˋ or ˋdescriptionˋ.
+    Returns a description field for the specified panel. `<type>` can either be `title` or `description`.
     Grafana variables will be replaced in the returned value.
   call: 'grafana_panel_description:<panel_id>["<type>",options]'
   see: https://grafana.com/docs/grafana/latest/variables/templates-and-variables/#variable-syntax
@@ -322,6 +342,8 @@ grafana_panel_image:
     instance:
     timeout:
     to:
+    from_timezone:
+    to_timezone:
 
 grafana_panel_query_table:
   description: >-
@@ -345,6 +367,8 @@ grafana_panel_query_table:
     timeout:
     to:
     transpose:
+    from_timezone:
+    to_timezone:
 
 grafana_panel_query_value:
   call: 'grafana_panel_query_value:<panel_id>[query="<query_letter>",options]'
@@ -365,6 +389,8 @@ grafana_panel_query_value:
     replace_values:
     timeout:
     to:
+    from_timezone:
+    to_timezone:
 
 grafana_sql_table:
   call: 'include::grafana_sql_table:<datasource_id>[sql="<sql_query>",options]'
@@ -383,6 +409,8 @@ grafana_sql_table:
     timeout:
     to:
     transpose:
+    from_timezone:
+    to_timezone:
 
 grafana_sql_value:
   call: 'grafana_sql_value:<datasource_id>[sql="<sql_query>",options]'
@@ -398,6 +426,8 @@ grafana_sql_value:
     replace_values:
     timeout:
     to:
+    from_timezone:
+    to_timezone:
 YAML_HELP
       end
     end
