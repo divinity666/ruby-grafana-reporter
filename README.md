@@ -35,6 +35,9 @@ The report may also be returned in any other format that asciidoctor supports.
 The reporter can run standalone or as a webservice. It is built to
 integrate without further dependencies with the asciidoctor docker image.
 
+Can't wait to see, what functions the reporter provides within the asciidoctor
+templates? Have a look at the [function documentation](FUNCTION_CALLS.md).
+
 The complete
 [API documentation](https://rubydoc.info/gems/ruby-grafana-reporter) can be
 found here.
