@@ -160,7 +160,7 @@ module GrafanaReporter
 
         # provide report
         @logger.debug("Returning PDF report at #{report.path}")
-        content = File.read(report.path)
+        content = File.read(report.path, mode: 'rb')
         return http_response(200, 'OK', content, "Content-Type": 'application/pdf') if content.start_with?('%PDF')
 
         # TODO: properly provide file as zip
