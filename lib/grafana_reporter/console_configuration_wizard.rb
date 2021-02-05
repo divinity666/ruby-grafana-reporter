@@ -86,16 +86,20 @@ include::grafana_environment[])
       end
 
       config_param = config_file == Application::Application::CONFIG_FILE ? '' : " -c #{config_file}"
+      program_call = "#{Gem.ruby} #{$PROGRAM_NAME}"
+      if defined?(Ocra)
+        program_call = ENV["OCRA_EXECUTABLE"]
+      end
 
       puts
       puts 'Now everything is setup properly. To create an initial report including a manual of all reporter '\
            'capabilities with the newly created configuration, call the following command:'
       puts
-      puts "   #{Gem.ruby} #{$PROGRAM_NAME}#{config_param} -t #{demo_report} -o demo_report_with_help.pdf"
+      puts "   #{program_call}#{config_param} -t #{demo_report} -o demo_report_with_help.pdf"
       puts
       puts 'To start the reporter as a service, call the following command:'
       puts
-      puts "   #{Gem.ruby} #{$PROGRAM_NAME}#{config_param}"
+      puts "   #{program_call}#{config_param}"
       puts
       puts "Open 'http://localhost:#{config.webserver_port}/render?var-template=#{demo_report}' in a webbrowser to"\
            ' test your configuration.'
