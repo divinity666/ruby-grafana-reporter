@@ -707,74 +707,6 @@ describe Application do
     end
   end
 
-  context 'config wizard' do
-    subject { GrafanaReporter::Application::Application.new }
-    let(:folder) { './test_templates' }
-    let(:config_file) { 'test.config' }
-
-    before do
-      File.delete(config_file) if File.exist?(config_file)
-      File.delete("#{folder}/demo_report.adoc") if File.exist?("#{folder}/demo_report.adoc")
-      Dir.delete(folder) if Dir.exist?(folder)
-      @config = ["\n", "http://localhost\n", "a\n", "#{stub_key}\n", "\n", "i\n", "\n", "i\n", "\n", "i\n", "24\n"]
-      allow(subject).to receive(:puts)
-      allow(subject).to receive(:print)
-      allow(subject.config.logger).to receive(:debug)
-      allow(subject.config.logger).to receive(:info)
-      allow(subject.config.logger).to receive(:warn)
-    end
-
-    after do
-      File.delete(config_file) if File.exist?(config_file)
-      File.delete("#{folder}/demo_report.adoc") if File.exist?("#{folder}/demo_report.adoc")
-      Dir.delete(folder) if Dir.exist?(folder)
-    end
-
-    it 'can create configured folders' do
-      @config.slice!(4, 2)
-      @config.insert(4, "#{folder}\n", "c\n")
-      allow(subject).to receive(:gets).and_return(*@config)
-      subject.configure_and_run(['-w','-c',config_file])
-      expect(Dir.exist?(folder)).to be true
-    end
-
-    it 'creates valid config file as admin' do
-      expect(subject.config.logger).not_to receive(:error)
-      allow(subject).to receive(:gets).and_return(*@config)
-      subject.configure_and_run(['-w','-c',config_file, '-d', 'ERROR'])
-      expect(File.exist?(config_file)).to be true
-    end
-
-    it 'creates valid config file as non admin with manual datasource' do
-      @config.slice!(2,2)
-      @config.insert(2, "d\n", "demo\n", "1\n", "a\n", "d\n")
-      allow(subject).to receive(:gets).and_return(*@config)
-      subject.configure_and_run(['-w','-c',config_file])
-      expect(File.exist?(config_file)).to be true
-    end
-
-    it 'asks before overwriting config file' do
-      allow(subject).to receive(:gets).and_return(*@config)
-      subject.configure_and_run(['-w','-c',config_file])
-      expect(File.exist?(config_file)).to be true
-      modify_date = File.mtime(config_file)
-      #try to create config again
-      @config = ["\n"]
-      allow(subject).to receive(:gets).and_return(*@config)
-      subject.configure_and_run(['-w','-c',config_file])
-      expect(File.mtime(config_file)).to eq(modify_date)
-    end
-
-    it 'warns if grafana instance could not be accessed' do
-      @config.insert(1, "http://blabla:9999\n", "r\n")
-      allow(subject).to receive(:gets).and_return(*@config)
-      WebMock.disable_net_connect!(allow: ['http://blabla:9999'])
-      subject.configure_and_run(['-w','-c',config_file])
-      WebMock.enable!
-      expect(File.exist?(config_file)).to be true
-    end
-  end
-
   context 'webserver' do
     before(:context) do
       WebMock.disable_net_connect!(allow: ['http://localhost:8033'])
@@ -891,6 +823,75 @@ default-document-attributes:
       expect(@app.config.logger).to receive(:error).with(/is not a valid template\./)
       res = Net::HTTP.get(URI('http://localhost:8033/render?var-template=does_not_exist'))
       expect(res).to include("is not a valid template.")
+    end
+  end
+end
+
+describe ConsoleConfigurationWizard do
+  context 'config wizard' do
+    subject { GrafanaReporter::ConsoleConfigurationWizard.new }
+    let(:folder) { './test_templates' }
+    let(:config_file) { 'test.config' }
+
+    before do
+      File.delete(config_file) if File.exist?(config_file)
+      File.delete("#{folder}/demo_report.adoc") if File.exist?("#{folder}/demo_report.adoc")
+      Dir.delete(folder) if Dir.exist?(folder)
+      @config = ["\n", "http://localhost\n", "a\n", "#{stub_key}\n", "\n", "i\n", "\n", "i\n", "\n", "i\n", "24\n"]
+      allow(subject).to receive(:puts)
+      allow(subject).to receive(:print)
+      allow_any_instance_of(Logger).to receive(:debug)
+      allow_any_instance_of(Logger).to receive(:info)
+      allow_any_instance_of(Logger).to receive(:warn)
+    end
+
+    after do
+      File.delete(config_file) if File.exist?(config_file)
+      File.delete("#{folder}/demo_report.adoc") if File.exist?("#{folder}/demo_report.adoc")
+      Dir.delete(folder) if Dir.exist?(folder)
+    end
+
+    it 'can create configured folders' do
+      @config.slice!(4, 2)
+      @config.insert(4, "#{folder}\n", "c\n")
+      allow(subject).to receive(:gets).and_return(*@config)
+      subject.start_wizard(config_file)
+      expect(Dir.exist?(folder)).to be true
+    end
+
+    it 'creates valid config file as admin' do
+      allow(subject).to receive(:gets).and_return(*@config)
+      subject.start_wizard(config_file)
+      expect(File.exist?(config_file)).to be true
+    end
+
+    it 'creates valid config file as non admin with manual datasource' do
+      @config.slice!(2,2)
+      @config.insert(2, "d\n", "demo\n", "1\n", "a\n", "d\n")
+      allow(subject).to receive(:gets).and_return(*@config)
+      subject.start_wizard(config_file)
+      expect(File.exist?(config_file)).to be true
+    end
+
+    it 'asks before overwriting config file' do
+      allow(subject).to receive(:gets).and_return(*@config)
+      subject.start_wizard(config_file)
+      expect(File.exist?(config_file)).to be true
+      modify_date = File.mtime(config_file)
+      #try to create config again
+      @config = ["\n"]
+      allow(subject).to receive(:gets).and_return(*@config)
+      subject.start_wizard(config_file)
+      expect(File.mtime(config_file)).to eq(modify_date)
+    end
+
+    it 'warns if grafana instance could not be accessed' do
+      @config.insert(1, "http://blabla:9999\n", "r\n")
+      allow(subject).to receive(:gets).and_return(*@config)
+      WebMock.disable_net_connect!(allow: ['http://blabla:9999'])
+      subject.start_wizard(config_file)
+      WebMock.enable!
+      expect(File.exist?(config_file)).to be true
     end
   end
 end
