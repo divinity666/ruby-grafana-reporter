@@ -8,13 +8,7 @@ module GrafanaReporter
     def start_wizard(config_file)
       config = Configuration.new
 
-      if File.exist?(config_file)
-        input = nil
-        until input
-          input = user_input("Configuration file '#{config_file}' already exists. Do you want to overwrite it?", 'yN')
-          return if input =~ /^(?:n|N|yN)$/
-        end
-      end
+      return unless overwrite_file(config_file)
 
       puts 'This wizard will guide you through an initial configuration for'\
            ' the ruby-grafana-reporter. The configuration file will be created'\
@@ -35,14 +29,14 @@ module GrafanaReporter
 #{grafana}
 
 grafana-reporter:
-report-class: GrafanaReporter::Asciidoctor::Report
-templates-folder: #{templates}
-reports-folder: #{reports}
-report-retention: #{retention}
-webservice-port: #{port}
+  report-class: GrafanaReporter::Asciidoctor::Report
+  templates-folder: #{templates}
+  reports-folder: #{reports}
+  report-retention: #{retention}
+  webservice-port: #{port}
 
 default-document-attributes:
-imagesdir: #{images}
+  imagesdir: #{images}
 # feel free to add here additional asciidoctor document attributes which are applied to all your templates
 )
 
@@ -274,6 +268,18 @@ include::grafana_environment[])
       end
 
       false
+    end
+
+    def overwrite_file(config_file)
+      return true unless File.exist?(config_file)
+
+      input = nil
+      until input
+        input = user_input("Configuration file '#{config_file}' already exists. Do you want to overwrite it?", 'yN')
+        return false if input =~ /^(?:n|N|yN)$/
+      end
+
+      true
     end
   end
 end
