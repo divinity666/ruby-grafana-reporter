@@ -34,7 +34,7 @@ module GrafanaReporter
 
         parser = OptionParser.new do |opts|
           if defined?(Ocra)
-            opts.banner = "Usage: #{ENV["OCRA_EXECUTABLE"]} [options]"
+            opts.banner = "Usage: #{ENV["OCRA_EXECUTABLE"].gsub("#{Dir.pwd}/".gsub('/', '\\'), '')} [options]"
           else
             opts.banner = "Usage: #{Gem.ruby} #{$PROGRAM_NAME} [options]"
           end
