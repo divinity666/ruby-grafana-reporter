@@ -837,7 +837,7 @@ describe ConsoleConfigurationWizard do
       File.delete(config_file) if File.exist?(config_file)
       File.delete("#{folder}/demo_report.adoc") if File.exist?("#{folder}/demo_report.adoc")
       Dir.delete(folder) if Dir.exist?(folder)
-      @config = ["\n", "http://localhost\n", "a\n", "#{stub_key}\n", "\n", "i\n", "\n", "i\n", "\n", "i\n", "24\n"]
+      @config = ["\n", "http://localhost\n", "a\n", "#{stub_key}\n", "#{folder}\n", "c\n", ".\n", ".\n", "i\n", "\n"]
       allow(subject).to receive(:puts)
       allow(subject).to receive(:print)
       allow_any_instance_of(Logger).to receive(:debug)
