@@ -153,10 +153,11 @@ module GrafanaReporter
     # This function shall be called, before the configuration object is used in the
     # {Application::Application#run}. It ensures, that everything is setup properly
     # and all necessary folders exist. Appropriate errors are raised in case of errors.
+    # @param explicit [Boolean] true, if validation shall expect explicit (wizard) configuration file
     # @return [void]
-    def validate
+    def validate(explicit = false)
       check_deprecation
-      validate_schema(schema, @config)
+      validate_schema(schema(explicit), @config)
 
       # check if set folders exist
       raise FolderDoesNotExistError.new(reports_folder, 'reports-folder') unless File.directory?(reports_folder)
@@ -277,7 +278,7 @@ module GrafanaReporter
       end
     end
 
-    def schema
+    def schema(explicit)
       {
         'grafana' =>
          [
@@ -294,7 +295,7 @@ module GrafanaReporter
               ]
            }
          ],
-        'default-document-attributes' => [Hash, 0],
+        'default-document-attributes' => [Hash, explicit ? 1 : 0],
         'grafana-reporter' =>
         [
           Hash, 1,
@@ -302,11 +303,11 @@ module GrafanaReporter
             'debug-level' => [String, 0],
             'run-mode' => [String, 0],
             'test-instance' => [String, 0],
-            'templates-folder' => [String, 0],
+            'templates-folder' => [String, explicit ? 1 : 0],
             'report-class' => [String, 1],
-            'reports-folder' => [String, 0],
-            'report-retention' => [Integer, 0],
-            'webservice-port' => [Integer, 0]
+            'reports-folder' => [String, explicit ? 1 : 0],
+            'report-retention' => [Integer, explicit ? 1 : 0],
+            'webservice-port' => [Integer, explicit ? 1 : 0]
           }
         ]
       }

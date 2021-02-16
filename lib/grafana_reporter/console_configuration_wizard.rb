@@ -49,10 +49,16 @@ default-document-attributes:
 
       begin
         config.config = YAML.load_file(config_file)
-        puts 'Configuration file validated successfully.'
       rescue StandardError => e
         raise ConfigurationError, "Could not read config file '#{config_file}' (Error: #{e.message})\n"\
               "Source:\n#{File.read(config_file)}"
+      end
+
+      begin
+        config.validate(true)
+        puts 'Configuration file validated successfully.'
+      rescue ConfigurationError => e
+        raise e
       end
 
       # create a demo report
