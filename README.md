@@ -44,22 +44,24 @@ found here.
 
 ## Getting started
 
-There exist several ways of installing the reporter. Here I cover the easiest
-setup by using ruby gems. If you need further installation help, or want to use
-a "baremetal" ruby setup or a docker integration, please have a look at the more
-extended [installation documentation](INSTALL.md).
+There exist several ways of installing the reporter. If you need further
+installation help, or want to use a "baremetal" ruby setup or a docker
+integration, please have a look at the more extended
+[installation documentation](INSTALL.md).
 
-To install the reporter as a gem, simply run:
+Following these steps sets up the reporter on a fresh Raspberry Pi installation:
 
+    sudo apt-get install ruby
     gem install ruby-grafana-reporter
 
-If no configuration file is in place, you might want to use the configuration
-wizard, which leads you through all necessary steps:
+That's it. Let's now configure a grafana setup with the configuration wizard:
 
     ruby-grafana-reporter -w
 
 It is strongly recommended, to also create the demo PDF file, as stated at the end
 of the procedure, to get a detailed documentation of all the reporter capabilities.
+The whole [function documentation](FUNCTION_CALLS.md) is also available at the
+previous link.
 
 To run the reporter as a service, you only need to call it like this:
 
@@ -114,7 +116,8 @@ Running the reporter as a webservice provides the following URLs
 
 ## Features
 
-* Build report template including all imaginable grafana content:
+* Build report template including all imaginable grafana content (see
+[function documentation](FUNCTION_CALLS.md) for a complete overview):
   * panels as images
   * panel table query or custom query results as real document tables (not images!)
   * single panel value or custom query single value result integrated in texts
