@@ -61,43 +61,22 @@ default-document-attributes:
         raise e
       end
 
-      # create a demo report
-      unless Dir.exist?(config.templates_folder)
-        puts "Skip creation of DEMO template, as folder '#{config.templates_folder}' does not exist."
-        return
-      end
-      demo_report = %(= First Grafana Report Template
+      demo_report = create_demo_report(config)
 
-include::grafana_help[]
-
-include::grafana_environment[])
-
-      demo_report = 'demo_report'
-      demo_report_file = "#{config.templates_folder}#{demo_report}.adoc"
-      if File.exist?(demo_report_file)
-        puts "Skip creation of DEMO template, as file '#{demo_report_file}' already exists."
-      else
-        begin
-          File.write(demo_report_file, demo_report, mode: 'w')
-          puts "DEMO template '#{demo_report_file}' successfully created."
-        rescue StandardError => e
-          raise e
-        end
-      end
-
+      demo_report = '<<your_report_name>>' unless demo_report
       config_param = config_file == Application::Application::CONFIG_FILE ? '' : " -c #{config_file}"
       program_call = "#{Gem.ruby} #{$PROGRAM_NAME}"
       if defined?(Ocra)
-        program_call = ENV["OCRA_EXECUTABLE"]
+        program_call = ENV["OCRA_EXECUTABLE"].gsub("#{Dir.pwd}/".gsub('/', '\\'), '')
       end
 
       puts
-      puts 'Now everything is setup properly. To create an initial report including a manual of all reporter '\
-           'capabilities with the newly created configuration, call the following command:'
+      puts 'Now everything is setup properly. Create your reports as required in the templates '\
+           'folder and run the reporter either standalone with e.g. the following command:'
       puts
       puts "   #{program_call}#{config_param} -t #{demo_report} -o demo_report_with_help.pdf"
       puts
-      puts 'To start the reporter as a service, call the following command:'
+      puts 'or run it as a service using the following command:'
       puts
       puts "   #{program_call}#{config_param}"
       puts
@@ -106,6 +85,37 @@ include::grafana_environment[])
     end
 
     private
+
+    def create_demo_report(config)
+      unless Dir.exist?(config.templates_folder)
+        puts "Skip creation of DEMO template, as folder '#{config.templates_folder}' does not exist."
+        return nil
+      end
+
+      demo_report = 'demo_report'
+      demo_report_file = "#{config.templates_folder}#{demo_report}.adoc"
+
+      # TODO: add question to overwrite file
+      if File.exist?(demo_report_file)
+        puts "Skip creation of DEMO template, as file '#{demo_report_file}' already exists."
+        return demo_report
+      end
+
+      demo_report = %(= First Grafana Report Template
+
+include::grafana_help[]
+
+include::grafana_environment[])
+      begin
+        File.write(demo_report_file, demo_report, mode: 'w')
+        puts "DEMO template '#{demo_report_file}' successfully created."
+      rescue StandardError => e
+        puts e.message
+        return nil
+      end
+
+      demo_report
+    end
 
     def ui_config_grafana(logger)
       valid = false
