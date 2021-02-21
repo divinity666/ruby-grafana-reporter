@@ -121,7 +121,6 @@ include::grafana_environment[])
       valid = false
       url = nil
       api_key = nil
-      datasources = ''
       until valid
         url ||= user_input('Specify grafana host', 'http://localhost:3000')
         print "Testing connection to '#{url}' #{api_key ? '_with_' : '_without_'} API key..."
@@ -141,12 +140,13 @@ include::grafana_environment[])
 
         when 'NON-Admin'
           print 'Access to grafana is permitted as NON-Admin. Do you want to use an [a]pi key,'\
-                ' configure [d]atasource manually, [r]e-enter api key or [i]gnore? [adRi]: '
+                ' [r]e-enter api key or [i]gnore? [aRi]: '
 
           case gets
           when /(?:i|I)$/
             valid = true
 
+# TODO: what is difference between 'a' and 'r'?
           when /(?:a|A)$/
             print 'Enter API key: '
             api_key = gets.sub(/\n$/, '')
@@ -154,12 +154,9 @@ include::grafana_environment[])
           when /(?:r|R|adRi)$/
             api_key = nil
 
-          when /(?:d|D)$/
-            valid = true
-            datasources = ui_config_datasources
-
           end
 
+# TODO: ask to enter API key, if grafana cannot be accessed without that
         else
           print "Grafana could not be accessed at '#{url}'. Do you want do [r]e-enter url, or"\
                ' [i]gnore and proceed? [Ri]: '
@@ -178,36 +175,8 @@ include::grafana_environment[])
       end
       %(grafana:
   default:
-    host: #{url}#{api_key ? "\n    api_key: #{api_key}" : ''}#{datasources ? "\n#{datasources}" : ''}
+    host: #{url}#{api_key ? "\n    api_key: #{api_key}" : ''}}
 )
-    end
-
-    def ui_config_datasources
-      finished = false
-      datasources = []
-      until finished
-        item = {}
-        print "Datasource ###{datasources.length + 1}) Enter datasource name as configured in grafana: "
-        item[:ds_name] = gets.sub(/\n$/, '')
-        print "Datasource ###{datasources.length + 1}) Enter datasource id: "
-        item[:ds_id] = gets.sub(/\n$/, '')
-
-        puts
-        selection = user_input("Datasource name: '#{item[:ds_name]}', Datasource id: '#{item[:ds_id]}'."\
-                               ' [A]ccept, [r]etry or [c]ancel?', 'Arc')
-
-        case selection
-        when /(?:Arc|A|a)$/
-          datasources << item
-          another = user_input('Add [a]nother datasource or [d]one?', 'aD')
-          finished = true if another =~ /(?:d|D)$/
-
-        when /(?:c|C)$/
-          finished = true
-
-        end
-      end
-      "    datasources:\n#{datasources.collect { |el| "      #{el[:ds_name]}: #{el[:ds_id]}" }.join('\n')}"
     end
 
     def ui_config_port

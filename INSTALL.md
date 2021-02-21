@@ -47,8 +47,6 @@ content:
       default:
         host: <<url to your grafana host, e.g. https://localhost:3000>>
         api_key: <<api key to be used by the reporter>>
-        datasources: # mandatory, if the api_key has only viewer rights, optional otherwise
-          "<<data source name in grafana>>": <<data source id in grafana>>
 
     default-document-attributes:
       imagesdir: .

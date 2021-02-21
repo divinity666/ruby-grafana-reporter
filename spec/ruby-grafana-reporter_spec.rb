@@ -400,10 +400,6 @@ describe Configuration do
       expect(subject.images_folder).to eq('./')
     end
 
-    it 'can read datasources' do
-      expect(subject.grafana_datasources).to eq({ 'demo' => 1, 'bla' => 2 })
-    end
-
     it 'is valid' do
       allow(subject.logger).to receive(:debug)
       allow(subject.logger).to receive(:info)
@@ -450,30 +446,6 @@ describe Configuration do
       expect { subject.validate }.not_to raise_error
     end
 
-    it 'validates optional datasources' do
-      subject.config = {
-                            'grafana' => { 'default' => { 'host' => 'test', 'datasources' => { 'test' => 1 } } },
-                            'grafana-reporter' => { 'report-class' => 'GrafanaReporter::Asciidoctor::Report' }
-                          }
-      expect { subject.validate }.not_to raise_error
-    end
-
-    it 'raises error if item exists without required subitem' do
-      subject.config = {
-                            'grafana' => { 'default' => { 'host' => 'test', 'datasources' => {} } },
-                            'grafana-reporter' => { 'report-class' => 'GrafanaReporter::Asciidoctor::Report' }
-                          }
-      expect { subject.validate }.to raise_error(ConfigurationDoesNotMatchSchemaError)
-    end
-
-    it 'raises error on wrong datasource type' do
-      subject.config = {
-                            'grafana' => { 'default' => { 'host' => 'test', 'datasources' => { 'test' => 'bla' } } },
-                            'grafana-reporter' => { 'report-class' => 'GrafanaReporter::Asciidoctor::Report' }
-                          }
-      expect { subject.validate }.to raise_error(ConfigurationDoesNotMatchSchemaError)
-    end
-
     it 'raises error if folder does not exist' do
       subject.config = {
                             'grafana' => { 'default' => { 'host' => 'test' } },
@@ -501,20 +473,6 @@ describe Configuration do
   end
 end
 
-describe Report do
-  subject do
-    config = Configuration.new
-    config.config = YAML.load_file('./spec/tests/demo_config.txt')
-
-    Report.new(config, './spec/tests/demo_report.adoc')
-  end
-
-  it 'can preconfigure grafana instance' do
-    expect(subject.grafana('default').datasource_id('demo')).to eq(1)
-    expect(subject.grafana('default').datasource_id('bla')).to eq(2)
-  end
-end
-
 # run tests against mocked grafana instance
 # WebMock.disable_net_connect!(:allow_localhost => true)
 
@@ -528,6 +486,16 @@ stub_datasource = '1'
 
 RSpec.configure do |config|
   config.before(:each) do
+    stub_request(:get, 'http://localhost/api/frontend/settings').with(
+      headers: {
+        'Accept' => 'application/json',
+        'Accept-Encoding' => 'gzip;q=1.0,deflate;q=0.6,identity;q=0.3',
+        'Content-Type' => 'application/json',
+        'User-Agent' => 'Ruby'
+      }
+    )
+    .to_return(status: 200, body: File.read('./spec/tests/frontend_settings.json'), headers: {})
+
     stub_request(:get, 'http://localhost/api/datasources').with(
       headers: {
         'Accept' => 'application/json',
@@ -865,9 +833,9 @@ describe ConsoleConfigurationWizard do
       expect(File.exist?(config_file)).to be true
     end
 
-    it 'creates valid config file as non admin with manual datasource' do
+    it 'creates valid config file as non admin' do
       @config.slice!(2,2)
-      @config.insert(2, "d\n", "demo\n", "1\n", "a\n", "d\n")
+      @config.insert(2, "i\n")
       allow(subject).to receive(:gets).and_return(*@config)
       subject.start_wizard(config_file)
       expect(File.exist?(config_file)).to be true

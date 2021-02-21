@@ -84,16 +84,6 @@ module GrafanaReporter
       get_config("grafana:#{instance}:api_key")
     end
 
-    # @param instance [String] grafana instance name, for which the value shall be retrieved.
-    # @return [Hash<String,Integer>] configured datasources for the requested grafana instance. Name as key,
-    #   ID as value.
-    def grafana_datasources(instance = 'default')
-      hash = get_config("grafana:#{instance}:datasources")
-      return nil if hash.nil?
-
-      hash.map { |k, v| [k, v] }.to_h
-    end
-
     # @return [String] configured folder, in which the report templates are stored including trailing slash.
     #   By default: current folder.
     def templates_folder
@@ -289,8 +279,7 @@ module GrafanaReporter
                 Hash, 1,
                 {
                   'host' => [String, 1],
-                  'api_key' => [String, 0],
-                  'datasources' => [Hash, 0, { nil => [Integer, 1] }]
+                  'api_key' => [String, 0]
                 }
               ]
            }
