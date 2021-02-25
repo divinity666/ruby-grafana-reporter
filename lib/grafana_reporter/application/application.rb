@@ -92,7 +92,7 @@ module GrafanaReporter
 
         begin
           parser.parse!(params)
-          return ConsoleConfigurationWizard.new.start_wizard(config_file) if action_wizard
+          return ConsoleConfigurationWizard.new.start_wizard(config_file, tmp_config) if action_wizard
         rescue ApplicationError => e
           puts e.message
           return -1

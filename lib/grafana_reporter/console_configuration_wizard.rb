@@ -5,7 +5,7 @@ module GrafanaReporter
     # Provides a command line configuration wizard for setting up the necessary configuration
     # file.
     # TODO: refactor class
-    def start_wizard(config_file)
+    def start_wizard(config_file, console_config)
       config = Configuration.new
 
       return unless overwrite_file(config_file)
@@ -18,7 +18,7 @@ module GrafanaReporter
       puts "Wizard is creating configuration file '#{config_file}'."
       puts
       port = ui_config_port
-      grafana = ui_config_grafana(config.logger)
+      grafana = ui_config_grafana(console_config)
       templates = ui_config_templates_folder
       reports = ui_config_reports_folder
       images = ui_config_images_folder(templates)
@@ -117,7 +117,7 @@ include::grafana_environment[])
       demo_report
     end
 
-    def ui_config_grafana(logger)
+    def ui_config_grafana(config)
       valid = false
       url = nil
       api_key = nil
@@ -128,7 +128,7 @@ include::grafana_environment[])
           # TODO: how to handle if ssl access if not working properly?
           res = Grafana::Grafana.new(url,
                                      api_key,
-                                     logger: logger).test_connection
+                                     :logger => config.logger, :ssl_cert => config.ssl_cert).test_connection
         rescue StandardError => e
           puts
           puts e.message
