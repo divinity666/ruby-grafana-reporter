@@ -33,8 +33,8 @@ module GrafanaReporter
         action_wizard = false
 
         parser = OptionParser.new do |opts|
-          if defined?(Ocra)
-            opts.banner = "Usage: #{ENV["OCRA_EXECUTABLE"].gsub("#{Dir.pwd}/".gsub('/', '\\'), '')} [options]"
+          if ENV['OCRA_EXECUTABLE']
+            opts.banner = "Usage: #{ENV['OCRA_EXECUTABLE'].gsub("#{Dir.pwd}/".gsub('/', '\\'), '')} [options]"
           else
             opts.banner = "Usage: #{Gem.ruby} #{$PROGRAM_NAME} [options]"
           end
@@ -55,6 +55,14 @@ module GrafanaReporter
           opts.on('-s', '--set VARIABLE,VALUE', Array, 'Set a variable value, which will be passed to the rendering') do |list|
             raise ParameterValueError.new(list.length) unless list.length == 2
             tmp_config.set_param("default-document-attributes:#{list[0]}", list[1])
+          end
+
+          opts.on('--ssl-cert FILE', 'Manually specify a SSL cert file for HTTPS connection to grafana. Only needed if not working properly otherwise.') do |file|
+            unless File.exist?(file)
+              config.logger.warn("SSL certificate file #{file} does not exist. Setting will be ignored.")
+            else
+              tmp_config.set_param('grafana-reporter:ssl-cert', file)
+            end
           end
 
           opts.on('--test GRAFANA_INSTANCE', 'test current configuration against given GRAFANA_INSTANCE') do |instance|
@@ -126,7 +134,7 @@ module GrafanaReporter
         when Configuration::MODE_CONNECTION_TEST
           res = Grafana::Grafana.new(config.grafana_host(config.test_instance),
                                      config.grafana_api_key(config.test_instance),
-                                     logger: config.logger).test_connection
+                                     :logger => config.logger, :ssl_cert => config.ssl_cert).test_connection
           puts res
 
         when Configuration::MODE_SINGLE_RENDER

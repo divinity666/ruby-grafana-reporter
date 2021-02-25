@@ -13,11 +13,12 @@ module Grafana
     #   trailing slash, e.g. +https://localhost:3000+.
     # @param key [String] API key for the grafana instance, if required
     # @param opts [Hash] additional options.
-    #   Currently supporting only +:logger+.
+    #   Currently supporting +:logger+ and +:ssl_cert+.
     def initialize(base_uri, key = nil, opts = {})
       @base_uri = base_uri
       @key = key
       @dashboards = {}
+      @ssl_cert = opts[:ssl_cert]
       @logger = opts[:logger] || ::Logger.new(nil)
 
       initialize_datasources unless @base_uri.empty?
@@ -94,6 +95,12 @@ module Grafana
       if @base_uri =~ /^https/
         http.use_ssl = true
         http.verify_mode = OpenSSL::SSL::VERIFY_PEER
+        if @ssl_cert and not File.exist?(@ssl_cert)
+          @logger.warn('SSL certificate file does not exist.')
+        elsif ENV['OCRA_EXECUTABLE'] and @ssl_cert
+          cert = OpenSSL::X509::Certificate.new(File.read(@ssl_cert))
+          http.cert_store.add_cert(cert)
+        end
       end
       http.read_timeout = timeout.to_i if timeout
 

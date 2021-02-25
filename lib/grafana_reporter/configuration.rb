@@ -27,7 +27,7 @@ module GrafanaReporter
 
     def initialize
       @config = {}
-      @logger = ::Logger.new($stderr, level: :unknown)
+      @logger = ::Logger.new($stderr, level: :info)
     end
 
     attr_accessor :logger
@@ -54,6 +54,11 @@ module GrafanaReporter
       return nil if get_config('default-document-attributes:var-template').nil?
 
       "#{templates_folder}#{get_config('default-document-attributes:var-template')}.adoc"
+    end
+
+    # @return [String] path to ssl certificate file, if manually specified, or nil
+    def ssl_cert
+      return get_config('grafana-reporter:ssl-cert')
     end
 
     # @return [String] destination filename for the report in {MODE_SINGLE_RENDER}.
@@ -296,6 +301,7 @@ module GrafanaReporter
             'report-class' => [String, 1],
             'reports-folder' => [String, explicit ? 1 : 0],
             'report-retention' => [Integer, explicit ? 1 : 0],
+            'ssl-cert' => [String, 0],
             'webservice-port' => [Integer, explicit ? 1 : 0]
           }
         ]

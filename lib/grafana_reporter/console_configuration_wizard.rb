@@ -66,8 +66,8 @@ default-document-attributes:
       demo_report = '<<your_report_name>>' unless demo_report
       config_param = config_file == Application::Application::CONFIG_FILE ? '' : " -c #{config_file}"
       program_call = "#{Gem.ruby} #{$PROGRAM_NAME}"
-      if defined?(Ocra)
-        program_call = ENV["OCRA_EXECUTABLE"].gsub("#{Dir.pwd}/".gsub('/', '\\'), '')
+      if ENV['OCRA_EXECUTABLE']
+        program_call = ENV['OCRA_EXECUTABLE'].gsub("#{Dir.pwd}/".gsub('/', '\\'), '')
       end
 
       puts
@@ -125,6 +125,7 @@ include::grafana_environment[])
         url ||= user_input('Specify grafana host', 'http://localhost:3000')
         print "Testing connection to '#{url}' #{api_key ? '_with_' : '_without_'} API key..."
         begin
+          # TODO: how to handle if ssl access if not working properly?
           res = Grafana::Grafana.new(url,
                                      api_key,
                                      logger: logger).test_connection
