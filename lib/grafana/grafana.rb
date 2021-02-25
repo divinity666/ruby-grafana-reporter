@@ -97,9 +97,10 @@ module Grafana
         http.verify_mode = OpenSSL::SSL::VERIFY_PEER
         if @ssl_cert and not File.exist?(@ssl_cert)
           @logger.warn('SSL certificate file does not exist.')
-        elsif ENV['OCRA_EXECUTABLE'] and @ssl_cert
-          cert = OpenSSL::X509::Certificate.new(File.read(@ssl_cert))
-          http.cert_store.add_cert(cert)
+        elsif @ssl_cert
+          http.cert_store = OpenSSL::X509::Store.new
+          http.cert_store.set_default_paths
+          http.cert_store.add_file(@ssl_cert)
         end
       end
       http.read_timeout = timeout.to_i if timeout
