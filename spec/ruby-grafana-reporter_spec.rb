@@ -643,6 +643,17 @@ describe Application do
     it 'expects default config file' do
       expect { subject.configure_and_run(['-c', 'does_not_exist.config']) }.to output(/Config file.* does not exist/).to_stdout
     end
+
+    it 'shows error on non-existing ssl cert file' do
+      expect(subject.config.logger).to receive(:warn).with(/SSL certificate .* does not exist.*/)
+      expect(subject.config.logger).to receive(:warn)
+      expect { subject.configure_and_run(['-c', './spec/tests/demo_config.txt', '--test', 'default', '-d', 'WARN', '--ssl-cert', 'does_not_exist.cert']) }.to output("Admin\n").to_stdout
+    end
+
+    it 'runs properly with correct ssl cert file' do
+      expect(subject.config.logger).not_to receive(:warn).with(/SSL certificate .* does not exist.*/)
+      expect { subject.configure_and_run(['-c', './spec/tests/demo_config.txt', '--test', 'default', '-d', 'WARN', '--ssl-cert',  './spec/tests/cacert.pem']) }.to output("Admin\n").to_stdout
+    end
   end
 
   context 'command line single rendering' do
@@ -823,13 +834,13 @@ describe ConsoleConfigurationWizard do
       @config.slice!(4, 2)
       @config.insert(4, "#{folder}\n", "c\n")
       allow(subject).to receive(:gets).and_return(*@config)
-      subject.start_wizard(config_file)
+      subject.start_wizard(config_file, Configuration.new)
       expect(Dir.exist?(folder)).to be true
     end
 
     it 'creates valid config file as admin' do
       allow(subject).to receive(:gets).and_return(*@config)
-      subject.start_wizard(config_file)
+      subject.start_wizard(config_file, Configuration.new)
       expect(File.exist?(config_file)).to be true
     end
 
@@ -837,19 +848,19 @@ describe ConsoleConfigurationWizard do
       @config.slice!(2,2)
       @config.insert(2, "i\n")
       allow(subject).to receive(:gets).and_return(*@config)
-      subject.start_wizard(config_file)
+      subject.start_wizard(config_file, Configuration.new)
       expect(File.exist?(config_file)).to be true
     end
 
     it 'asks before overwriting config file' do
       allow(subject).to receive(:gets).and_return(*@config)
-      subject.start_wizard(config_file)
+      subject.start_wizard(config_file, Configuration.new)
       expect(File.exist?(config_file)).to be true
       modify_date = File.mtime(config_file)
       #try to create config again
       @config = ["\n"]
       allow(subject).to receive(:gets).and_return(*@config)
-      subject.start_wizard(config_file)
+      subject.start_wizard(config_file, Configuration.new)
       expect(File.mtime(config_file)).to eq(modify_date)
     end
 
@@ -857,7 +868,7 @@ describe ConsoleConfigurationWizard do
       @config.insert(1, "http://blabla:9999\n", "r\n")
       allow(subject).to receive(:gets).and_return(*@config)
       WebMock.disable_net_connect!(allow: ['http://blabla:9999'])
-      subject.start_wizard(config_file)
+      subject.start_wizard(config_file, Configuration.new)
       WebMock.enable!
       expect(File.exist?(config_file)).to be true
     end
@@ -871,10 +882,6 @@ describe Grafana do
     it 'connects properly' do
       expect(subject.test_connection).to eq('Admin')
     end
-  end
-
-  context 'without datasources' do
-    subject { Grafana::Grafana.new(stub_url, stub_key, datasources: {}) }
 
     it 'raises error if datasource does not exist' do
       expect { subject.datasource_id('blabla') }.to raise_error(DatasourceDoesNotExistError)
