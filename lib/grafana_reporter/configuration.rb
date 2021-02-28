@@ -58,7 +58,7 @@ module GrafanaReporter
 
     # @return [String] path to ssl certificate file, if manually specified, or nil
     def ssl_cert
-      return get_config('grafana-reporter:ssl-cert')
+      get_config('grafana-reporter:ssl-cert')
     end
 
     # @return [String] destination filename for the report in {MODE_SINGLE_RENDER}.
@@ -172,12 +172,8 @@ module GrafanaReporter
 
       cur_pos = @config
       levels.each do |subpath|
-        if cur_pos[subpath]
-          cur_pos = cur_pos[subpath]
-        else
-          cur_pos[subpath] = {}
-          cur_pos = cur_pos[subpath]
-        end
+        cur_pos[subpath] = {} unless cur_pos[subpath]
+        cur_pos = cur_pos[subpath]
       end
 
       cur_pos[last_level] = value
@@ -189,7 +185,7 @@ module GrafanaReporter
     #
     # param other_config [Configuration] other configuration object
     def merge!(other_config)
-      self.config.merge!(other_config.config) { |_key, v1, v2| Hash === v1 && Hash === v2 ? v1.merge(v2) : v2 }
+      config.merge!(other_config.config) { |_key, v1, v2| Hash === v1 && Hash === v2 ? v1.merge(v2) : v2 }
       update_configuration
     end
 
@@ -198,9 +194,11 @@ module GrafanaReporter
     def check_deprecation
       return if report_class
 
-      logger.warn('DEPRECATION WARNING: Your configuration explicitly needs to specify the \'grafana-reporter:report-class\' value. '\
-                  'Currently this defaults to \'GrafanaReporter::Asciidoctor::Report\'. You can get rid of this warning, if you explicitly '\
-                  'set this configuration in your configuration file. Setting this default will be removed in a future version.')
+      logger.warn('DEPRECATION WARNING: Your configuration explicitly needs to specify the '\
+                  '\'grafana-reporter:report-class\' value.  Currently this defaults to '\
+                  '\'GrafanaReporter::Asciidoctor::Report\'. You can get rid of this warning, if you '\
+                  'explicitly set this configuration in your configuration file. Setting this default will be '\
+                  'removed in a future version.')
       set_param('grafana-reporter:report-class', 'GrafanaReporter::Asciidoctor::Report')
     end
 

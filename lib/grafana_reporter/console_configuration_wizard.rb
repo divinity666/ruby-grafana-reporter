@@ -63,12 +63,10 @@ default-document-attributes:
 
       demo_report = create_demo_report(config)
 
-      demo_report = '<<your_report_name>>' unless demo_report
+      demo_report ||= '<<your_report_name>>'
       config_param = config_file == Application::Application::CONFIG_FILE ? '' : " -c #{config_file}"
       program_call = "#{Gem.ruby} #{$PROGRAM_NAME}"
-      if ENV['OCRA_EXECUTABLE']
-        program_call = ENV['OCRA_EXECUTABLE'].gsub("#{Dir.pwd}/".gsub('/', '\\'), '')
-      end
+      program_call = ENV['OCRA_EXECUTABLE'].gsub("#{Dir.pwd}/".gsub('/', '\\'), '') if ENV['OCRA_EXECUTABLE']
 
       puts
       puts 'Now everything is setup properly. Create your reports as required in the templates '\
@@ -128,7 +126,7 @@ include::grafana_environment[])
           # TODO: how to handle if ssl access if not working properly?
           res = Grafana::Grafana.new(url,
                                      api_key,
-                                     :logger => config.logger, :ssl_cert => config.ssl_cert).test_connection
+                                     logger: config.logger, ssl_cert: config.ssl_cert).test_connection
         rescue StandardError => e
           puts
           puts e.message
@@ -147,7 +145,7 @@ include::grafana_environment[])
           when /(?:i|I)$/
             valid = true
 
-# TODO: what is difference between 'a' and 'r'?
+          # TODO: what is difference between 'a' and 'r'?
           when /(?:a|A)$/
             print 'Enter API key: '
             api_key = gets.sub(/\n$/, '')
@@ -157,7 +155,7 @@ include::grafana_environment[])
 
           end
 
-# TODO: ask to enter API key, if grafana cannot be accessed without that
+        # TODO: ask to enter API key, if grafana cannot be accessed without that
         else
           print "Grafana could not be accessed at '#{url}'. Do you want do [r]e-enter url, or"\
                ' [i]gnore and proceed? [Ri]: '

@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module GrafanaReporter
   module Asciidoctor
     # This mixin contains several common methods, which can be used within the queries.
@@ -8,8 +10,8 @@ module GrafanaReporter
       # @param item_hash [Hash] variables from item configuration level, i.e. specific call, which may override document
       # @return [void]
       def merge_hash_variables(document_hash, item_hash)
-        merge_variables(document_hash.select { |k, _v| k =~ /^var-/ || k == 'grafana-report-timestamp' || k =~ /grafana_default_(?:from|to)_timezone/ }.each_with_object({}) { |(k,v), h| h[k] = ::Grafana::Variable.new(v) })
-        merge_variables(item_hash.select { |k, _v| k =~ /^var-/ || k =~ /^render-/ || k =~ /filter_columns|format|replace_values_.*|transpose|column_divider|row_divider|from_timezone|to_timezone/ }.each_with_object({}) { |(k,v), h| h[k] = ::Grafana::Variable.new(v) })
+        merge_variables(document_hash.select { |k, _v| k =~ /^var-/ || k == 'grafana-report-timestamp' || k =~ /grafana_default_(?:from|to)_timezone/ }.each_with_object({}) { |(k, v), h| h[k] = ::Grafana::Variable.new(v) })
+        merge_variables(item_hash.select { |k, _v| k =~ /^var-/ || k =~ /^render-/ || k =~ /filter_columns|format|replace_values_.*|transpose|column_divider|row_divider|from_timezone|to_timezone/ }.each_with_object({}) { |(k, v), h| h[k] = ::Grafana::Variable.new(v) })
         self.timeout = item_hash['timeout'] || document_hash['grafana-default-timeout'] || timeout
         self.from = item_hash['from'] || document_hash['from'] || from
         self.to = item_hash['to'] || document_hash['to'] || to
@@ -227,7 +229,7 @@ module GrafanaReporter
       #   calculated for +from+
       # @param timezone [Grafana::Variable] timezone to use, if not system timezone
       # @return [String] translated date as timestamp string
-      def translate_date(orig_date, report_time, is_to_time, timezone=nil)
+      def translate_date(orig_date, report_time, is_to_time, timezone = nil)
         report_time ||= Variable.new(Time.now.to_s)
         return (DateTime.parse(report_time.raw_value).to_time.to_i * 1000).to_s unless orig_date
         return orig_date if orig_date =~ /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/
@@ -238,7 +240,7 @@ module GrafanaReporter
         raise TimeRangeUnknownError, orig_date unless date_splitted
 
         date = DateTime.parse(report_time.raw_value)
-# TODO: allow from_translated or similar in ADOC template
+        # TODO: allow from_translated or similar in ADOC template
         date = date.new_offset(timezone.raw_value) if timezone
 
         # substract specified time
