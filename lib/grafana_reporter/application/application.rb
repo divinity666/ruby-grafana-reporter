@@ -52,16 +52,19 @@ module GrafanaReporter
             tmp_config.set_param('to_file', file)
           end
 
-          opts.on('-s', '--set VARIABLE,VALUE', Array, 'Set a variable value, which will be passed to the rendering') do |list|
-            raise ParameterValueError.new(list.length) unless list.length == 2
+          opts.on('-s', '--set VARIABLE,VALUE', Array, 'Set a variable value, which will be passed to the '\
+                  'rendering') do |list|
+            raise ParameterValueError, list.length unless list.length == 2
+
             tmp_config.set_param("default-document-attributes:#{list[0]}", list[1])
           end
 
-          opts.on('--ssl-cert FILE', 'Manually specify a SSL cert file for HTTPS connection to grafana. Only needed if not working properly otherwise.') do |file|
-            unless File.exist?(file)
-              config.logger.warn("SSL certificate file #{file} does not exist. Setting will be ignored.")
-            else
+          opts.on('--ssl-cert FILE', 'Manually specify a SSL cert file for HTTPS connection to grafana. Only '\
+                  'needed if not working properly otherwise.') do |file|
+            if File.exist?(file)
               tmp_config.set_param('grafana-reporter:ssl-cert', file)
+            else
+              config.logger.warn("SSL certificate file #{file} does not exist. Setting will be ignored.")
             end
           end
 
@@ -134,7 +137,7 @@ module GrafanaReporter
         when Configuration::MODE_CONNECTION_TEST
           res = Grafana::Grafana.new(config.grafana_host(config.test_instance),
                                      config.grafana_api_key(config.test_instance),
-                                     :logger => config.logger, :ssl_cert => config.ssl_cert).test_connection
+                                     logger: config.logger, ssl_cert: config.ssl_cert).test_connection
           puts res
 
         when Configuration::MODE_SINGLE_RENDER

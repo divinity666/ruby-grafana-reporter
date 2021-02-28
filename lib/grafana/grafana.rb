@@ -47,7 +47,7 @@ module Grafana
     #
     # @return [Integer] ID for the specified datasource name
     def datasource_id(datasource_name)
-      datasource_name = 'default' unless datasource_name
+      datasource_name ||= 'default'
       return @datasources[datasource_name] if @datasources[datasource_name]
 
       raise DatasourceDoesNotExistError.new('name', datasource_name)
@@ -95,7 +95,7 @@ module Grafana
       if @base_uri =~ /^https/
         http.use_ssl = true
         http.verify_mode = OpenSSL::SSL::VERIFY_PEER
-        if @ssl_cert and not File.exist?(@ssl_cert)
+        if @ssl_cert && !File.exist?(@ssl_cert)
           @logger.warn('SSL certificate file does not exist.')
         elsif @ssl_cert
           http.cert_store = OpenSSL::X509::Store.new
@@ -124,7 +124,7 @@ module Grafana
       return unless settings.is_a?(Net::HTTPOK)
 
       json = JSON.parse(settings.body)
-      json['datasources'].select { |k,v| v['id'].to_i > 0 }.each do |ds_name, ds_value|
+      json['datasources'].select { |_k, v| v['id'].to_i.positive? }.each do |ds_name, ds_value|
         @datasources[ds_name] = ds_value['id'].to_i
       end
       @datasources['default'] = @datasources[json['defaultDatasource']]
