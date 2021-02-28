@@ -406,6 +406,15 @@ describe Configuration do
       allow(subject.logger).to receive(:warn)
       expect { subject.validate }.not_to raise_error
     end
+
+    it 'raises error if grafana instance does not have a host setting' do
+      obj = Configuration.new
+      yaml = YAML.load_file('./spec/tests/demo_config.txt')
+      yaml['grafana']['default'].delete('host')
+      obj.config = yaml
+      expect { obj.grafana_host }.to raise_error(GrafanaInstanceWithoutHostError)
+      expect { obj.validate }.to raise_error(ConfigurationDoesNotMatchSchemaError)
+    end
   end
 
   context 'without config file' do
@@ -693,6 +702,11 @@ describe Application do
       expect { subject.configure_and_run(['-c', './spec/tests/demo_config.txt', '-t', 'spec/tests/demo_report', '-o', './result.pdf', '-d', 'DEBUG', '-s', 'par1,test']) }.not_to output(/ERROR/).to_stderr
     end
 
+    it 'raises error on malformed custom command line parameters' do
+      expect { subject.configure_and_run(['-c', './spec/tests/demo_config.txt', '-t', 'spec/tests/demo_report', '-o', './result.pdf', '-s', 'par1']) }.to output(/GrafanaReporterError: Parameter '-s' needs exactly two values separated by comma, received 1./).to_stdout
+      expect { subject.configure_and_run(['-c', './spec/tests/demo_config.txt', '-t', 'spec/tests/demo_report', '-o', './result.pdf', '-s', 'par1,val1,something']) }.to output(/GrafanaReporterError: Parameter '-s' needs exactly two values separated by comma, received 3./).to_stdout
+    end
+
     it 'does not raise error on non existing template' do
       expect { subject.configure_and_run(['-c', './spec/tests/demo_config.txt', '-t', 'does_not_exist']) }.to output(/report template .* is not a valid template/).to_stdout
     end
@@ -970,6 +984,12 @@ describe PanelQueryValueInlineMacro do
     expect(@report.logger).not_to receive(:error)
     expect(Asciidoctor.convert("grafana_panel_query_value:#{stub_panel}[query=\"#{stub_panel_query}\",dashboard=\"#{stub_dashboard}\",format=\",%.2f\",filter_columns=\"time_sec\"]", to_file: false)).to include('<p>43.90')
   end
+
+  it 'shows fatal error if query is missing' do
+    expect(@report.logger).to receive(:fatal).with(/GrafanaError: The specified query '' does not exist in the panel '11' in dashboard.*/)
+    expect(Asciidoctor.convert("grafana_panel_query_value:#{stub_panel}[dashboard=\"#{stub_dashboard}\",format=\",%.2f\",filter_columns=\"time_sec\"]", to_file: false)).to include('GrafanaError: The specified query \'\' does not exist in the panel \'11\' in dashboard')
+  end
+
 end
 
 describe PanelImageBlockMacro do
@@ -1016,6 +1036,12 @@ describe PanelImageInlineMacro do
     tmp_file = result.to_s.gsub(/.*img src="([^"]+)".*/m, '\1')
     expect(File.exist?("./spec/templates/images/#{tmp_file}")).to be false
   end
+
+  it 'shows error if a reporter error occurs' do
+    expect(@report.logger).to receive(:error).with('GrafanaReporterError: The specified time range \'schwurbel\' is unknown.')
+    expect(Asciidoctor.convert("grafana_panel_image:#{stub_panel}[dashboard=\"#{stub_dashboard}\",from=\"schwurbel\"]", to_file: false)).to include('GrafanaReporterError: The specified time range \'schwurbel\' is unknown.')
+  end
+
 end
 
 describe SqlTableIncludeProcessor do
@@ -1128,6 +1154,7 @@ describe PanelPropertyInlineMacro do
     expect(@report.logger).not_to receive(:error)
     expect(Asciidoctor.convert("grafana_panel_property:#{stub_panel}[\"description\",dashboard=\"#{stub_dashboard}\"]", to_file: false, attributes: { 'var-my-var' => 'Meine Ersetzung' })).to include('Meine Ersetzung')
   end
+
 end
 
 describe PanelQueryTableIncludeProcessor do
@@ -1194,6 +1221,12 @@ describe PanelQueryTableIncludeProcessor do
       expect(@report.logger).not_to receive(:error)
       expect(Asciidoctor.convert("include::grafana_panel_query_table:#{stub_panel}[query=\"#{stub_panel_query}\",dashboard=\"#{stub_dashboard}\",transpose=\"true\"]", to_file: false)).to match(/<p>\| 1594308060000 \| 1594308030000 \|/)
     end
+
+    it 'shows error if a reporter error occurs' do
+      expect(@report.logger).to receive(:error).with('GrafanaReporterError: The specified time range \'schwurbel\' is unknown.')
+      expect(Asciidoctor.convert("include::grafana_panel_query_table:#{stub_panel}[query=\"#{stub_panel_query}\",dashboard=\"#{stub_dashboard}\",from=\"schwurbel\"]", to_file: false)).to include('|GrafanaReporterError: The specified time range \'schwurbel\' is unknown.')
+    end
+
   end
 end
 
