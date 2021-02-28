@@ -1043,6 +1043,16 @@ describe SqlTableIncludeProcessor do
     expect(Asciidoctor.convert("include::grafana_sql_table:#{stub_datasource}[sql=\"SELECT 1\",from=\"now/y\",to=\"now/y\"]", to_file: false)).not_to include('GrafanaReporterError')
   end
 
+  it 'shows fatal error if sql statement is missing' do
+    expect(@report.logger).to receive(:fatal).with('GrafanaError: No SQL statement has been specified. (Grafana::MissingSqlQueryError)')
+    expect(Asciidoctor.convert("include::grafana_sql_table:#{stub_datasource}[from=\"now/y\",to=\"now/y\"]", to_file: false)).to include('|GrafanaError: No SQL statement has been specified. (Grafana::MissingSqlQueryError)')
+  end
+
+  it 'shows error if a reporter error occurs' do
+    expect(@report.logger).to receive(:error).with('GrafanaReporterError: The specified time range \'schwurbel\' is unknown.')
+    expect(Asciidoctor.convert("include::grafana_sql_table:#{stub_datasource}[sql=\"SELECT 1\",from=\"schwurbel\",to=\"now/y\"]", to_file: false)).to include('|GrafanaReporterError: The specified time range \'schwurbel\' is unknown.')
+  end
+
 end
 
 describe SqlValueInlineMacro do
@@ -1071,7 +1081,7 @@ describe SqlValueInlineMacro do
     expect(Asciidoctor.convert("grafana_sql_value:#{stub_datasource}[sql=\"SELECT 1\",from=\"now/y\",to=\"now/y\"]", to_file: false)).not_to include('GrafanaReporterError')
   end
 
-  it 'returns error message if no sql statement specified' do
+  it 'returns fatal error message if no sql statement specified' do
     expect(@report.logger).to receive(:fatal).with(/No SQL statement/)
     expect(Asciidoctor.convert("grafana_sql_value:#{stub_datasource}[test=\"bla\"]", to_file: false)).to include('MissingSqlQueryError')
     expect(@report.logger).to receive(:fatal).with(/No SQL statement/)
@@ -1087,6 +1097,12 @@ describe SqlValueInlineMacro do
     expect(@report.logger).not_to receive(:error)
     expect(Asciidoctor.convert("grafana_sql_value:#{stub_datasource}[sql=\"SELECT $my-var\"]", to_file: false, attributes: { 'var-my-var' => 1 })).to include('1')
   end
+
+  it 'shows error if a reporter error occurs' do
+    expect(@report.logger).to receive(:error).with('GrafanaReporterError: The specified time range \'schwurbel\' is unknown.')
+    expect(Asciidoctor.convert("grafana_sql_value:#{stub_datasource}[sql=\"SELECT 1\",from=\"schwurbel\",to=\"now/y\"]", to_file: false)).to include('GrafanaReporterError: The specified time range \'schwurbel\' is unknown.')
+  end
+
 end
 
 describe PanelPropertyInlineMacro do
@@ -1239,6 +1255,7 @@ describe AlertsTableIncludeProcessor do
     expect(@report.logger).to receive(:error).with(/key not found: "stated"/)
     expect(Asciidoctor.convert("include::grafana_alerts[columns=\"newStateDate,name,stated\",panel=\"#{stub_panel}\",dashboard=\"#{stub_dashboard}\"]", to_file: false)).to include('key')
   end
+
 end
 
 describe ValueAsVariableIncludeProcessor do
