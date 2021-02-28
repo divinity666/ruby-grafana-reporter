@@ -70,11 +70,6 @@ module GrafanaReporter
         result = format_columns(result, @variables['format'])
         result = replace_values(result, @variables.select { |k, _v| k =~ /^replace_values_\d+/ })
         result = filter_columns(result, @variables['filter_columns'])
-        if @variables['filter_column']
-          @report.logger.warn("DEPRECATED: Call of  no longer supported function 'filter_column' has been found."\
-                              " Rename to 'filter_columns'")
-          result = filter_columns(result, @variables['filter_column'])
-        end
 
         @result = result[:content].map { |row| "| #{row.map { |item| item.to_s.gsub('|', '\\|') }.join(' | ')}" }
       end
