@@ -562,6 +562,18 @@ RSpec.configure do |config|
     .to_return(status: 200, body: '{"results":{"A":{"refId":"A","meta":{"rowCount":1,"sql":"SELECT 1"},"series":null,"tables":[{"columns":[{"text":"1"}],"rows":[[1]]}],"dataframes":null}}}', headers: {})
 
     stub_request(:post, 'http://localhost/api/tsdb/query').with(
+      body: /.*SELECT 1 as value WHERE value = 0*/,
+      headers: {
+        'Accept' => 'application/json',
+        'Accept-Encoding' => 'gzip;q=1.0,deflate;q=0.6,identity;q=0.3',
+        'Authorization' => 'Bearer xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx',
+        'Content-Type' => 'application/json',
+        'User-Agent' => 'Ruby'
+      }
+    )
+    .to_return(status: 200, body: '{"results":{"A":{"refId":"A","meta":{"rowCount":0,"sql":"SELECT 1 as value WHERE value = 0"},"series":null,"tables":null,"dataframes":null}}}', headers: {})
+
+    stub_request(:post, 'http://localhost/api/tsdb/query').with(
       body: /.*SELECT 1000[^\d]*/,
       headers: {
         'Accept' => 'application/json',
@@ -1245,23 +1257,29 @@ describe ValueAsVariableIncludeProcessor do
 
   it 'can be processed' do
     expect(@report.logger).not_to receive(:error)
-    expect(Asciidoctor.convert("include::grafana_value_as_variable[call=\"grafana_sql_value:#{stub_datasource}\",sql=\"SELECT 1\",variable_name=\"test\",panel=\"#{stub_panel}\",dashboard=\"#{stub_dashboard}\"]", to_file: false)).not_to include('1')
-    expect(Asciidoctor.convert("include::grafana_value_as_variable[call=\"grafana_sql_value:#{stub_datasource}\",sql=\"SELECT 1\",variable_name=\"test\",panel=\"#{stub_panel}\",dashboard=\"#{stub_dashboard}\"]\n{test}", to_file: false)).to include('1')
+    expect(Asciidoctor.convert("include::grafana_value_as_variable[call=\"grafana_sql_value:#{stub_datasource}\",sql=\"SELECT 1\",variable_name=\"test\"\"]", to_file: false)).not_to include('1')
+    expect(Asciidoctor.convert("include::grafana_value_as_variable[call=\"grafana_sql_value:#{stub_datasource}\",sql=\"SELECT 1\",variable_name=\"test\"\"]\n{test}", to_file: false)).to include('1')
   end
 
   it 'shows error if mandatory call attributes is missing' do
-    expect(@report.logger).to receive(:error).with("Missing mandatory attribute 'call' or 'variable_name'.")
+    expect(@report.logger).to receive(:error).with("ValueAsVariableIncludeProcessor: Missing mandatory attribute 'call' or 'variable_name'.")
     Asciidoctor.convert("include::grafana_value_as_variable[variable_name=\"test\",panel=\"#{stub_panel}\",dashboard=\"#{stub_dashboard}\"]", to_file: false)
   end
 
   it 'shows error if mandatory variable_name attributes is missing' do
-    expect(@report.logger).to receive(:error).with("Missing mandatory attribute 'call' or 'variable_name'.")
+    expect(@report.logger).to receive(:error).with("ValueAsVariableIncludeProcessor: Missing mandatory attribute 'call' or 'variable_name'.")
     Asciidoctor.convert("include::grafana_value_as_variable[call=\"test:1\",panel=\"#{stub_panel}\",dashboard=\"#{stub_dashboard}\"]", to_file: false)
   end
 
   it 'shows error if mandatory call attributes is malformed' do
-    expect(@report.logger).to receive(:error).with("Could not find inline macro extension for 'test'.")
+    expect(@report.logger).to receive(:error).with("ValueAsVariableIncludeProcessor: Could not find inline macro extension for 'test'.")
     Asciidoctor.convert("include::grafana_value_as_variable[call=\"test\",variable_name=\"test\",panel=\"#{stub_panel}\",dashboard=\"#{stub_dashboard}\"]", to_file: false)
+  end
+
+  it 'shows debug message if variable is not added, as result was empty' do
+    allow(@report.logger).to receive(:debug)
+    expect(@report.logger).to receive(:debug).with("ValueAsVariableIncludeProcessor: Not adding variable 'test' as query result was empty.")
+    Asciidoctor.convert("include::grafana_value_as_variable[call=\"grafana_sql_value:#{stub_datasource}\",sql=\"SELECT 1 as value WHERE value = 0\",variable_name=\"test\"]", to_file: false)
   end
 end
 
