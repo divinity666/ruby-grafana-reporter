@@ -185,7 +185,7 @@ module GrafanaReporter
     #
     # param other_config [Configuration] other configuration object
     def merge!(other_config)
-      config.merge!(other_config.config) { |_key, v1, v2| Hash === v1 && Hash === v2 ? v1.merge(v2) : v2 }
+      config.merge!(other_config.config) { |_key, v1, v2| v1.is_a?(Hash) && v2.is_a?(Hash) ? v1.merge(v2) : v2 }
       update_configuration
     end
 
@@ -203,13 +203,12 @@ module GrafanaReporter
     end
 
     def update_configuration
-      if get_config('grafana-reporter:debug-level') =~ /DEBUG|INFO|WARN|ERROR|FATAL|UNKNOWN/
-        @logger.level = Object.const_get("::Logger::Severity::#{get_config('grafana-reporter:debug-level')}")
-      end
+      debug_level = get_config('grafana-reporter:debug-level')
+      rep_class = get_config('grafana-reporter:report-class')
 
-      if get_config('grafana-reporter:report-class')
-        self.report_class = Object.const_get(get_config('grafana-reporter:report-class'))
-      end
+      @logger.level = Object.const_get("::Logger::Severity::#{debug_level}") if debug_level =~ /DEBUG|INFO|WARN|
+                                                                                                ERROR|FATAL|UNKNOWN/x
+      self.report_class = Object.const_get(rep_class) if rep_class
     end
 
     def get_config(path)
@@ -232,20 +231,16 @@ module GrafanaReporter
 
         if key.nil?
           # apply to all on this level
-          case
-          when subject.is_a?(Hash)
-            if subject.length < min_occurence
-              raise ConfigurationDoesNotMatchSchemaError.new(key, 'occur', min_occurence, subject.length)
-            end
+          raise ConfigurationError, "Unhandled configuration data type '#{subject.class}'." unless subject.is_a?(Hash)
 
-            subject.each do |k, _v|
-              sub_scheme = {}
-              sub_scheme[k] = schema[nil]
-              validate_schema(sub_scheme, subject)
-            end
+          if subject.length < min_occurence
+            raise ConfigurationDoesNotMatchSchemaError.new(key, 'occur', min_occurence, subject.length)
+          end
 
-          else
-            raise ConfigurationError, "Unhandled configuration data type '#{subject.class}'."
+          subject.each do |k, _v|
+            sub_scheme = {}
+            sub_scheme[k] = schema[nil]
+            validate_schema(sub_scheme, subject)
           end
 
         # apply to single item

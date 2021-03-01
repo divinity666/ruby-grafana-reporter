@@ -10,8 +10,17 @@ module GrafanaReporter
       # @param item_hash [Hash] variables from item configuration level, i.e. specific call, which may override document
       # @return [void]
       def merge_hash_variables(document_hash, item_hash)
-        merge_variables(document_hash.select { |k, _v| k =~ /^var-/ || k == 'grafana-report-timestamp' || k =~ /grafana_default_(?:from|to)_timezone/ }.each_with_object({}) { |(k, v), h| h[k] = ::Grafana::Variable.new(v) })
-        merge_variables(item_hash.select { |k, _v| k =~ /^var-/ || k =~ /^render-/ || k =~ /filter_columns|format|replace_values_.*|transpose|column_divider|row_divider|from_timezone|to_timezone/ }.each_with_object({}) { |(k, v), h| h[k] = ::Grafana::Variable.new(v) })
+        sel_doc_items = document_hash.select do |k, _v|
+          k =~ /^var-/ || k == 'grafana-report-timestamp' || k =~ /grafana_default_(?:from|to)_timezone/
+        end
+        merge_variables(sel_doc_items.each_with_object({}) { |(k, v), h| h[k] = ::Grafana::Variable.new(v) })
+
+        sel_items = item_hash.select do |k, _v|
+          k =~ /^var-/ || k =~ /^render-/ || k =~ /filter_columns|format|replace_values_.*|transpose|column_divider|
+                                                   row_divider|from_timezone|to_timezone/x
+        end
+        merge_variables(sel_items.each_with_object({}) { |(k, v), h| h[k] = ::Grafana::Variable.new(v) })
+
         self.timeout = item_hash['timeout'] || document_hash['grafana-default-timeout'] || timeout
         self.from = item_hash['from'] || document_hash['from'] || from
         self.to = item_hash['to'] || document_hash['to'] || to

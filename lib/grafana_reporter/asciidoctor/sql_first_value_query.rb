@@ -19,13 +19,11 @@ module GrafanaReporter
         results = replace_values(results, @variables.select { |k, _v| k =~ /^replace_values_\d+/ })
         results = filter_columns(results, @variables['filter_columns'])
 
-        unless results[:content].empty?
-          unless results[:content][0].empty?
-            @result = results[:content][0][0]
-            return
-          end
-        end
         @result = ''
+        return if results[:content].empty?
+        return if results[:content][0].empty?
+
+        @result = results[:content][0][0]
       end
 
       # Translates the from and to times.
@@ -34,8 +32,10 @@ module GrafanaReporter
       # @return [void]
       def pre_process(grafana)
         super(grafana)
-        @from = translate_date(@from, @variables['grafana-report-timestamp'], false, @variables['from_timezone'] || @variables['grafana_default_from_timezone'])
-        @to = translate_date(@to, @variables['grafana-report-timestamp'], true, @variables['to_timezone'] || @variables['grafana_default_to_timezone'])
+        @from = translate_date(@from, @variables['grafana-report-timestamp'], false, @variables['from_timezone'] ||
+                               @variables['grafana_default_from_timezone'])
+        @to = translate_date(@to, @variables['grafana-report-timestamp'], true, @variables['to_timezone'] ||
+                             @variables['grafana_default_to_timezone'])
       end
     end
   end

@@ -30,8 +30,10 @@ module GrafanaReporter
         @datasource = @panel.field('datasource')
         @datasource_id = grafana.datasource_id(@datasource)
         super(grafana)
-        @from = translate_date(@from, @variables['grafana-report-timestamp'], false, @variables['from_timezone'] || @variables['grafana_default_from_timezone'])
-        @to = translate_date(@to, @variables['grafana-report-timestamp'], true, @variables['to_timezone'] || @variables['grafana_default_to_timezone'])
+        @from = translate_date(@from, @variables['grafana-report-timestamp'], false, @variables['from_timezone'] ||
+                               @variables['grafana_default_from_timezone'])
+        @to = translate_date(@to, @variables['grafana-report-timestamp'], true, @variables['to_timezone'] ||
+                             @variables['grafana_default_to_timezone'])
       end
     end
   end
