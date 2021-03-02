@@ -43,8 +43,10 @@ module GrafanaReporter
       def pre_process(_grafana)
         raise MissingMandatoryAttributeError, 'columns' unless @variables['columns']
 
-        @from = translate_date(@from, @variables['grafana-report-timestamp'], false, @variables['from_timezone'] || @variables['grafana_default_from_timezone'])
-        @to = translate_date(@to, @variables['grafana-report-timestamp'], true, @variables['to_timezone'] || @variables['grafana_default_to_timezone'])
+        @from = translate_date(@from, @variables['grafana-report-timestamp'], false, @variables['from_timezone'] ||
+                               @variables['grafana_default_from_timezone'])
+        @to = translate_date(@to, @variables['grafana-report-timestamp'], true, @variables['to_timezone'] ||
+                             @variables['grafana_default_to_timezone'])
       end
 
       # Filters the query result for the given columns and sets the result
@@ -70,11 +72,6 @@ module GrafanaReporter
         result = format_columns(result, @variables['format'])
         result = replace_values(result, @variables.select { |k, _v| k =~ /^replace_values_\d+/ })
         result = filter_columns(result, @variables['filter_columns'])
-        if @variables['filter_column']
-          @report.logger.warn("DEPRECATED: Call of  no longer supported function 'filter_column' has been found."\
-                              " Rename to 'filter_columns'")
-          result = filter_columns(result, @variables['filter_column'])
-        end
 
         @result = result[:content].map { |row| "| #{row.map { |item| item.to_s.gsub('|', '\\|') }.join(' | ')}" }
       end

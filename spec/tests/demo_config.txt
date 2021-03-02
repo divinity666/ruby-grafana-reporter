@@ -8,9 +8,6 @@ grafana:
   default:
     host: http://localhost
     api_key: xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-    datasources:
-      demo: 1
-      bla: 2
 
 default-document-attributes:
   imagesdir: /

@@ -30,17 +30,17 @@ module GrafanaReporter
 #{functions_as_text(opts.merge(level: opts[:level] + 1))})
       end
 
-      def toc(opts = {})
+      def toc
         result = []
 
         result << "Table of contents"
         result << "* [Global options](#global-options)"
-        prepared_help[:global_options].sort.map do |k, v|
+        prepared_help[:global_options].sort.map do |k, _v|
           result << "  * [#{k}](##{k.downcase})"
         end
 
         result << "* [Functions](#functions)"
-        prepared_help[:functions].sort.map do |k, v|
+        prepared_help[:functions].sort.map do |k, _v|
           result << "  * [#{k}](##{k.downcase})"
         end
 
@@ -122,7 +122,7 @@ end}
       end
 
       def raw_help_yaml
-        return <<YAML_HELP
+        <<YAML_HELP
 global_options:
   grafana_default_instance:
     call: ":grafana_default_instance: <instance_name>"

@@ -70,7 +70,7 @@ module GrafanaReporter
           selected_attrs = attrs.select do |k, _v|
             k =~ /(?:columns|limit|alertId|dashboardId|panelId|userId|type|tags)/
           end
-          query.merge_variables(selected_attrs.each_with_object({}) { |(k,v), h| h[k] = ::Grafana::Variable.new(v) })
+          query.merge_variables(selected_attrs.each_with_object({}) { |(k, v), h| h[k] = ::Grafana::Variable.new(v) })
           @report.logger.debug("from: #{query.from}, to: #{query.to}")
 
           begin

@@ -12,6 +12,7 @@ Reporting Service for Grafana
 * [Getting started](#getting-started)
   * [Grafana integration](#grafana-integration)
   * [Webservice overview](#webservice-overview)
+* [Documentation](#documentation)
 * [Features](#features)
 * [Roadmap](#roadmap)
 * [Contributing](#contributing)
@@ -38,28 +39,28 @@ integrate without further dependencies with the asciidoctor docker image.
 Can't wait to see, what functions the reporter provides within the asciidoctor
 templates? Have a look at the [function documentation](FUNCTION_CALLS.md).
 
-The complete
-[API documentation](https://rubydoc.info/gems/ruby-grafana-reporter) can be
-found here.
-
 ## Getting started
 
-There exist several ways of installing the reporter. Here I cover the easiest
-setup by using ruby gems. If you need further installation help, or want to use
-a "baremetal" ruby setup or a docker integration, please have a look at the more
-extended [installation documentation](INSTALL.md).
+There exist several ways of installing the reporter. If you need further
+installation help, or want to use a "baremetal" ruby setup or a docker
+integration, please have a look at the more extended
+[installation documentation](INSTALL.md).
 
-To install the reporter as a gem, simply run:
+Windows users may directly use the provided executable.
 
+Following these steps sets up the reporter on a fresh Raspberry Pi installation:
+
+    sudo apt-get install ruby
     gem install ruby-grafana-reporter
 
-If no configuration file is in place, you might want to use the configuration
-wizard, which leads you through all necessary steps:
+That's it. Let's now configure a grafana setup with the configuration wizard:
 
     ruby-grafana-reporter -w
 
 It is strongly recommended, to also create the demo PDF file, as stated at the end
 of the procedure, to get a detailed documentation of all the reporter capabilities.
+The whole [function documentation](FUNCTION_CALLS.md) is also available at the
+previous link.
 
 To run the reporter as a service, you only need to call it like this:
 
@@ -112,38 +113,42 @@ Running the reporter as a webservice provides the following URLs
     /view_report - for viewing the status or receving the result of a specific rendering, is automatically called after a successfull /render call
     /cancel_report - for cancelling the rendering of a specific report, normally not called manually, but on user interaction in the /view_report or /overview URL
 
+The main endpoint to call for report generation is configured in the previous chapter [Grafana integration](#grafana-integration).
+
+However, if you would like to see, currently running report generations and previously generated reports, you may want to call the endpoint `/overview`.
+
+## Documentation
+
+The [function documentation](FUNCTION_CALLS.md) contains a complete overview of
+all possible grafana calls, to generate dynamic report templates.
+
+The [API documentation](https://rubydoc.info/gems/ruby-grafana-reporter) can be
+found here.
+
 ## Features
 
 * Build report template including all imaginable grafana content:
   * panels as images
   * panel table query or custom query results as real document tables (not images!)
   * single panel value or custom query single value result integrated in texts
-* Solid as a rock, also in case of template errors (at least it aims to be)
-* Runs standalone or as a webservice
+* Solid as a rock, also in case of template errors and whatever else may happen
+* Fully controllable as command line application or as a webservice
 * Seamlessly integrates with asciidoctor docker container
-* Developed for being able to support other tools than asciidoctor as well
+* Developed to support other tools than asciidoctor as well
 
 ## Roadmap
 
 This is just a collection of things, I am heading for in future, without a schedule.
 
-* Add documentation of possible asciidoctor calls to grafana
 * Add a simple plugin system to support specific asciidoctor modifications
 * Solve code TODOs
 * Become [rubocop](https://rubocop.org/) ready
+* Clean and properly setup test cases
 
 ## Contributing
 
 If you'd like to contribute, please fork the repository and use a feature
 branch. Pull requests are warmly welcome.
-
-Though not yet valid for my code, I'd like to see the project become
-[rubocop](https://rubocop.org/) ready :-)
-
-Definitely open spots from my side are:
-
-* This README
-* Clean and properly setup test cases
 
 ## Licensing
 

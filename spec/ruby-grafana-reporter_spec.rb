@@ -400,15 +400,20 @@ describe Configuration do
       expect(subject.images_folder).to eq('./')
     end
 
-    it 'can read datasources' do
-      expect(subject.grafana_datasources).to eq({ 'demo' => 1, 'bla' => 2 })
-    end
-
     it 'is valid' do
       allow(subject.logger).to receive(:debug)
       allow(subject.logger).to receive(:info)
       allow(subject.logger).to receive(:warn)
       expect { subject.validate }.not_to raise_error
+    end
+
+    it 'raises error if grafana instance does not have a host setting' do
+      obj = Configuration.new
+      yaml = YAML.load_file('./spec/tests/demo_config.txt')
+      yaml['grafana']['default'].delete('host')
+      obj.config = yaml
+      expect { obj.grafana_host }.to raise_error(GrafanaInstanceWithoutHostError)
+      expect { obj.validate }.to raise_error(ConfigurationDoesNotMatchSchemaError)
     end
   end
 
@@ -450,30 +455,6 @@ describe Configuration do
       expect { subject.validate }.not_to raise_error
     end
 
-    it 'validates optional datasources' do
-      subject.config = {
-                            'grafana' => { 'default' => { 'host' => 'test', 'datasources' => { 'test' => 1 } } },
-                            'grafana-reporter' => { 'report-class' => 'GrafanaReporter::Asciidoctor::Report' }
-                          }
-      expect { subject.validate }.not_to raise_error
-    end
-
-    it 'raises error if item exists without required subitem' do
-      subject.config = {
-                            'grafana' => { 'default' => { 'host' => 'test', 'datasources' => {} } },
-                            'grafana-reporter' => { 'report-class' => 'GrafanaReporter::Asciidoctor::Report' }
-                          }
-      expect { subject.validate }.to raise_error(ConfigurationDoesNotMatchSchemaError)
-    end
-
-    it 'raises error on wrong datasource type' do
-      subject.config = {
-                            'grafana' => { 'default' => { 'host' => 'test', 'datasources' => { 'test' => 'bla' } } },
-                            'grafana-reporter' => { 'report-class' => 'GrafanaReporter::Asciidoctor::Report' }
-                          }
-      expect { subject.validate }.to raise_error(ConfigurationDoesNotMatchSchemaError)
-    end
-
     it 'raises error if folder does not exist' do
       subject.config = {
                             'grafana' => { 'default' => { 'host' => 'test' } },
@@ -501,20 +482,6 @@ describe Configuration do
   end
 end
 
-describe Report do
-  subject do
-    config = Configuration.new
-    config.config = YAML.load_file('./spec/tests/demo_config.txt')
-
-    Report.new(config, './spec/tests/demo_report.adoc')
-  end
-
-  it 'can preconfigure grafana instance' do
-    expect(subject.grafana('default').datasource_id('demo')).to eq(1)
-    expect(subject.grafana('default').datasource_id('bla')).to eq(2)
-  end
-end
-
 # run tests against mocked grafana instance
 # WebMock.disable_net_connect!(:allow_localhost => true)
 
@@ -528,6 +495,16 @@ stub_datasource = '1'
 
 RSpec.configure do |config|
   config.before(:each) do
+    stub_request(:get, 'http://localhost/api/frontend/settings').with(
+      headers: {
+        'Accept' => 'application/json',
+        'Accept-Encoding' => 'gzip;q=1.0,deflate;q=0.6,identity;q=0.3',
+        'Content-Type' => 'application/json',
+        'User-Agent' => 'Ruby'
+      }
+    )
+    .to_return(status: 200, body: File.read('./spec/tests/frontend_settings.json'), headers: {})
+
     stub_request(:get, 'http://localhost/api/datasources').with(
       headers: {
         'Accept' => 'application/json',
@@ -592,6 +569,18 @@ RSpec.configure do |config|
       }
     )
     .to_return(status: 200, body: '{"results":{"A":{"refId":"A","meta":{"rowCount":1,"sql":"SELECT 1"},"series":null,"tables":[{"columns":[{"text":"1"}],"rows":[[1]]}],"dataframes":null}}}', headers: {})
+
+    stub_request(:post, 'http://localhost/api/tsdb/query').with(
+      body: /.*SELECT 1 as value WHERE value = 0*/,
+      headers: {
+        'Accept' => 'application/json',
+        'Accept-Encoding' => 'gzip;q=1.0,deflate;q=0.6,identity;q=0.3',
+        'Authorization' => 'Bearer xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx',
+        'Content-Type' => 'application/json',
+        'User-Agent' => 'Ruby'
+      }
+    )
+    .to_return(status: 200, body: '{"results":{"A":{"refId":"A","meta":{"rowCount":0,"sql":"SELECT 1 as value WHERE value = 0"},"series":null,"tables":null,"dataframes":null}}}', headers: {})
 
     stub_request(:post, 'http://localhost/api/tsdb/query').with(
       body: /.*SELECT 1000[^\d]*/,
@@ -675,6 +664,17 @@ describe Application do
     it 'expects default config file' do
       expect { subject.configure_and_run(['-c', 'does_not_exist.config']) }.to output(/Config file.* does not exist/).to_stdout
     end
+
+    it 'shows error on non-existing ssl cert file' do
+      expect(subject.config.logger).to receive(:warn).with(/SSL certificate .* does not exist.*/)
+      expect(subject.config.logger).to receive(:warn)
+      expect { subject.configure_and_run(['-c', './spec/tests/demo_config.txt', '--test', 'default', '-d', 'WARN', '--ssl-cert', 'does_not_exist.cert']) }.to output("Admin\n").to_stdout
+    end
+
+    it 'runs properly with correct ssl cert file' do
+      expect(subject.config.logger).not_to receive(:warn).with(/SSL certificate .* does not exist.*/)
+      expect { subject.configure_and_run(['-c', './spec/tests/demo_config.txt', '--test', 'default', '-d', 'WARN', '--ssl-cert',  './spec/tests/cacert.pem']) }.to output("Admin\n").to_stdout
+    end
   end
 
   context 'command line single rendering' do
@@ -702,76 +702,13 @@ describe Application do
       expect { subject.configure_and_run(['-c', './spec/tests/demo_config.txt', '-t', 'spec/tests/demo_report', '-o', './result.pdf', '-d', 'DEBUG', '-s', 'par1,test']) }.not_to output(/ERROR/).to_stderr
     end
 
+    it 'raises error on malformed custom command line parameters' do
+      expect { subject.configure_and_run(['-c', './spec/tests/demo_config.txt', '-t', 'spec/tests/demo_report', '-o', './result.pdf', '-s', 'par1']) }.to output(/GrafanaReporterError: Parameter '-s' needs exactly two values separated by comma, received 1./).to_stdout
+      expect { subject.configure_and_run(['-c', './spec/tests/demo_config.txt', '-t', 'spec/tests/demo_report', '-o', './result.pdf', '-s', 'par1,val1,something']) }.to output(/GrafanaReporterError: Parameter '-s' needs exactly two values separated by comma, received 3./).to_stdout
+    end
+
     it 'does not raise error on non existing template' do
       expect { subject.configure_and_run(['-c', './spec/tests/demo_config.txt', '-t', 'does_not_exist']) }.to output(/report template .* is not a valid template/).to_stdout
-    end
-  end
-
-  context 'config wizard' do
-    subject { GrafanaReporter::Application::Application.new }
-    let(:folder) { './test_templates' }
-    let(:config_file) { 'test.config' }
-
-    before do
-      File.delete(config_file) if File.exist?(config_file)
-      File.delete("#{folder}/demo_report.adoc") if File.exist?("#{folder}/demo_report.adoc")
-      Dir.delete(folder) if Dir.exist?(folder)
-      @config = ["\n", "http://localhost\n", "a\n", "#{stub_key}\n", "\n", "i\n", "\n", "i\n", "\n", "i\n", "24\n"]
-      allow(subject).to receive(:puts)
-      allow(subject).to receive(:print)
-      allow(subject.config.logger).to receive(:debug)
-      allow(subject.config.logger).to receive(:info)
-      allow(subject.config.logger).to receive(:warn)
-    end
-
-    after do
-      File.delete(config_file) if File.exist?(config_file)
-      File.delete("#{folder}/demo_report.adoc") if File.exist?("#{folder}/demo_report.adoc")
-      Dir.delete(folder) if Dir.exist?(folder)
-    end
-
-    it 'can create configured folders' do
-      @config.slice!(4, 2)
-      @config.insert(4, "#{folder}\n", "c\n")
-      allow(subject).to receive(:gets).and_return(*@config)
-      subject.configure_and_run(['-w','-c',config_file])
-      expect(Dir.exist?(folder)).to be true
-    end
-
-    it 'creates valid config file as admin' do
-      expect(subject.config.logger).not_to receive(:error)
-      allow(subject).to receive(:gets).and_return(*@config)
-      subject.configure_and_run(['-w','-c',config_file, '-d', 'ERROR'])
-      expect(File.exist?(config_file)).to be true
-    end
-
-    it 'creates valid config file as non admin with manual datasource' do
-      @config.slice!(2,2)
-      @config.insert(2, "d\n", "demo\n", "1\n", "a\n", "d\n")
-      allow(subject).to receive(:gets).and_return(*@config)
-      subject.configure_and_run(['-w','-c',config_file])
-      expect(File.exist?(config_file)).to be true
-    end
-
-    it 'asks before overwriting config file' do
-      allow(subject).to receive(:gets).and_return(*@config)
-      subject.configure_and_run(['-w','-c',config_file])
-      expect(File.exist?(config_file)).to be true
-      modify_date = File.mtime(config_file)
-      #try to create config again
-      @config = ["\n"]
-      allow(subject).to receive(:gets).and_return(*@config)
-      subject.configure_and_run(['-w','-c',config_file])
-      expect(File.mtime(config_file)).to eq(modify_date)
-    end
-
-    it 'warns if grafana instance could not be accessed' do
-      @config.insert(1, "http://blabla:9999\n", "r\n")
-      allow(subject).to receive(:gets).and_return(*@config)
-      WebMock.disable_net_connect!(allow: ['http://blabla:9999'])
-      subject.configure_and_run(['-w','-c',config_file])
-      WebMock.enable!
-      expect(File.exist?(config_file)).to be true
     end
   end
 
@@ -895,6 +832,75 @@ default-document-attributes:
   end
 end
 
+describe ConsoleConfigurationWizard do
+  context 'config wizard' do
+    subject { GrafanaReporter::ConsoleConfigurationWizard.new }
+    let(:folder) { './test_templates' }
+    let(:config_file) { 'test.config' }
+
+    before do
+      File.delete(config_file) if File.exist?(config_file)
+      File.delete("#{folder}/demo_report.adoc") if File.exist?("#{folder}/demo_report.adoc")
+      Dir.delete(folder) if Dir.exist?(folder)
+      @config = ["\n", "http://localhost\n", "a\n", "#{stub_key}\n", "#{folder}\n", "c\n", ".\n", ".\n", "i\n", "\n"]
+      allow(subject).to receive(:puts)
+      allow(subject).to receive(:print)
+      allow_any_instance_of(Logger).to receive(:debug)
+      allow_any_instance_of(Logger).to receive(:info)
+      allow_any_instance_of(Logger).to receive(:warn)
+    end
+
+    after do
+      File.delete(config_file) if File.exist?(config_file)
+      File.delete("#{folder}/demo_report.adoc") if File.exist?("#{folder}/demo_report.adoc")
+      Dir.delete(folder) if Dir.exist?(folder)
+    end
+
+    it 'can create configured folders' do
+      @config.slice!(4, 2)
+      @config.insert(4, "#{folder}\n", "c\n")
+      allow(subject).to receive(:gets).and_return(*@config)
+      subject.start_wizard(config_file, Configuration.new)
+      expect(Dir.exist?(folder)).to be true
+    end
+
+    it 'creates valid config file as admin' do
+      allow(subject).to receive(:gets).and_return(*@config)
+      subject.start_wizard(config_file, Configuration.new)
+      expect(File.exist?(config_file)).to be true
+    end
+
+    it 'creates valid config file as non admin' do
+      @config.slice!(2,2)
+      @config.insert(2, "i\n")
+      allow(subject).to receive(:gets).and_return(*@config)
+      subject.start_wizard(config_file, Configuration.new)
+      expect(File.exist?(config_file)).to be true
+    end
+
+    it 'asks before overwriting config file' do
+      allow(subject).to receive(:gets).and_return(*@config)
+      subject.start_wizard(config_file, Configuration.new)
+      expect(File.exist?(config_file)).to be true
+      modify_date = File.mtime(config_file)
+      #try to create config again
+      @config = ["\n"]
+      allow(subject).to receive(:gets).and_return(*@config)
+      subject.start_wizard(config_file, Configuration.new)
+      expect(File.mtime(config_file)).to eq(modify_date)
+    end
+
+    it 'warns if grafana instance could not be accessed' do
+      @config.insert(1, "http://blabla:9999\n", "r\n")
+      allow(subject).to receive(:gets).and_return(*@config)
+      WebMock.disable_net_connect!(allow: ['http://blabla:9999'])
+      subject.start_wizard(config_file, Configuration.new)
+      WebMock.enable!
+      expect(File.exist?(config_file)).to be true
+    end
+  end
+end
+
 describe Grafana do
   context 'with datasources' do
     subject { Grafana::Grafana.new(stub_url, stub_key) }
@@ -902,10 +908,6 @@ describe Grafana do
     it 'connects properly' do
       expect(subject.test_connection).to eq('Admin')
     end
-  end
-
-  context 'without datasources' do
-    subject { Grafana::Grafana.new(stub_url, stub_key, datasources: {}) }
 
     it 'raises error if datasource does not exist' do
       expect { subject.datasource_id('blabla') }.to raise_error(DatasourceDoesNotExistError)
@@ -982,6 +984,12 @@ describe PanelQueryValueInlineMacro do
     expect(@report.logger).not_to receive(:error)
     expect(Asciidoctor.convert("grafana_panel_query_value:#{stub_panel}[query=\"#{stub_panel_query}\",dashboard=\"#{stub_dashboard}\",format=\",%.2f\",filter_columns=\"time_sec\"]", to_file: false)).to include('<p>43.90')
   end
+
+  it 'shows fatal error if query is missing' do
+    expect(@report.logger).to receive(:fatal).with(/GrafanaError: The specified query '' does not exist in the panel '11' in dashboard.*/)
+    expect(Asciidoctor.convert("grafana_panel_query_value:#{stub_panel}[dashboard=\"#{stub_dashboard}\",format=\",%.2f\",filter_columns=\"time_sec\"]", to_file: false)).to include('GrafanaError: The specified query \'\' does not exist in the panel \'11\' in dashboard')
+  end
+
 end
 
 describe PanelImageBlockMacro do
@@ -1028,6 +1036,12 @@ describe PanelImageInlineMacro do
     tmp_file = result.to_s.gsub(/.*img src="([^"]+)".*/m, '\1')
     expect(File.exist?("./spec/templates/images/#{tmp_file}")).to be false
   end
+
+  it 'shows error if a reporter error occurs' do
+    expect(@report.logger).to receive(:error).with('GrafanaReporterError: The specified time range \'schwurbel\' is unknown.')
+    expect(Asciidoctor.convert("grafana_panel_image:#{stub_panel}[dashboard=\"#{stub_dashboard}\",from=\"schwurbel\"]", to_file: false)).to include('GrafanaReporterError: The specified time range \'schwurbel\' is unknown.')
+  end
+
 end
 
 describe SqlTableIncludeProcessor do
@@ -1053,6 +1067,16 @@ describe SqlTableIncludeProcessor do
     expect(@report.logger).to receive(:debug).exactly(3).times.with(any_args)
     expect(@report.logger).to receive(:debug).with(/"from":"#{Time.new(Time.new.year,1,1).to_i * 1000}".*"to":"#{(Time.new(Time.new.year + 1,1,1) - 1).to_i * 1000}"/)
     expect(Asciidoctor.convert("include::grafana_sql_table:#{stub_datasource}[sql=\"SELECT 1\",from=\"now/y\",to=\"now/y\"]", to_file: false)).not_to include('GrafanaReporterError')
+  end
+
+  it 'shows fatal error if sql statement is missing' do
+    expect(@report.logger).to receive(:fatal).with('GrafanaError: No SQL statement has been specified. (Grafana::MissingSqlQueryError)')
+    expect(Asciidoctor.convert("include::grafana_sql_table:#{stub_datasource}[from=\"now/y\",to=\"now/y\"]", to_file: false)).to include('|GrafanaError: No SQL statement has been specified. (Grafana::MissingSqlQueryError)')
+  end
+
+  it 'shows error if a reporter error occurs' do
+    expect(@report.logger).to receive(:error).with('GrafanaReporterError: The specified time range \'schwurbel\' is unknown.')
+    expect(Asciidoctor.convert("include::grafana_sql_table:#{stub_datasource}[sql=\"SELECT 1\",from=\"schwurbel\",to=\"now/y\"]", to_file: false)).to include('|GrafanaReporterError: The specified time range \'schwurbel\' is unknown.')
   end
 
 end
@@ -1083,7 +1107,7 @@ describe SqlValueInlineMacro do
     expect(Asciidoctor.convert("grafana_sql_value:#{stub_datasource}[sql=\"SELECT 1\",from=\"now/y\",to=\"now/y\"]", to_file: false)).not_to include('GrafanaReporterError')
   end
 
-  it 'returns error message if no sql statement specified' do
+  it 'returns fatal error message if no sql statement specified' do
     expect(@report.logger).to receive(:fatal).with(/No SQL statement/)
     expect(Asciidoctor.convert("grafana_sql_value:#{stub_datasource}[test=\"bla\"]", to_file: false)).to include('MissingSqlQueryError')
     expect(@report.logger).to receive(:fatal).with(/No SQL statement/)
@@ -1099,6 +1123,12 @@ describe SqlValueInlineMacro do
     expect(@report.logger).not_to receive(:error)
     expect(Asciidoctor.convert("grafana_sql_value:#{stub_datasource}[sql=\"SELECT $my-var\"]", to_file: false, attributes: { 'var-my-var' => 1 })).to include('1')
   end
+
+  it 'shows error if a reporter error occurs' do
+    expect(@report.logger).to receive(:error).with('GrafanaReporterError: The specified time range \'schwurbel\' is unknown.')
+    expect(Asciidoctor.convert("grafana_sql_value:#{stub_datasource}[sql=\"SELECT 1\",from=\"schwurbel\",to=\"now/y\"]", to_file: false)).to include('GrafanaReporterError: The specified time range \'schwurbel\' is unknown.')
+  end
+
 end
 
 describe PanelPropertyInlineMacro do
@@ -1124,6 +1154,7 @@ describe PanelPropertyInlineMacro do
     expect(@report.logger).not_to receive(:error)
     expect(Asciidoctor.convert("grafana_panel_property:#{stub_panel}[\"description\",dashboard=\"#{stub_dashboard}\"]", to_file: false, attributes: { 'var-my-var' => 'Meine Ersetzung' })).to include('Meine Ersetzung')
   end
+
 end
 
 describe PanelQueryTableIncludeProcessor do
@@ -1190,6 +1221,12 @@ describe PanelQueryTableIncludeProcessor do
       expect(@report.logger).not_to receive(:error)
       expect(Asciidoctor.convert("include::grafana_panel_query_table:#{stub_panel}[query=\"#{stub_panel_query}\",dashboard=\"#{stub_dashboard}\",transpose=\"true\"]", to_file: false)).to match(/<p>\| 1594308060000 \| 1594308030000 \|/)
     end
+
+    it 'shows error if a reporter error occurs' do
+      expect(@report.logger).to receive(:error).with('GrafanaReporterError: The specified time range \'schwurbel\' is unknown.')
+      expect(Asciidoctor.convert("include::grafana_panel_query_table:#{stub_panel}[query=\"#{stub_panel_query}\",dashboard=\"#{stub_dashboard}\",from=\"schwurbel\"]", to_file: false)).to include('|GrafanaReporterError: The specified time range \'schwurbel\' is unknown.')
+    end
+
   end
 end
 
@@ -1251,6 +1288,7 @@ describe AlertsTableIncludeProcessor do
     expect(@report.logger).to receive(:error).with(/key not found: "stated"/)
     expect(Asciidoctor.convert("include::grafana_alerts[columns=\"newStateDate,name,stated\",panel=\"#{stub_panel}\",dashboard=\"#{stub_dashboard}\"]", to_file: false)).to include('key')
   end
+
 end
 
 describe ValueAsVariableIncludeProcessor do
@@ -1269,23 +1307,29 @@ describe ValueAsVariableIncludeProcessor do
 
   it 'can be processed' do
     expect(@report.logger).not_to receive(:error)
-    expect(Asciidoctor.convert("include::grafana_value_as_variable[call=\"grafana_sql_value:#{stub_datasource}\",sql=\"SELECT 1\",variable_name=\"test\",panel=\"#{stub_panel}\",dashboard=\"#{stub_dashboard}\"]", to_file: false)).not_to include('1')
-    expect(Asciidoctor.convert("include::grafana_value_as_variable[call=\"grafana_sql_value:#{stub_datasource}\",sql=\"SELECT 1\",variable_name=\"test\",panel=\"#{stub_panel}\",dashboard=\"#{stub_dashboard}\"]\n{test}", to_file: false)).to include('1')
+    expect(Asciidoctor.convert("include::grafana_value_as_variable[call=\"grafana_sql_value:#{stub_datasource}\",sql=\"SELECT 1\",variable_name=\"test\"\"]", to_file: false)).not_to include('1')
+    expect(Asciidoctor.convert("include::grafana_value_as_variable[call=\"grafana_sql_value:#{stub_datasource}\",sql=\"SELECT 1\",variable_name=\"test\"\"]\n{test}", to_file: false)).to include('1')
   end
 
   it 'shows error if mandatory call attributes is missing' do
-    expect(@report.logger).to receive(:error).with("Missing mandatory attribute 'call' or 'variable_name'.")
+    expect(@report.logger).to receive(:error).with("ValueAsVariableIncludeProcessor: Missing mandatory attribute 'call' or 'variable_name'.")
     Asciidoctor.convert("include::grafana_value_as_variable[variable_name=\"test\",panel=\"#{stub_panel}\",dashboard=\"#{stub_dashboard}\"]", to_file: false)
   end
 
   it 'shows error if mandatory variable_name attributes is missing' do
-    expect(@report.logger).to receive(:error).with("Missing mandatory attribute 'call' or 'variable_name'.")
+    expect(@report.logger).to receive(:error).with("ValueAsVariableIncludeProcessor: Missing mandatory attribute 'call' or 'variable_name'.")
     Asciidoctor.convert("include::grafana_value_as_variable[call=\"test:1\",panel=\"#{stub_panel}\",dashboard=\"#{stub_dashboard}\"]", to_file: false)
   end
 
   it 'shows error if mandatory call attributes is malformed' do
-    expect(@report.logger).to receive(:error).with("Could not find inline macro extension for 'test'.")
+    expect(@report.logger).to receive(:error).with("ValueAsVariableIncludeProcessor: Could not find inline macro extension for 'test'.")
     Asciidoctor.convert("include::grafana_value_as_variable[call=\"test\",variable_name=\"test\",panel=\"#{stub_panel}\",dashboard=\"#{stub_dashboard}\"]", to_file: false)
+  end
+
+  it 'shows debug message if variable is not added, as result was empty' do
+    allow(@report.logger).to receive(:debug)
+    expect(@report.logger).to receive(:debug).with("ValueAsVariableIncludeProcessor: Not adding variable 'test' as query result was empty.")
+    Asciidoctor.convert("include::grafana_value_as_variable[call=\"grafana_sql_value:#{stub_datasource}\",sql=\"SELECT 1 as value WHERE value = 0\",variable_name=\"test\"]", to_file: false)
   end
 end
 

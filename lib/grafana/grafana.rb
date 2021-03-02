@@ -13,16 +13,15 @@ module Grafana
     #   trailing slash, e.g. +https://localhost:3000+.
     # @param key [String] API key for the grafana instance, if required
     # @param opts [Hash] additional options.
-    #   Currently supporting +:logger+ and +:datasources+.
-    #   +:datasources+ need to be an Hash with datasource name as key and datasource id as value.
-    #   If not specified, the datasources will be queried from the grafana interface.
-    #   Specifying +:datasources+> here can be used, so that the interface can be used without grafana Admin privileges.
+    #   Currently supporting +:logger+ and +:ssl_cert+.
     def initialize(base_uri, key = nil, opts = {})
       @base_uri = base_uri
       @key = key
       @dashboards = {}
+      @ssl_cert = opts[:ssl_cert]
       @logger = opts[:logger] || ::Logger.new(nil)
-      @datasources = opts[:datasources]
+
+      initialize_datasources unless @base_uri.empty?
     end
 
     # Used to test a connection to the grafana instance.
@@ -34,14 +33,13 @@ module Grafana
     def test_connection
       if execute_http_request('/api/datasources').is_a?(Net::HTTPOK)
         # we have admin rights
-        @logger.info('Reporter is running with Admin privileges on grafana.')
+        @logger.warn('Reporter is running with Admin privileges on grafana. This is a potential security risk.')
         return 'Admin'
       end
       # check if we have lower rights
       return 'Failed' unless execute_http_request('/api/dashboards/home').is_a?(Net::HTTPOK)
 
-      @logger.info('Reporter is running with NON-Admin privileges on grafana. Make sure that necessary '\
-                   'datasources are specified in CONFIG_FILE, otherwise operation will fail')
+      @logger.info('Reporter is running with NON-Admin privileges on grafana.')
       'NON-Admin'
     end
 
@@ -49,17 +47,17 @@ module Grafana
     #
     # @return [Integer] ID for the specified datasource name
     def datasource_id(datasource_name)
-      id = datasources[datasource_name]
-      raise DatasourceDoesNotExistError.new('name', datasource_name) unless id
+      datasource_name ||= 'default'
+      return @datasources[datasource_name] if @datasources[datasource_name]
 
-      id
+      raise DatasourceDoesNotExistError.new('name', datasource_name)
     end
 
     # Returns if the given datasource ID exists for the grafana instance.
     #
     # @return [Boolean] true if exists, false otherwise
     def datasource_id_exists?(datasource_id)
-      datasources.value?(datasource_id)
+      @datasources.value?(datasource_id)
     end
 
     # @param dashboard_uid [String] UID of the searched {Dashboard}
@@ -97,6 +95,13 @@ module Grafana
       if @base_uri =~ /^https/
         http.use_ssl = true
         http.verify_mode = OpenSSL::SSL::VERIFY_PEER
+        if @ssl_cert && !File.exist?(@ssl_cert)
+          @logger.warn('SSL certificate file does not exist.')
+        elsif @ssl_cert
+          http.cert_store = OpenSSL::X509::Store.new
+          http.cert_store.set_default_paths
+          http.cert_store.add_file(@ssl_cert)
+        end
       end
       http.read_timeout = timeout.to_i if timeout
 
@@ -112,19 +117,17 @@ module Grafana
 
     private
 
-    def datasources
-      if @datasources.nil?
-        # load datasources from grafana directly, if allowed
-        response = execute_http_request('/api/datasources')
-        if response['message'].nil?
-          json = JSON.parse(response.body)
-          # only store needed values
-          @datasources = json.map { |item| [item['name'], item['id']] }.to_h
-        else
-          @datasources = {}
-        end
+    def initialize_datasources
+      @datasources = {}
+
+      settings = execute_http_request('/api/frontend/settings')
+      return unless settings.is_a?(Net::HTTPOK)
+
+      json = JSON.parse(settings.body)
+      json['datasources'].select { |_k, v| v['id'].to_i.positive? }.each do |ds_name, ds_value|
+        @datasources[ds_name] = ds_value['id'].to_i
       end
-      @datasources
+      @datasources['default'] = @datasources[json['defaultDatasource']]
     end
   end
 end

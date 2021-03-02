@@ -27,7 +27,7 @@ module GrafanaReporter
 
     def initialize
       @config = {}
-      @logger = ::Logger.new($stderr, level: :unknown)
+      @logger = ::Logger.new($stderr, level: :info)
     end
 
     attr_accessor :logger
@@ -56,6 +56,11 @@ module GrafanaReporter
       "#{templates_folder}#{get_config('default-document-attributes:var-template')}.adoc"
     end
 
+    # @return [String] path to ssl certificate file, if manually specified, or nil
+    def ssl_cert
+      get_config('grafana-reporter:ssl-cert')
+    end
+
     # @return [String] destination filename for the report in {MODE_SINGLE_RENDER}.
     def to_file
       return get_config('to_file') || true if mode == MODE_SINGLE_RENDER
@@ -82,16 +87,6 @@ module GrafanaReporter
     # @return [String] configured 'api_key' for the requested grafana instance.
     def grafana_api_key(instance = 'default')
       get_config("grafana:#{instance}:api_key")
-    end
-
-    # @param instance [String] grafana instance name, for which the value shall be retrieved.
-    # @return [Hash<String,Integer>] configured datasources for the requested grafana instance. Name as key,
-    #   ID as value.
-    def grafana_datasources(instance = 'default')
-      hash = get_config("grafana:#{instance}:datasources")
-      return nil if hash.nil?
-
-      hash.map { |k, v| [k, v] }.to_h
     end
 
     # @return [String] configured folder, in which the report templates are stored including trailing slash.
@@ -153,10 +148,11 @@ module GrafanaReporter
     # This function shall be called, before the configuration object is used in the
     # {Application::Application#run}. It ensures, that everything is setup properly
     # and all necessary folders exist. Appropriate errors are raised in case of errors.
+    # @param explicit [Boolean] true, if validation shall expect explicit (wizard) configuration file
     # @return [void]
-    def validate
+    def validate(explicit = false)
       check_deprecation
-      validate_schema(schema, @config)
+      validate_schema(schema(explicit), @config)
 
       # check if set folders exist
       raise FolderDoesNotExistError.new(reports_folder, 'reports-folder') unless File.directory?(reports_folder)
@@ -176,12 +172,8 @@ module GrafanaReporter
 
       cur_pos = @config
       levels.each do |subpath|
-        if cur_pos[subpath]
-          cur_pos = cur_pos[subpath]
-        else
-          cur_pos[subpath] = {}
-          cur_pos = cur_pos[subpath]
-        end
+        cur_pos[subpath] = {} unless cur_pos[subpath]
+        cur_pos = cur_pos[subpath]
       end
 
       cur_pos[last_level] = value
@@ -193,7 +185,7 @@ module GrafanaReporter
     #
     # param other_config [Configuration] other configuration object
     def merge!(other_config)
-      self.config.merge!(other_config.config) { |_key, v1, v2| Hash === v1 && Hash === v2 ? v1.merge(v2) : v2 }
+      config.merge!(other_config.config) { |_key, v1, v2| v1.is_a?(Hash) && v2.is_a?(Hash) ? v1.merge(v2) : v2 }
       update_configuration
     end
 
@@ -202,20 +194,21 @@ module GrafanaReporter
     def check_deprecation
       return if report_class
 
-      logger.warn('DEPRECATION WARNING: Your configuration explicitly needs to specify the \'grafana-reporter:report-class\' value. '\
-                  'Currently this defaults to \'GrafanaReporter::Asciidoctor::Report\'. You can get rid of this warning, if you explicitly '\
-                  'set this configuration in your configuration file. Setting this default will be removed in a future version.')
+      logger.warn('DEPRECATION WARNING: Your configuration explicitly needs to specify the '\
+                  '\'grafana-reporter:report-class\' value.  Currently this defaults to '\
+                  '\'GrafanaReporter::Asciidoctor::Report\'. You can get rid of this warning, if you '\
+                  'explicitly set this configuration in your configuration file. Setting this default will be '\
+                  'removed in a future version.')
       set_param('grafana-reporter:report-class', 'GrafanaReporter::Asciidoctor::Report')
     end
 
     def update_configuration
-      if get_config('grafana-reporter:debug-level') =~ /DEBUG|INFO|WARN|ERROR|FATAL|UNKNOWN/
-        @logger.level = Object.const_get("::Logger::Severity::#{get_config('grafana-reporter:debug-level')}")
-      end
+      debug_level = get_config('grafana-reporter:debug-level')
+      rep_class = get_config('grafana-reporter:report-class')
 
-      if get_config('grafana-reporter:report-class')
-        self.report_class = Object.const_get(get_config('grafana-reporter:report-class'))
-      end
+      @logger.level = Object.const_get("::Logger::Severity::#{debug_level}") if debug_level =~ /DEBUG|INFO|WARN|
+                                                                                                ERROR|FATAL|UNKNOWN/x
+      self.report_class = Object.const_get(rep_class) if rep_class
     end
 
     def get_config(path)
@@ -238,20 +231,16 @@ module GrafanaReporter
 
         if key.nil?
           # apply to all on this level
-          case
-          when subject.is_a?(Hash)
-            if subject.length < min_occurence
-              raise ConfigurationDoesNotMatchSchemaError.new(key, 'occur', min_occurence, subject.length)
-            end
+          raise ConfigurationError, "Unhandled configuration data type '#{subject.class}'." unless subject.is_a?(Hash)
 
-            subject.each do |k, _v|
-              sub_scheme = {}
-              sub_scheme[k] = schema[nil]
-              validate_schema(sub_scheme, subject)
-            end
+          if subject.length < min_occurence
+            raise ConfigurationDoesNotMatchSchemaError.new(key, 'occur', min_occurence, subject.length)
+          end
 
-          else
-            raise ConfigurationError, "Unhandled configuration data type '#{subject.class}'."
+          subject.each do |k, _v|
+            sub_scheme = {}
+            sub_scheme[k] = schema[nil]
+            validate_schema(sub_scheme, subject)
           end
 
         # apply to single item
@@ -277,7 +266,7 @@ module GrafanaReporter
       end
     end
 
-    def schema
+    def schema(explicit)
       {
         'grafana' =>
          [
@@ -288,13 +277,12 @@ module GrafanaReporter
                 Hash, 1,
                 {
                   'host' => [String, 1],
-                  'api_key' => [String, 0],
-                  'datasources' => [Hash, 0, { nil => [Integer, 1] }]
+                  'api_key' => [String, 0]
                 }
               ]
            }
          ],
-        'default-document-attributes' => [Hash, 0],
+        'default-document-attributes' => [Hash, explicit ? 1 : 0],
         'grafana-reporter' =>
         [
           Hash, 1,
@@ -302,11 +290,12 @@ module GrafanaReporter
             'debug-level' => [String, 0],
             'run-mode' => [String, 0],
             'test-instance' => [String, 0],
-            'templates-folder' => [String, 0],
+            'templates-folder' => [String, explicit ? 1 : 0],
             'report-class' => [String, 1],
-            'reports-folder' => [String, 0],
-            'report-retention' => [Integer, 0],
-            'webservice-port' => [Integer, 0]
+            'reports-folder' => [String, explicit ? 1 : 0],
+            'report-retention' => [Integer, explicit ? 1 : 0],
+            'ssl-cert' => [String, 0],
+            'webservice-port' => [Integer, explicit ? 1 : 0]
           }
         ]
       }

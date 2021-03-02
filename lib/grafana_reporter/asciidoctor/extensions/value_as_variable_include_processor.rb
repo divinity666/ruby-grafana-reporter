@@ -31,7 +31,7 @@ module GrafanaReporter
       # +call+ - regular call to the reporter hook (*mandatory*)
       #
       # +variable_name+ - name of the variable, to which the result shall be assigned (*mandatory*)
-     class ValueAsVariableIncludeProcessor < ::Asciidoctor::Extensions::IncludeProcessor
+      class ValueAsVariableIncludeProcessor < ::Asciidoctor::Extensions::IncludeProcessor
         include ProcessorMixin
 
         # :nodoc:
@@ -52,7 +52,8 @@ module GrafanaReporter
           @report.logger.debug("Processing ValueAsVariableIncludeProcessor (call: #{call}, target: #{target},"\
                                " variable_name: #{attribute}, attrs: #{attrs})")
           if !call || !attribute
-            @report.logger.error("Missing mandatory attribute 'call' or 'variable_name'.")
+            @report.logger.error('ValueAsVariableIncludeProcessor: Missing mandatory attribute \'call\' or '\
+                                 '\'variable_name\'.')
             return reader
           end
 
@@ -64,7 +65,8 @@ module GrafanaReporter
           # TODO: properly show error messages also in document
           ext = doc.extensions.find_inline_macro_extension(call) if doc.extensions.inline_macros?
           if !ext
-            @report.logger.error("Could not find inline macro extension for '#{call}'.")
+            @report.logger.error('ValueAsVariableIncludeProcessor: Could not find inline macro extension for '\
+                                 "'#{call}'.")
           else
             @report.logger.debug('ValueAsVariableIncludeProcessor: Calling sub-method.')
             item = ext.process_method.call(doc, target, attrs)
@@ -73,7 +75,7 @@ module GrafanaReporter
               @report.logger.debug("ValueAsVariableIncludeProcessor: Adding '#{result}' to document.")
               reader.unshift_line(result)
             else
-              @report.logger.debug("ValueAsVariableIncludeProcessor: Not adding variable '#{attribute}',"\
+              @report.logger.debug("ValueAsVariableIncludeProcessor: Not adding variable '#{attribute}'"\
                                    ' as query result was empty.')
             end
           end

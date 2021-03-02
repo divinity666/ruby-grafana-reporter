@@ -115,8 +115,7 @@ module GrafanaReporter
         unless @grafana_instances[instance]
           @grafana_instances[instance] = ::Grafana::Grafana.new(@config.grafana_host(instance),
                                                                 @config.grafana_api_key(instance),
-                                                                logger: @logger,
-                                                                datasources: @config.grafana_datasources(instance))
+                                                                logger: @logger, ssl_cert: @config.ssl_cert)
         end
         @grafana_instances[instance]
       end
