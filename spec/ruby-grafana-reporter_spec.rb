@@ -641,6 +641,28 @@ RSpec.configure do |config|
   end
 end
 
+class ReportEventHandler
+  def callback(event, report)
+    case event
+    when :on_before_create
+      @cur_thread = Thread.current
+      Thread.stop
+
+    when :on_after_finish
+      @done = true
+
+    end
+  end
+
+  def unpause_thread
+    @cur_thread.wakeup
+  end
+
+  def done?
+    @done
+  end
+end
+
 describe Application do
   context 'command line' do
     subject { GrafanaReporter::Application::Application.new }
@@ -735,12 +757,17 @@ default-document-attributes:
       app = GrafanaReporter::Application::Application.new
       app.config = config
       @webserver = Thread.new { app.run }
-      sleep 0.5
+      sleep 0.1 until app.webservice.running?
       @app = app
+    end
+
+    before do
+      AbstractReport.clear_event_listeners
     end
 
     after(:context) do
       WebMock.enable!
+      AbstractReport.clear_event_listeners
       @webserver.kill
     end
 
@@ -759,8 +786,11 @@ default-document-attributes:
     end
 
     it 'can properly cancel demo report' do
+      evt = ReportEventHandler.new
+      AbstractReport.add_event_listener(:on_before_create, evt)
+
       expect(@app.config.logger).not_to receive(:error)
-      url = URI('http://localhost:8033/render?var-template=demo_report_slow')
+      url = URI('http://localhost:8033/render?var-template=demo_report')
       http = Net::HTTP.new(url.host, url.port)
       res = http.request_get(url.request_uri)
       expect(res.code).to eq("302")
@@ -771,6 +801,11 @@ default-document-attributes:
       expect(res.body).to include("in progress")
       res = http.request_get("/cancel_report?report_id=#{id}")
       expect(res.code).to eq("302")
+
+      evt.unpause_thread
+      cur_time = Time.new
+      sleep 0.1 while !evt.done? && Time.new - cur_time < 10
+
       res = Net::HTTP.get(URI("http://localhost:8033/view_log?report_id=#{id}"))
       expect(res).to include("Cancelling report generation invoked.")
       res = Net::HTTP.get(URI('http://localhost:8033/overview'))
@@ -778,6 +813,10 @@ default-document-attributes:
     end
 
     it 'can properly create demo pdf report' do
+      evt = ReportEventHandler.new
+      AbstractReport.add_event_listener(:on_before_create, evt)
+      AbstractReport.add_event_listener(:on_after_finish, evt)
+
       expect(@app.config.logger).not_to receive(:error)
       url = URI('http://localhost:8033/render?var-template=demo_report')
       http = Net::HTTP.new(url.host, url.port)
@@ -793,12 +832,19 @@ default-document-attributes:
       res = http.request_get('/overview')
       expect(res.body).to include(id)
 
-      sleep 1 # race condition with webmock here, because report might not be finished earlier
+      evt.unpause_thread
+      cur_time = Time.new
+      sleep 0.1 while !evt.done? && Time.new - cur_time < 10
+
       res = http.request_get("/view_report?report_id=#{id}")
       expect(res['content-type']).to include('application/pdf')
     end
 
     it 'can properly create demo html report' do
+      evt = ReportEventHandler.new
+      AbstractReport.add_event_listener(:on_before_create, evt)
+      AbstractReport.add_event_listener(:on_after_finish, evt)
+
       expect(@app.config.logger).not_to receive(:error)
       url = URI('http://localhost:8033/render?var-template=demo_report&convert-backend=html')
       http = Net::HTTP.new(url.host, url.port)
@@ -814,7 +860,10 @@ default-document-attributes:
       res = http.request_get('/overview')
       expect(res.body).to include(id)
 
-      sleep 1 # race condition with webmock here, because report might not be finished earlier
+      evt.unpause_thread
+      cur_time = Time.new
+      sleep 0.1 while !evt.done? && Time.new - cur_time < 10
+
       res = http.request_get("/view_report?report_id=#{id}")
       expect(res['content-type']).to include('application/octet-stream')
       expect(res['content-disposition']).to include('.zip')
