@@ -4,7 +4,7 @@ module GrafanaReporter
   module Asciidoctor
     # Implementation of a specific {AbstractReport}. It is used to
     # build reports specifically for asciidoctor results.
-    class Report < GrafanaReporter::AbstractReport
+    class Report < ::GrafanaReporter::AbstractReport
       # (see AbstractReport#initialize)
       def initialize(config, template, destination_file_or_path = nil, custom_attributes = {})
         super
@@ -18,7 +18,7 @@ module GrafanaReporter
       # @see AbstractReport#create_report
       # @return [void]
       def create_report
-        @start_time = Time.now
+        super
         attrs = { 'convert-backend' => 'pdf' }.merge(@config.default_document_attributes.merge(@custom_attributes))
         attrs['grafana-report-timestamp'] = @start_time.to_s
         logger.info("Report started at #{@start_time}")
@@ -92,9 +92,7 @@ module GrafanaReporter
         end
 
         clean_image_files
-        @end_time = Time.now
-        logger.info("Report finished after #{@end_time - @start_time} seconds.")
-        @done = true
+        done!
       rescue StandardError => e
         # catch all errors during execution
         died_with_error(e)
@@ -147,8 +145,7 @@ module GrafanaReporter
       # @return [void]
       def died_with_error(error)
         @error = [error.message] << [error.backtrace]
-        @end_time = Time.now
-        @done = true
+        done!
       end
 
       private

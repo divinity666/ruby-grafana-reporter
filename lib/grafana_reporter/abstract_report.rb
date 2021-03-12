@@ -9,6 +9,12 @@ module GrafanaReporter
   # Objects of this class are also stored in {Application::Application}, unless
   # the retention time is over.
   class AbstractReport
+    # Array of supported event callback symbols
+    EVENT_CALLBACKS= [:all, :on_before_create, :on_after_cancel, :on_after_finish]
+
+    @@event_listeners = {}
+    @@event_listeners.default = []
+
     # @return [String] path to the template
     attr_reader :template
 
@@ -45,11 +51,26 @@ module GrafanaReporter
       raise MissingTemplateError, @template.to_s unless File.exist?(@template.to_s)
     end
 
+    # Registers a new event listener object.
+    # @param event [Symbol] one of EVENT_CALLBACKS
+    # @param listener [Object] object responding to #callback(event_symbol, object)
+    def self.add_event_listener(event, listener)
+      @@event_listeners[event] = [] if @@event_listeners[event] == []
+      @@event_listeners[event].push(listener)
+    end
+
+    # Removes all registeres event listener objects
+    def self.clear_event_listeners
+      @@event_listeners = {}
+      @@event_listeners.default = []
+    end
+
     # Call to request cancelling the report generation.
     # @return [void]
     def cancel!
       @cancel = true
       logger.info('Cancelling report generation invoked.')
+      notify(:on_after_cancel)
     end
 
     # @return [String] path to the report destination file
@@ -96,17 +117,32 @@ module GrafanaReporter
       logger.internal_messages
     end
 
-    # @abstract
     # Is being called to start the report generation.
     # @return [void]
     def create_report
-      raise NotImplementedError
+      @start_time = Time.new
+      notify(:on_before_create)
     end
 
     # @abstract
     # @return [Integer] number between 0 and 100, representing the current progress of the report creation.
     def progress
       raise NotImplementedError
+    end
+
+    private
+
+    def done!
+      @done = true
+      @end_time = Time.new
+      logger.info("Report creation #{status} after #{@end_time - @start_time} seconds")
+      notify(:on_after_finish)
+    end
+
+    def notify(event)
+      (@@event_listeners[:all] + @@event_listeners[event]).each do |listener|
+        listener.callback(event, self)
+      end
     end
   end
 end
