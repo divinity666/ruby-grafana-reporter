@@ -19,8 +19,12 @@ module GrafanaReporter
       # Contains the {Configuration} object of the application.
       attr_accessor :config
 
+      # Stores the {Webservice} object of the application
+      attr_reader :webservice
+
       def initialize
         @config = Configuration.new
+        @webservice = Webservice.new
       end
 
       # This is the main method, which is called, if the application is
@@ -148,7 +152,7 @@ module GrafanaReporter
           end
 
         when Configuration::MODE_SERVICE
-          Webservice.new(config).run
+          @webservice.run(config)
         end
 
         0
