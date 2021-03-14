@@ -12,6 +12,7 @@ module GrafanaReporter
     # Array of supported event callback symbols
     EVENT_CALLBACKS= [:all, :on_before_create, :on_after_cancel, :on_after_finish]
 
+    # Class variable for storing event listeners
     @@event_listeners = {}
     @@event_listeners.default = []
 
@@ -65,6 +66,11 @@ module GrafanaReporter
       @@event_listeners.default = []
     end
 
+    def self.event_listener_count
+      # TODO: check if this is needed and/or correct calculation
+      @@event_listeners.length
+    end
+
     # Call to request cancelling the report generation.
     # @return [void]
     def cancel!
@@ -102,9 +108,11 @@ module GrafanaReporter
       @error || []
     end
 
-    # @return [String] status of the report, one of 'in progress', 'cancelled', 'died' or 'finished'.
+    # @return [String] status of the report as string, either 'not started', 'in progress', 'cancelling', 'cancelled', 'died' or 'finished'.
     def status
+      return 'not started' unless @start_time
       return 'cancelled' if done && cancel
+      return 'cancelling' if !done && cancel
       return 'finished' if done && error.empty?
       return 'died' if done && !error.empty?
 
@@ -120,8 +128,9 @@ module GrafanaReporter
     # Is being called to start the report generation.
     # @return [void]
     def create_report
-      @start_time = Time.new
       notify(:on_before_create)
+      @start_time = Time.new
+      logger.info("Report started at #{@start_time}")
     end
 
     # @abstract
@@ -135,13 +144,20 @@ module GrafanaReporter
     def done!
       @done = true
       @end_time = Time.new
-      logger.info("Report creation #{status} after #{@end_time - @start_time} seconds")
+      logger.info("Report creation ended after #{@end_time - @start_time} seconds with status '#{status}'")
       notify(:on_after_finish)
     end
 
     def notify(event)
       (@@event_listeners[:all] + @@event_listeners[event]).each do |listener|
-        listener.callback(event, self)
+        logger.debug("Informing event listener '#{listener.class}' about event '#{event}' for report '#{object_id}'.")
+        begin
+          res = listener.callback(event, self)
+          logger.debug("Event listener '#{listener.class}' for event '#{event}' and report '#{object_id}' returned with result '#{res}'.")
+        rescue StandardError => e
+          puts ("Event listener '#{listener.class}' for event '#{event}' and report '#{object_id}' returned with error: #{e.message}.")
+          logger.error("Event listener '#{listener.class}' for event '#{event}' and report '#{object_id}' returned with error: #{e.message}.")
+        end
       end
     end
   end
