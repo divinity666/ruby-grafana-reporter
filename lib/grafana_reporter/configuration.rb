@@ -209,6 +209,14 @@ module GrafanaReporter
       @logger.level = Object.const_get("::Logger::Severity::#{debug_level}") if debug_level =~ /DEBUG|INFO|WARN|
                                                                                                 ERROR|FATAL|UNKNOWN/x
       self.report_class = Object.const_get(rep_class) if rep_class
+
+      # register callbacks
+      callbacks = get_config('grafana-reporter:callbacks')
+      return unless callbacks
+
+      callbacks.each do |url, event|
+        AbstractReport.add_event_listener(event.to_sym, ReportWebhook.new(url))
+      end
     end
 
     def get_config(path)
@@ -295,7 +303,14 @@ module GrafanaReporter
             'reports-folder' => [String, explicit ? 1 : 0],
             'report-retention' => [Integer, explicit ? 1 : 0],
             'ssl-cert' => [String, 0],
-            'webservice-port' => [Integer, explicit ? 1 : 0]
+            'webservice-port' => [Integer, explicit ? 1 : 0],
+            'callbacks' =>
+              [
+                Hash, 0,
+                  {
+                    nil => [String, 1]
+                  }
+              ]
           }
         ]
       }
