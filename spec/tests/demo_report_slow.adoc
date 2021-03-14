@@ -1,6 +1,0 @@
-= Ruby-Grafana-Reporter Demo Report
-
-Show a valid value: grafana_sql_value:1[sql="SELECT 1000"]
-
-Parameter 1: {par1}
-Parameter 2: {par2}

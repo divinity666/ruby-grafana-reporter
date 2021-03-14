@@ -455,6 +455,22 @@ describe Configuration do
       expect { subject.validate }.not_to raise_error
     end
 
+    it 'raises error if not supported data type is used' do
+      subject.config = {
+                            'grafana' => { 'default' => [] },
+                            'grafana-reporter' => { 'report-class' => 'GrafanaReporter::Asciidoctor::Report' }
+                          }
+      expect { subject.validate }.to raise_error(ConfigurationError)
+    end
+
+    it 'raises error if wrong data type is used' do
+      subject.config = {
+                            'grafana' => { 'default' => { 'host' => 5 } },
+                            'grafana-reporter' => { 'report-class' => 'GrafanaReporter::Asciidoctor::Report' }
+                          }
+      expect { subject.validate }.to raise_error(ConfigurationDoesNotMatchSchemaError)
+    end
+
     it 'raises error if folder does not exist' do
       subject.config = {
                             'grafana' => { 'default' => { 'host' => 'test' } },
@@ -495,7 +511,14 @@ stub_datasource = '1'
 
 RSpec.configure do |config|
   config.before(:each) do
-    stub_request(:get, 'http://localhost/api/frontend/settings').with(
+   stub_request(:get, 'http://localhost/webhook').with(
+      headers: {
+        'User-Agent' => 'Ruby'
+      }
+    )
+    .to_return(status: 200, body: "called test webhook", headers: {})
+
+   stub_request(:get, 'http://localhost/api/frontend/settings').with(
       headers: {
         'Accept' => 'application/json',
         'Accept-Encoding' => 'gzip;q=1.0,deflate;q=0.6,identity;q=0.3',
@@ -582,18 +605,6 @@ RSpec.configure do |config|
     )
     .to_return(status: 200, body: '{"results":{"A":{"refId":"A","meta":{"rowCount":0,"sql":"SELECT 1 as value WHERE value = 0"},"series":null,"tables":null,"dataframes":null}}}', headers: {})
 
-    stub_request(:post, 'http://localhost/api/tsdb/query').with(
-      body: /.*SELECT 1000[^\d]*/,
-      headers: {
-        'Accept' => 'application/json',
-        'Accept-Encoding' => 'gzip;q=1.0,deflate;q=0.6,identity;q=0.3',
-        'Authorization' => 'Bearer xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx',
-        'Content-Type' => 'application/json',
-        'User-Agent' => 'Ruby'
-      }
-    )
-    .to_return { |req| sleep 2; {status: 200, body: '{"results":{"A":{"refId":"A","meta":{"rowCount":1,"sql":"SELECT 1000"},"series":null,"tables":[{"columns":[{"text":"1000"}],"rows":[[1]]}],"dataframes":null}}}', headers: {} } }
-
     stub_request(:get, %r{http://localhost/render/d-solo/IDBRfjSmz\?from=\d+&fullscreen=true&panelId=11&theme=light&timeout=60(?:&var-[^&]+)*}).with(
       headers: {
         'Accept' => 'image/png',
@@ -642,16 +653,25 @@ RSpec.configure do |config|
 end
 
 class ReportEventHandler
+  def initialize(stop_thread = true)
+    @stop_thread = stop_thread
+    @done = false
+  end
+
   def callback(event, report)
+    @report = report
     case event
     when :on_before_create
       @cur_thread = Thread.current
-      Thread.stop
+      Thread.stop if @stop_thread
 
     when :on_after_finish
       @done = true
-
     end
+  end
+
+  def report
+    @report
   end
 
   def unpause_thread
@@ -769,6 +789,7 @@ default-document-attributes:
       WebMock.enable!
       AbstractReport.clear_event_listeners
       @webserver.kill
+      # TODO: kill webservice properly and release port again
     end
 
     it 'responds to overview' do
@@ -788,6 +809,7 @@ default-document-attributes:
     it 'can properly cancel demo report' do
       evt = ReportEventHandler.new
       AbstractReport.add_event_listener(:on_before_create, evt)
+      AbstractReport.add_event_listener(:on_after_finish, evt)
 
       expect(@app.config.logger).not_to receive(:error)
       url = URI('http://localhost:8033/render?var-template=demo_report')
@@ -798,7 +820,7 @@ default-document-attributes:
 
       id = res['location'].gsub(/.*report_id=([^\r\n]*).*/, '\1')
       res = http.request_get("/view_report?report_id=#{id}")
-      expect(res.body).to include("in progress")
+      expect(res.body).to include("not started")
       res = http.request_get("/cancel_report?report_id=#{id}")
       expect(res.code).to eq("302")
 
@@ -810,6 +832,7 @@ default-document-attributes:
       expect(res).to include("Cancelling report generation invoked.")
       res = Net::HTTP.get(URI('http://localhost:8033/overview'))
       expect(res).to include(id)
+      expect(evt.done?).to be true
     end
 
     it 'can properly create demo pdf report' do
@@ -826,7 +849,7 @@ default-document-attributes:
 
       id = res['location'].gsub(/.*report_id=([^\r\n]*).*/, '\1')
       res = http.request_get("/view_report?report_id=#{id}")
-      expect(res.body).to include("in progress")
+      expect(res.body).to include("not started")
       res = http.request_get("/view_log?report_id=#{id}")
       expect(res.body).not_to include("Cancelling report generation invoked.")
       res = http.request_get('/overview')
@@ -835,6 +858,7 @@ default-document-attributes:
       evt.unpause_thread
       cur_time = Time.new
       sleep 0.1 while !evt.done? && Time.new - cur_time < 10
+      expect(evt.done?).to be true
 
       res = http.request_get("/view_report?report_id=#{id}")
       expect(res['content-type']).to include('application/pdf')
@@ -854,7 +878,7 @@ default-document-attributes:
 
       id = res['location'].gsub(/.*report_id=([^\r\n]*).*/, '\1')
       res = http.request_get("/view_report?report_id=#{id}")
-      expect(res.body).to include("in progress")
+      expect(res.body).to include("not started")
       res = http.request_get("/view_log?report_id=#{id}")
       expect(res.body).not_to include("Cancelling report generation invoked.")
       res = http.request_get('/overview')
@@ -863,6 +887,7 @@ default-document-attributes:
       evt.unpause_thread
       cur_time = Time.new
       sleep 0.1 while !evt.done? && Time.new - cur_time < 10
+      expect(evt.done?).to be true
 
       res = http.request_get("/view_report?report_id=#{id}")
       expect(res['content-type']).to include('application/octet-stream')
@@ -879,6 +904,63 @@ default-document-attributes:
       expect(res).to include("is not a valid template.")
     end
   end
+end
+
+describe ReportWebhook do
+    before(:context) do
+      WebMock.disable_net_connect!(allow: ['http://localhost:8034'])
+      config = Configuration.new
+      yaml = "grafana-reporter:
+  report-class: GrafanaReporter::Asciidoctor::Report
+  webservice-port: 8034
+  templates-folder: ./spec/tests
+  reports-folder: .
+  callbacks:
+    http://localhost/webhook: on_after_finish
+
+grafana:
+  default:
+    host: http://localhost
+    api_key: #{stub_key}
+
+default-document-attributes:
+  imagesdir: ."
+
+      config.config = YAML.load(yaml)
+      config.logger.level = ::Logger::Severity::WARN
+      app = GrafanaReporter::Application::Application.new
+      app.config = config
+      @webserver = Thread.new { app.run }
+      sleep 0.1 until app.webservice.running?
+      @app = app
+    end
+
+    after(:context) do
+      WebMock.enable!
+      AbstractReport.clear_event_listeners
+      @webserver.kill
+      # TODO: kill webservice properly and release port again
+    end
+
+    it 'registers event listeners' do
+      expect(AbstractReport.event_listener_count).to eq(1)
+    end
+
+    it 'calls event listener properly' do
+      evt = ReportEventHandler.new(false)
+      AbstractReport.add_event_listener(:on_after_finish, evt)
+
+      expect(@app.config.logger).not_to receive(:error)
+      url = URI('http://localhost:8034/render?var-template=demo_report')
+      http = Net::HTTP.new(url.host, url.port)
+      http.request_get(url.request_uri)
+
+      cur_time = Time.new
+      sleep 0.1 while !evt.done? && Time.new - cur_time < 10
+      expect(evt.done?).to be true
+      expect(evt.report.full_log).to include('called test webhook')
+      expect(WebMock).to have_requested(:get, 'http://localhost/webhook').with(body: include('"status":"finished"'))
+    end
 end
 
 describe ConsoleConfigurationWizard do
