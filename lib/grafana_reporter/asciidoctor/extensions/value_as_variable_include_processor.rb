@@ -43,8 +43,8 @@ module GrafanaReporter
         def process(doc, reader, target, attrs)
           return if @report.cancel
 
-          # do NOT increase step, as this is done by sub processor
-          # @report.next_step
+          # increase step for this processor as well as it is also counted in the step counter
+          @report.next_step
 
           call_attr = attrs.delete('call')
           call, target = call_attr.split(':') if call_attr
@@ -54,6 +54,8 @@ module GrafanaReporter
           if !call || !attribute
             @report.logger.error('ValueAsVariableIncludeProcessor: Missing mandatory attribute \'call\' or '\
                                  '\'variable_name\'.')
+            # increase counter, as error occured and no sub call is being processed
+            @report.next_step
             return reader
           end
 
@@ -67,6 +69,8 @@ module GrafanaReporter
           if !ext
             @report.logger.error('ValueAsVariableIncludeProcessor: Could not find inline macro extension for '\
                                  "'#{call}'.")
+            # increase counter, as error occured and no sub call is being processed
+            @report.next_step
           else
             @report.logger.debug('ValueAsVariableIncludeProcessor: Calling sub-method.')
             item = ext.process_method.call(doc, target, attrs)
