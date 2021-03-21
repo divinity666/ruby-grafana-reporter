@@ -34,6 +34,20 @@ grafana-reporter:
   reports-folder: #{reports}
   report-retention: #{retention}
   webservice-port: #{port}
+# you may want to configure the following webhook callbacks to get informed on certain events
+#  callbacks:
+#    all:
+#      - <<your_callback_url>>
+#      - ...
+#    on_before_create:
+#      - <<your_callback_url>>
+#      - ...
+#    on_after_cancel:
+#      - <<your_callback_url>>
+#      - ...
+#    on_after_finish:
+#      - <<your_callback_url>>
+#      - ...
 
 default-document-attributes:
   imagesdir: #{images}
