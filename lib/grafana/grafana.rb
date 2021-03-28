@@ -18,7 +18,8 @@ module Grafana
       @base_uri = base_uri
       @key = key
       @dashboards = {}
-      @ssl_cert = opts[:ssl_cert]
+      # TODO: move to a proper place
+      WebRequest.ssl_cert = opts[:ssl_cert]
       @logger = opts[:logger] || ::Logger.new(nil)
 
       initialize_datasources unless @base_uri.empty?
@@ -86,33 +87,9 @@ module Grafana
     # @param relative_uri [String] relative URL with a leading slash, which shall be queried
     # @param options [Hash] options, which shall be merged to the request.
     # @param timeout [Integer] number of seconds to wait, before the http request is cancelled, defaults to 60 seconds
-    def execute_http_request(relative_uri, options = {}, timeout = nil)
-      uri = URI.parse(@base_uri + relative_uri)
-      default_options = { accept: 'application/json', request: Net::HTTP::Get, content_type: 'application/json' }
-      options = default_options.merge(options)
-
-      http = Net::HTTP.new(uri.host, uri.port)
-      if @base_uri =~ /^https/
-        http.use_ssl = true
-        http.verify_mode = OpenSSL::SSL::VERIFY_PEER
-        if @ssl_cert && !File.exist?(@ssl_cert)
-          @logger.warn('SSL certificate file does not exist.')
-        elsif @ssl_cert
-          http.cert_store = OpenSSL::X509::Store.new
-          http.cert_store.set_default_paths
-          http.cert_store.add_file(@ssl_cert)
-        end
-      end
-      http.read_timeout = timeout.to_i if timeout
-
-      request = options[:request].new(uri.request_uri)
-      request['Accept'] = options[:accept]
-      request['Content-Type'] = options[:content_type]
-      request['Authorization'] = "Bearer #{@key}" unless @key.nil?
-      request.body = options[:body]
-
-      @logger.debug("Requesting #{relative_uri} with '#{options[:body]}' and timeout '#{http.read_timeout}'")
-      http.request(request)
+    def execute_http_request(relative_uri, options = {}, timeout = 60)
+      @logger.debug("Requesting #{relative_uri} with '#{options[:body]}' and timeout '#{timeout}'")
+      WebRequest.new("#{@base_uri}#{relative_uri}", options.merge({authorization: "Bearer #{@key}"})).execute(timeout)
     end
 
     private
