@@ -56,11 +56,6 @@ module GrafanaReporter
       "#{templates_folder}#{get_config('default-document-attributes:var-template')}.adoc"
     end
 
-    # @return [String] path to ssl certificate file, if manually specified, or nil
-    def ssl_cert
-      get_config('grafana-reporter:ssl-cert')
-    end
-
     # @return [String] destination filename for the report in {MODE_SINGLE_RENDER}.
     def to_file
       return get_config('to_file') || true if mode == MODE_SINGLE_RENDER
@@ -209,6 +204,7 @@ module GrafanaReporter
       @logger.level = Object.const_get("::Logger::Severity::#{debug_level}") if debug_level =~ /DEBUG|INFO|WARN|
                                                                                                 ERROR|FATAL|UNKNOWN/x
       self.report_class = Object.const_get(rep_class) if rep_class
+      WebRequest.ssl_cert = get_config('grafana-reporter:ssl-cert')
 
       # register callbacks
       callbacks = get_config('grafana-reporter:callbacks')

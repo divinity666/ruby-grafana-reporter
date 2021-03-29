@@ -140,7 +140,7 @@ include::grafana_environment[])
           # TODO: how to handle if ssl access if not working properly?
           res = Grafana::Grafana.new(url,
                                      api_key,
-                                     logger: config.logger, ssl_cert: config.ssl_cert).test_connection
+                                     logger: config.logger).test_connection
         rescue StandardError => e
           puts
           puts e.message

@@ -13,13 +13,11 @@ module Grafana
     #   trailing slash, e.g. +https://localhost:3000+.
     # @param key [String] API key for the grafana instance, if required
     # @param opts [Hash] additional options.
-    #   Currently supporting +:logger+ and +:ssl_cert+.
+    #   Currently supporting +:logger+.
     def initialize(base_uri, key = nil, opts = {})
       @base_uri = base_uri
       @key = key
       @dashboards = {}
-      # TODO: move to a proper place
-      WebRequest.ssl_cert = opts[:ssl_cert]
       @logger = opts[:logger] || ::Logger.new(nil)
 
       initialize_datasources unless @base_uri.empty?
@@ -59,6 +57,18 @@ module Grafana
     # @return [Boolean] true if exists, false otherwise
     def datasource_id_exists?(datasource_id)
       @datasources.value?(datasource_id)
+    end
+
+    # @return [Array] Array of dashboard uids within the current grafana object
+    def dashboards
+      response = execute_http_request("/api/search")
+      dashboards = JSON.parse(response.body)
+
+      dashboards.each do |dashboard|
+        @dashboards[dashboard[:uid]] = nil unless @dashboards[dashboard[:uid]]
+      end
+
+      @dashboards.keys
     end
 
     # @param dashboard_uid [String] UID of the searched {Dashboard}

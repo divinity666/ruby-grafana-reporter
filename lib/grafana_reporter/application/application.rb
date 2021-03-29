@@ -141,7 +141,7 @@ module GrafanaReporter
         when Configuration::MODE_CONNECTION_TEST
           res = Grafana::Grafana.new(config.grafana_host(config.test_instance),
                                      config.grafana_api_key(config.test_instance),
-                                     logger: config.logger, ssl_cert: config.ssl_cert).test_connection
+                                     logger: config.logger).test_connection
           puts res
 
         when Configuration::MODE_SINGLE_RENDER
