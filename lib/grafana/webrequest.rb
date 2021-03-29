@@ -32,8 +32,8 @@ module Grafana
       @http.read_timeout = timeout.to_i
       
       request = @options[:request].new(@uri.request_uri)
-      request['Accept'] = @options[:accept]
-      request['Content-Type'] = @options[:content_type]
+      request['Accept'] = @options[:accept] if @options[:accept]
+      request['Content-Type'] = @options[:content_type] if @options[:content_type]
       request['Authorization'] = @options[:authorization] if @options[:authorization]
       request.body = @options[:body]
 
