@@ -1079,9 +1079,12 @@ describe PanelQueryValueInlineMacro do
 
   it 'can translate times' do
     @report.logger.level = ::Logger::Severity::DEBUG
-    expect(@report.logger).to receive(:debug).exactly(4).times.with(any_args)
-    expect(@report.logger).to receive(:debug).with(/"from":"#{Time.new(Time.new.year,1,1).to_i * 1000}".*"to":"#{(Time.new(Time.new.year + 1,1,1) - 1).to_i * 1000}"/)
-    expect(Asciidoctor.convert("grafana_panel_query_value:#{stub_panel}[query=\"#{stub_panel_query}\",dashboard=\"#{stub_dashboard}\",from=\"now/y\",to=\"now/y\"]", to_file: false)).not_to include('GrafanaReporterError')
+    expect(@report.logger).to receive(:debug).with(/Processing PanelQueryValueInlineMacro/)
+    expect(@report.logger).to receive(:debug).with(/Requesting \/api\/frontend\/settings/)
+    expect(@report.logger).to receive(:debug).with(/Requesting \/api\/dashboards\/uid\//)
+    expect(@report.logger).to receive(:debug).with(/from: /)
+    expect(@report.logger).to receive(:debug).with(/"from":"#{Time.utc(Time.new.year,1,1).to_i * 1000}".*"to":"#{(Time.utc(Time.new.year + 1,1,1) - 1).to_i * 1000}"/)
+    expect(Asciidoctor.convert("grafana_panel_query_value:#{stub_panel}[from_timezone=\"UTC\",to_timezone=\"UTC\",query=\"#{stub_panel_query}\",dashboard=\"#{stub_dashboard}\",from=\"now/y\",to=\"now/y\"]", to_file: false)).not_to include('GrafanaReporterError')
   end
 
   it 'can replace values' do
@@ -1196,8 +1199,8 @@ describe SqlTableIncludeProcessor do
   it 'can translate times' do
     @report.logger.level = ::Logger::Severity::DEBUG
     expect(@report.logger).to receive(:debug).exactly(3).times.with(any_args)
-    expect(@report.logger).to receive(:debug).with(/"from":"#{Time.new(Time.new.year,1,1).to_i * 1000}".*"to":"#{(Time.new(Time.new.year + 1,1,1) - 1).to_i * 1000}"/)
-    expect(Asciidoctor.convert("include::grafana_sql_table:#{stub_datasource}[sql=\"SELECT 1\",from=\"now/y\",to=\"now/y\"]", to_file: false)).not_to include('GrafanaReporterError')
+    expect(@report.logger).to receive(:debug).with(/"from":"#{Time.utc(Time.new.year,1,1).to_i * 1000}".*"to":"#{(Time.utc(Time.new.year + 1,1,1) - 1).to_i * 1000}"/)
+    expect(Asciidoctor.convert("include::grafana_sql_table:#{stub_datasource}[sql=\"SELECT 1\",from_timezone=\"UTC\",to_timezone=\"UTC\",from=\"now/y\",to=\"now/y\"]", to_file: false)).not_to include('GrafanaReporterError')
   end
 
   it 'shows fatal error if sql statement is missing' do
@@ -1234,8 +1237,8 @@ describe SqlValueInlineMacro do
   it 'can translate times' do
     @report.logger.level = ::Logger::Severity::DEBUG
     expect(@report.logger).to receive(:debug).exactly(3).times.with(any_args)
-    expect(@report.logger).to receive(:debug).with(/"from":"#{Time.new(Time.new.year,1,1).to_i * 1000}".*"to":"#{(Time.new(Time.new.year + 1,1,1) - 1).to_i * 1000}"/)
-    expect(Asciidoctor.convert("grafana_sql_value:#{stub_datasource}[sql=\"SELECT 1\",from=\"now/y\",to=\"now/y\"]", to_file: false)).not_to include('GrafanaReporterError')
+    expect(@report.logger).to receive(:debug).with(/"from":"#{Time.utc(Time.new.year,1,1).to_i * 1000}".*"to":"#{(Time.utc(Time.new.year + 1,1,1) - 1).to_i * 1000}"/)
+    expect(Asciidoctor.convert("grafana_sql_value:#{stub_datasource}[sql=\"SELECT 1\",from=\"now/y\",to=\"now/y\",from_timezone=\"UTC\",to_timezone=\"UTC\"]", to_file: false)).not_to include('GrafanaReporterError')
   end
 
   it 'returns fatal error message if no sql statement specified' do
@@ -1311,8 +1314,8 @@ describe PanelQueryTableIncludeProcessor do
     it 'can translate times' do
       @report.logger.level = ::Logger::Severity::DEBUG
       expect(@report.logger).to receive(:debug).exactly(4).times.with(any_args)
-      expect(@report.logger).to receive(:debug).with(/"from":"#{Time.new(Time.new.year,1,1).to_i * 1000}".*"to":"#{(Time.new(Time.new.year + 1,1,1) - 1).to_i * 1000}"/)
-      expect(Asciidoctor.convert("include::grafana_panel_query_table:#{stub_panel}[query=\"#{stub_panel_query}\",dashboard=\"#{stub_dashboard}\",from=\"now/y\",to=\"now/y\"]", to_file: false)).not_to include('GrafanaReporterError')
+      expect(@report.logger).to receive(:debug).with(/"from":"#{Time.utc(Time.new.year,1,1).to_i * 1000}".*"to":"#{(Time.utc(Time.new.year + 1,1,1) - 1).to_i * 1000}"/)
+      expect(Asciidoctor.convert("include::grafana_panel_query_table:#{stub_panel}[query=\"#{stub_panel_query}\",from_timezone=\"UTC\",to_timezone=\"UTC\",dashboard=\"#{stub_dashboard}\",from=\"now/y\",to=\"now/y\"]", to_file: false)).not_to include('GrafanaReporterError')
     end
 
     it 'can replace values' do
