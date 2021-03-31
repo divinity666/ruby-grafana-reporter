@@ -23,6 +23,14 @@ module GrafanaReporter
         super
         @result = @result.body
       end
+
+      # (see AbstractQuery#self.build_demo_entry)
+      def self.build_demo_entry(panel)
+        return nil unless panel
+        return nil unless panel.model['type'] == 'graph'
+
+        "block image:\n\ngrafana_panel_image::#{panel.id}[dashboard=\"#{panel.dashboard.id}\",width=\"50%\"]\n\ninline image can also be created.grafana_panel_image:#{panel.id}[dashboard=\"#{panel.dashboard.id}\",render-width=\"200\"]"
+      end
     end
   end
 end

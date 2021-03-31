@@ -128,5 +128,13 @@ module Grafana
     def post_process
       raise NotImplementedError
     end
+
+    # @abstract
+    #
+    # This method is called if a demo report shall be built for a given {Panel}.
+    # @return [String] String containing the entry, or nil if not possible for given panel
+    def self.build_demo_entry(panel)
+      raise NotImplementedError
+    end
   end
 end

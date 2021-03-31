@@ -96,6 +96,11 @@ module GrafanaReporter
 
         "?#{url_params}"
       end
+
+      # (see AbstractQuery#self.build_demo_entry)
+      def self.build_demo_entry(panel)
+        "|===\ninclude::grafana_alerts[columns=\"panelId,name,state\"]\n|==="
+      end
     end
   end
 end

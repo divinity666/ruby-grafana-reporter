@@ -31,6 +31,23 @@ module GrafanaReporter
         @to = translate_date(@to, @variables['grafana-report-timestamp'], true, @variables['to_timezone'] ||
                              @variables['grafana_default_to_timezone'])
       end
+
+      # (see AbstractQuery#self.build_demo_entry)
+      def self.build_demo_entry(panel)
+        return nil unless panel
+        return nil unless panel.model['type'] == 'singlestat'
+
+        refId = nil
+        panel.model['targets'].each do |item|
+          unless item['hide']
+            refId = item['refId']
+            break
+          end
+        end
+        return nil unless refId
+
+        "it's easily possible to include the query value: grafana_panel_query_value:#{panel.id}[query=\"#{refId}\",dashboard=\"#{panel.dashboard.id}\"] - just within this text."
+      end
     end
   end
 end

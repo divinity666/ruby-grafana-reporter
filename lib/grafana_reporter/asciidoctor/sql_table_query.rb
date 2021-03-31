@@ -39,6 +39,23 @@ module GrafanaReporter
         @to = translate_date(@to, @variables['grafana-report-timestamp'], true, @variables['to_timezone'] ||
                              @variables['grafana_default_to_timezone'])
       end
+
+      # (see AbstractQuery#self.build_demo_entry)
+      def self.build_demo_entry(panel)
+        return nil unless panel
+        return nil unless panel.model['transform'] == 'table'
+
+        refId = nil
+        panel.model['targets'].each do |item|
+          if !item['hide'] && item["rawQuery"] && !item["rawSql"].empty?
+            refId = item['refId']
+            break
+          end
+        end
+        return nil unless refId
+
+        "|===\ninclude::grafana_sql_table:#{panel.dashboard.grafana.datasource_id(panel.model["datasource"])}[sql=\"#{panel.query(refId).gsub(/"/,'\"').gsub("\n",' ').gsub(/\\/,"\\\\")}\",filter_columns=\"time\",dashboard=\"#{panel.dashboard.id}\",from=\"now-1h\",to=\"now\"]\n|==="
+      end
     end
   end
 end
