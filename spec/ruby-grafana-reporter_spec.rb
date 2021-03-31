@@ -14,6 +14,7 @@ describe AbstractQuery do
     expect { query.request }.to raise_error(NotImplementedError)
     expect { query.pre_process(nil) }.to raise_error(NotImplementedError)
     expect { query.post_process }.to raise_error(NotImplementedError)
+    expect { AbstractQuery.build_demo_entry(nil) }.to raise_error(NotImplementedError)
   end
 end
 
@@ -281,6 +282,8 @@ describe PanelImageQuery do
       expect(subject.translate_date('now-d', Variable.new('2020-07-28T20:58:03.005+0200'), true)).to eq('1595876282000')
       expect(subject.translate_date('now-d/d', Variable.new('2020-07-28T20:58:03.005+0200'), false)).to eq('1595800800000')
       expect(subject.translate_date('now-d/d', Variable.new('2020-07-28T20:58:03.005+0200'), true)).to eq('1595887199000')
+      expect(subject.translate_date('now/d-d', Variable.new('2020-07-28T20:58:03.005+0200'), false)).to eq('1595800800000')
+      expect(subject.translate_date('now/d-d', Variable.new('2020-07-28T20:58:03.005+0200'), true)).to eq('1595887199000')
     end
 
     it 'can translate now rounded weeks' do
@@ -503,6 +506,7 @@ end
 
 stub_url = 'http://localhost'
 stub_key = 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'
+stub_key_viewer = 'viewerxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'
 stub_dashboard = 'IDBRfjSmz'
 stub_panel = '11'
 stub_panel_query = 'A'
@@ -511,6 +515,22 @@ stub_datasource = '1'
 
 RSpec.configure do |config|
   config.before(:each) do
+    stub_request(:get, "http://localhost/api/search").with(
+      headers: {
+        'Accept'=>'application/json',
+        'Accept-Encoding'=>'gzip;q=1.0,deflate;q=0.6,identity;q=0.3',
+        'Authorization' => /^Bearer (?:#{stub_key}|#{stub_key_viewer})$/,
+        'Content-Type'=>'application/json',
+        'User-Agent'=>'Ruby'
+      }
+    )
+    .to_return(status: 200, body: "[{\"uid\":\"#{stub_dashboard}\"}]", headers: {})
+
+    stub_request(:get, 'http://localhost/api/search').with { |request|
+      !request.headers.has_key?('Authorization') && request.headers.select { |k, v| k =~ /^(?:Accept|Accept-Encoding|Content-Type|User-Agent)$/ } == { 'Accept' => 'application/json', 'Accept-Encoding' => 'gzip;q=1.0,deflate;q=0.6,identity;q=0.3', 'Content-Type' => 'application/json', 'User-Agent' => 'Ruby' }
+    }
+    .to_return(status: 403, body: '{"message":"Permission denied"}', headers: {})
+
    stub_request(:get, 'http://localhost/webhook').with(
       headers: {
         'User-Agent' => 'Ruby'
@@ -522,11 +542,17 @@ RSpec.configure do |config|
       headers: {
         'Accept' => 'application/json',
         'Accept-Encoding' => 'gzip;q=1.0,deflate;q=0.6,identity;q=0.3',
+        'Authorization' => /^Bearer (?:#{stub_key}|#{stub_key_viewer})$/,
         'Content-Type' => 'application/json',
         'User-Agent' => 'Ruby'
       }
     )
     .to_return(status: 200, body: File.read('./spec/tests/frontend_settings.json'), headers: {})
+
+    stub_request(:get, 'http://localhost/api/frontend/settings').with { |request|
+      !request.headers.has_key?('Authorization') && request.headers.select { |k, v| k =~ /^(?:Accept|Accept-Encoding|Content-Type|User-Agent)$/ } == { 'Accept' => 'application/json', 'Accept-Encoding' => 'gzip;q=1.0,deflate;q=0.6,identity;q=0.3', 'Content-Type' => 'application/json', 'User-Agent' => 'Ruby' }
+    }
+    .to_return(status: 403, body: '{"message":"Permission denied"}', headers: {})
 
     stub_request(:get, 'http://localhost/api/datasources').with(
       headers: {
@@ -564,11 +590,17 @@ RSpec.configure do |config|
       headers: {
         'Accept' => 'application/json',
         'Accept-Encoding' => 'gzip;q=1.0,deflate;q=0.6,identity;q=0.3',
+        'Authorization' => /Bearer (?:#{stub_key}|#{stub_key_viewer})/,
         'Content-Type' => 'application/json',
         'User-Agent' => 'Ruby'
       }
     )
     .to_return(status: 200, body: File.read('./spec/tests/demo_dashboard.json'), headers: {})
+
+    stub_request(:get, 'http://localhost/api/dashboards/home').with { |request|
+      !request.headers.has_key?('Authorization') && request.headers.select { |k, v| k =~ /^(?:Accept|Accept-Encoding|Content-Type|User-Agent)$/ } == { 'Accept' => 'application/json', 'Accept-Encoding' => 'gzip;q=1.0,deflate;q=0.6,identity;q=0.3', 'Content-Type' => 'application/json', 'User-Agent' => 'Ruby' }
+    }
+    .to_return(status: 403, body: '{"message":"Permission denied"}', headers: {})
 
     stub_request(:get, 'http://localhost/api/dashboards/uid/blabla').with(
       headers: {
@@ -973,7 +1005,7 @@ describe ConsoleConfigurationWizard do
       File.delete(config_file) if File.exist?(config_file)
       File.delete("#{folder}/demo_report.adoc") if File.exist?("#{folder}/demo_report.adoc")
       Dir.delete(folder) if Dir.exist?(folder)
-      @config = ["\n", "http://localhost\n", "a\n", "#{stub_key}\n", "#{folder}\n", "c\n", ".\n", ".\n", "i\n", "\n"]
+      @config = ["\n", "http://localhost\n", "a\n", "#{stub_key}\n", "i\n", "#{folder}\n", "c\n", ".\n", ".\n", "\n", "\n"]
       allow(subject).to receive(:puts)
       allow(subject).to receive(:print)
       allow_any_instance_of(Logger).to receive(:debug)
@@ -988,8 +1020,6 @@ describe ConsoleConfigurationWizard do
     end
 
     it 'can create configured folders' do
-      @config.slice!(4, 2)
-      @config.insert(4, "#{folder}\n", "c\n")
       allow(subject).to receive(:gets).and_return(*@config)
       subject.start_wizard(config_file, Configuration.new)
       expect(Dir.exist?(folder)).to be true
@@ -999,11 +1029,11 @@ describe ConsoleConfigurationWizard do
       allow(subject).to receive(:gets).and_return(*@config)
       subject.start_wizard(config_file, Configuration.new)
       expect(File.exist?(config_file)).to be true
+      expect(File.exist?("#{folder}/demo_report.adoc")).to be false
     end
 
-    it 'creates valid config file as non admin' do
+    it 'creates valid config file without working access' do
       @config.slice!(2,2)
-      @config.insert(2, "i\n")
       allow(subject).to receive(:gets).and_return(*@config)
       subject.start_wizard(config_file, Configuration.new)
       expect(File.exist?(config_file)).to be true
@@ -1029,6 +1059,16 @@ describe ConsoleConfigurationWizard do
       WebMock.enable!
       expect(File.exist?(config_file)).to be true
     end
+
+    it 'can create a proper demo report' do
+      @config.slice!(10,1)
+      @config.insert(10, "y\n")
+      allow_any_instance_of(DemoReportWizard).to receive(:puts)
+      allow_any_instance_of(DemoReportWizard).to receive(:print)
+      allow(subject).to receive(:gets).and_return(*@config)
+      subject.start_wizard(config_file, Configuration.new)
+      expect(File.exist?("#{folder}/demo_report.adoc")).to be true
+    end
   end
 end
 
@@ -1036,7 +1076,7 @@ describe Grafana do
   context 'with datasources' do
     subject { Grafana::Grafana.new(stub_url, stub_key) }
 
-    it 'connects properly' do
+    it 'has Admin rights' do
       expect(subject.test_connection).to eq('Admin')
     end
 
@@ -1050,9 +1090,9 @@ describe Grafana do
   end
 
   context 'non-admin privileges' do
-    subject { Grafana::Grafana.new(stub_url) }
+    subject { Grafana::Grafana.new(stub_url, stub_key_viewer) }
 
-    it 'has only NON-Admin rights' do
+    it 'has NON-Admin rights' do
       expect(subject.test_connection).to eq('NON-Admin')
     end
   end
@@ -1080,10 +1120,13 @@ describe PanelQueryValueInlineMacro do
   it 'can translate times' do
     @report.logger.level = ::Logger::Severity::DEBUG
     expect(@report.logger).to receive(:debug).with(/Processing PanelQueryValueInlineMacro/)
-    expect(@report.logger).to receive(:debug).with(/Requesting \/api\/frontend\/settings/)
-    expect(@report.logger).to receive(:debug).with(/Requesting \/api\/dashboards\/uid\//)
+    expect(@report.logger).to receive(:debug).with(/Requesting http:\/\/localhost\/api\/frontend\/settings/)
+    expect(@report.logger).to receive(:debug).with(/Received response/)
+    expect(@report.logger).to receive(:debug).with(/Requesting http:\/\/localhost\/api\/dashboards\/uid\//)
+    expect(@report.logger).to receive(:debug).with(/Received response/)
     expect(@report.logger).to receive(:debug).with(/from: /)
     expect(@report.logger).to receive(:debug).with(/"from":"#{Time.utc(Time.new.year,1,1).to_i * 1000}".*"to":"#{(Time.utc(Time.new.year + 1,1,1) - 1).to_i * 1000}"/)
+    expect(@report.logger).to receive(:debug).with(/Received response/)
     expect(Asciidoctor.convert("grafana_panel_query_value:#{stub_panel}[from_timezone=\"UTC\",to_timezone=\"UTC\",query=\"#{stub_panel_query}\",dashboard=\"#{stub_dashboard}\",from=\"now/y\",to=\"now/y\"]", to_file: false)).not_to include('GrafanaReporterError')
   end
 
@@ -1198,8 +1241,9 @@ describe SqlTableIncludeProcessor do
 
   it 'can translate times' do
     @report.logger.level = ::Logger::Severity::DEBUG
-    expect(@report.logger).to receive(:debug).exactly(3).times.with(any_args)
+    expect(@report.logger).to receive(:debug).exactly(4).times.with(any_args)
     expect(@report.logger).to receive(:debug).with(/"from":"#{Time.utc(Time.new.year,1,1).to_i * 1000}".*"to":"#{(Time.utc(Time.new.year + 1,1,1) - 1).to_i * 1000}"/)
+    expect(@report.logger).to receive(:debug).with(/Received response/)
     expect(Asciidoctor.convert("include::grafana_sql_table:#{stub_datasource}[sql=\"SELECT 1\",from_timezone=\"UTC\",to_timezone=\"UTC\",from=\"now/y\",to=\"now/y\"]", to_file: false)).not_to include('GrafanaReporterError')
   end
 
@@ -1236,8 +1280,9 @@ describe SqlValueInlineMacro do
 
   it 'can translate times' do
     @report.logger.level = ::Logger::Severity::DEBUG
-    expect(@report.logger).to receive(:debug).exactly(3).times.with(any_args)
+    expect(@report.logger).to receive(:debug).exactly(4).times.with(any_args)
     expect(@report.logger).to receive(:debug).with(/"from":"#{Time.utc(Time.new.year,1,1).to_i * 1000}".*"to":"#{(Time.utc(Time.new.year + 1,1,1) - 1).to_i * 1000}"/)
+    expect(@report.logger).to receive(:debug).with(/Received response/)
     expect(Asciidoctor.convert("grafana_sql_value:#{stub_datasource}[sql=\"SELECT 1\",from=\"now/y\",to=\"now/y\",from_timezone=\"UTC\",to_timezone=\"UTC\"]", to_file: false)).not_to include('GrafanaReporterError')
   end
 
@@ -1313,8 +1358,9 @@ describe PanelQueryTableIncludeProcessor do
 
     it 'can translate times' do
       @report.logger.level = ::Logger::Severity::DEBUG
-      expect(@report.logger).to receive(:debug).exactly(4).times.with(any_args)
+      expect(@report.logger).to receive(:debug).exactly(6).times.with(any_args)
       expect(@report.logger).to receive(:debug).with(/"from":"#{Time.utc(Time.new.year,1,1).to_i * 1000}".*"to":"#{(Time.utc(Time.new.year + 1,1,1) - 1).to_i * 1000}"/)
+      expect(@report.logger).to receive(:debug).with(/Received response/)
       expect(Asciidoctor.convert("include::grafana_panel_query_table:#{stub_panel}[query=\"#{stub_panel_query}\",from_timezone=\"UTC\",to_timezone=\"UTC\",dashboard=\"#{stub_dashboard}\",from=\"now/y\",to=\"now/y\"]", to_file: false)).not_to include('GrafanaReporterError')
     end
 
