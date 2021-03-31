@@ -46,6 +46,8 @@ module GrafanaReporter
           @report.logger.debug("Processing PanelImageInlineMacro (instance: #{instance}, dashboard: #{dashboard},"\
                                " panel: #{target})")
           query = PanelImageQuery.new(@report.grafana(instance).dashboard(dashboard).panel(target))
+          # set alt text to a default, because otherwise asciidoctor fails
+          attrs['alt'] = '' unless attrs['alt']
           query.merge_hash_variables(parent.document.attributes, attrs)
           @report.logger.debug("from: #{query.from}, to: #{query.to}")
 
