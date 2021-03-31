@@ -6,9 +6,51 @@ module GrafanaReporter
     # file.
     # TODO: refactor class
     def start_wizard(config_file, console_config)
-      config = Configuration.new
+      action = overwrite_or_use_config_file(config_file)
+      return if action == 'abort'
 
-      return unless overwrite_file(config_file)
+      config = create_config_wizard(config_file, console_config) if action == 'overwrite'
+      config ||= Configuration.new
+
+      begin
+        config.config = YAML.load_file(config_file)
+      rescue StandardError => e
+        raise ConfigurationError, "Could not read config file '#{config_file}' (Error: #{e.message})\n"\
+              "Source:\n#{File.read(config_file)}"
+      end
+
+      begin
+        config.validate(true)
+        puts 'Configuration file validated successfully.'
+      rescue ConfigurationError => e
+        raise e
+      end
+
+      demo_report = create_demo_report(config)
+
+      demo_report ||= '<<your_report_name>>'
+      config_param = config_file == Application::Application::CONFIG_FILE ? '' : " -c #{config_file}"
+      program_call = "#{Gem.ruby} #{$PROGRAM_NAME}"
+      program_call = ENV['OCRA_EXECUTABLE'].gsub("#{Dir.pwd}/".gsub('/', '\\'), '') if ENV['OCRA_EXECUTABLE']
+
+      puts
+      puts 'Now everything is setup properly. Create your reports as required in the templates '\
+           'folder and run the reporter either standalone with e.g. the following command:'
+      puts
+      puts "   #{program_call}#{config_param} -t #{demo_report} -o demo_report_with_help.pdf"
+      puts
+      puts 'or run it as a service using the following command:'
+      puts
+      puts "   #{program_call}#{config_param}"
+      puts
+      puts "Open 'http://localhost:#{config.webserver_port}/render?var-template=#{demo_report}' in a webbrowser to"\
+           ' test your configuration.'
+    end
+
+    private
+
+    def create_config_wizard(config_file, console_config)
+      config = Configuration.new
 
       puts 'This wizard will guide you through an initial configuration for'\
            ' the ruby-grafana-reporter. The configuration file will be created'\
@@ -61,42 +103,8 @@ default-document-attributes:
         raise e
       end
 
-      begin
-        config.config = YAML.load_file(config_file)
-      rescue StandardError => e
-        raise ConfigurationError, "Could not read config file '#{config_file}' (Error: #{e.message})\n"\
-              "Source:\n#{File.read(config_file)}"
-      end
-
-      begin
-        config.validate(true)
-        puts 'Configuration file validated successfully.'
-      rescue ConfigurationError => e
-        raise e
-      end
-
-      demo_report = create_demo_report(config)
-
-      demo_report ||= '<<your_report_name>>'
-      config_param = config_file == Application::Application::CONFIG_FILE ? '' : " -c #{config_file}"
-      program_call = "#{Gem.ruby} #{$PROGRAM_NAME}"
-      program_call = ENV['OCRA_EXECUTABLE'].gsub("#{Dir.pwd}/".gsub('/', '\\'), '') if ENV['OCRA_EXECUTABLE']
-
-      puts
-      puts 'Now everything is setup properly. Create your reports as required in the templates '\
-           'folder and run the reporter either standalone with e.g. the following command:'
-      puts
-      puts "   #{program_call}#{config_param} -t #{demo_report} -o demo_report_with_help.pdf"
-      puts
-      puts 'or run it as a service using the following command:'
-      puts
-      puts "   #{program_call}#{config_param}"
-      puts
-      puts "Open 'http://localhost:#{config.webserver_port}/render?var-template=#{demo_report}' in a webbrowser to"\
-           ' test your configuration.'
+      config
     end
-
-    private
 
     def create_demo_report(config)
       unless Dir.exist?(config.templates_folder)
@@ -104,22 +112,31 @@ default-document-attributes:
         return nil
       end
 
+      create = user_input("Shall I create a demo report for your new configuration file? Please note that this report might contain confidential information, depending on the confidentiality of the information stored in your dashboard.", 'yN')
+      return nil unless create =~ /^(?:y|Y)$/
+
       demo_report = 'demo_report'
       demo_report_file = "#{config.templates_folder}#{demo_report}.adoc"
 
-      # TODO: add question to overwrite file
+      # ask to overwrite file
       if File.exist?(demo_report_file)
-        puts "Skip creation of DEMO template, as file '#{demo_report_file}' already exists."
-        return demo_report
+        input = user_input("Demo template '#{demo_report_file}' does already exist. Do you want to overwrite it?", 'yN')
+
+        case input
+        when /^(?:y|Y)$/
+          puts 'Overwriting existing DEMO template.'
+
+        else
+          puts "Skip creation of DEMO template."
+          return demo_report
+        end
       end
 
-      demo_report = %(= First Grafana Report Template
+      classes = [Asciidoctor::AlertsTableQuery, Asciidoctor::AnnotationsTableQuery, Asciidoctor::PanelFirstValueQuery, Asciidoctor::PanelImageQuery, Asciidoctor::PanelPropertyQuery, Asciidoctor::PanelTableQuery, Asciidoctor::SqlFirstValueQuery, Asciidoctor::SqlTableQuery, Asciidoctor::Help]
+      demo_report_content = DemoReportWizard.new(classes).build(::Grafana::Grafana.new(config.grafana_host, config.grafana_api_key))
 
-include::grafana_help[]
-
-include::grafana_environment[])
       begin
-        File.write(demo_report_file, demo_report, mode: 'w')
+        File.write(demo_report_file, demo_report_content, mode: 'w')
         puts "DEMO template '#{demo_report_file}' successfully created."
       rescue StandardError => e
         puts e.message
@@ -137,7 +154,6 @@ include::grafana_environment[])
         url ||= user_input('Specify grafana host', 'http://localhost:3000')
         print "Testing connection to '#{url}' #{api_key ? '_with_' : '_without_'} API key..."
         begin
-          # TODO: how to handle if ssl access if not working properly?
           res = Grafana::Grafana.new(url,
                                      api_key,
                                      logger: config.logger).test_connection
@@ -149,34 +165,38 @@ include::grafana_environment[])
 
         case res
         when 'Admin'
-          valid = true
+          tmp = user_input('Access to grafana is permitted as Admin, which is a potential security risk.'\
+                ' Do you want to use another [a]pi key, [r]e-enter url key or [i]gnore?', 'aRi')
 
-        when 'NON-Admin'
-          print 'Access to grafana is permitted as NON-Admin. Do you want to use an [a]pi key,'\
-                ' [r]e-enter api key or [i]gnore? [aRi]: '
-
-          case gets
+          case tmp
           when /(?:i|I)$/
             valid = true
 
-          # TODO: what is difference between 'a' and 'r'?
           when /(?:a|A)$/
             print 'Enter API key: '
-            api_key = gets.sub(/\n$/, '')
+            api_key = gets.strip
 
-          when /(?:r|R|adRi)$/
+          else
+            url = nil
             api_key = nil
 
           end
 
-        # TODO: ask to enter API key, if grafana cannot be accessed without that
-        else
-          print "Grafana could not be accessed at '#{url}'. Do you want do [r]e-enter url, or"\
-               ' [i]gnore and proceed? [Ri]: '
+        when 'NON-Admin'
+          print 'Access to grafana is permitted as NON-Admin.'
+	  valid = true
 
-          case gets
+        else
+          tmp = user_input("Grafana could not be accessed at '#{url}'. Do you want to use an [a]pi key,"\
+                ' [r]e-enter url, or [i]gnore and proceed?', 'aRi')
+
+          case tmp
           when /(?:i|I)$/
             valid = true
+
+          when /(?:a|A)$/
+            print 'Enter API key: '
+            api_key = gets.strip
 
           else
             url = nil
@@ -188,7 +208,7 @@ include::grafana_environment[])
       end
       %(grafana:
   default:
-    host: #{url}#{api_key ? "\n    api_key: #{api_key}" : ''}}
+    host: #{url}#{api_key ? "\n    api_key: #{api_key}" : ''}
 )
     end
 
@@ -268,16 +288,17 @@ include::grafana_environment[])
       false
     end
 
-    def overwrite_file(config_file)
-      return true unless File.exist?(config_file)
+    def overwrite_or_use_config_file(config_file)
+      return 'overwrite' unless File.exist?(config_file)
 
       input = nil
       until input
-        input = user_input("Configuration file '#{config_file}' already exists. Do you want to overwrite it?", 'yN')
-        return false if input =~ /^(?:n|N|yN)$/
+        input = user_input("Configuration file '#{config_file}' already exists. Do you want to [o]verwrite it, use it to for [d]emo report creation only, or [a]bort?", 'odA')
       end
 
-      true
+      return 'demo_report' if input =~ /^(?:d|D)$/
+      return 'abort' if input =~ /^(?:A|a|odA)$/
+      'overwrite'
     end
   end
 end
