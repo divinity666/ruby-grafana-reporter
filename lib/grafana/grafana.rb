@@ -60,12 +60,14 @@ module Grafana
     end
 
     # @return [Array] Array of dashboard uids within the current grafana object
-    def dashboards
+    def dashboard_ids
       response = execute_http_request("/api/search")
+      return [] unless response.is_a?(Net::HTTPOK)
+
       dashboards = JSON.parse(response.body)
 
       dashboards.each do |dashboard|
-        @dashboards[dashboard[:uid]] = nil unless @dashboards[dashboard[:uid]]
+        @dashboards[dashboard['uid']] = nil unless @dashboards[dashboard['uid']]
       end
 
       @dashboards.keys
@@ -77,7 +79,11 @@ module Grafana
       return @dashboards[dashboard_uid] unless @dashboards[dashboard_uid].nil?
 
       response = execute_http_request("/api/dashboards/uid/#{dashboard_uid}")
-      model = JSON.parse(response.body)['dashboard']
+      model = nil
+      begin
+        model = JSON.parse(response.body)['dashboard']
+      rescue
+      end
 
       raise DashboardDoesNotExistError, dashboard_uid if model.nil?
 
@@ -98,8 +104,9 @@ module Grafana
     # @param options [Hash] options, which shall be merged to the request.
     # @param timeout [Integer] number of seconds to wait, before the http request is cancelled, defaults to 60 seconds
     def execute_http_request(relative_uri, options = {}, timeout = 60)
-      @logger.debug("Requesting #{relative_uri} with '#{options[:body]}' and timeout '#{timeout}'")
-      WebRequest.new("#{@base_uri}#{relative_uri}", options.merge({authorization: "Bearer #{@key}"})).execute(timeout)
+      auth = {}
+      auth = {authorization: "Bearer #{@key}"} if @key
+      WebRequest.new("#{@base_uri}#{relative_uri}", auth.merge({logger: @logger}).merge(options)).execute(timeout)
     end
 
     private
