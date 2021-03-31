@@ -2,8 +2,10 @@
 
 module Grafana
   class WebRequest
-    class << self
-      attr_accessor :ssl_cert
+    @@ssl_cert = nil
+
+    def self.ssl_cert=(ssl_cert)
+      @@ssl_cert = ssl_cert
     end
 
     # Initializes a specific HTTP request.
@@ -14,21 +16,23 @@ module Grafana
     #   content_type: 'application/json'
     #
     # @param url [String] URL which shall be queried
-    # @param options [Hash] options, which shall be merged to the request.
+    # @param options [Hash] options, which shall be merged to the request. Also allows `+logger+` option
     def initialize(url, options = {})
       @uri = URI.parse(url)
       default_options = { accept: 'application/json', request: Net::HTTP::Get, content_type: 'application/json' }
-      @options = default_options.merge(options)
+      @options = default_options.merge(options.select {|k,v| k != :logger})
+      @logger = options[:logger] || Logger.new(nil)
 
       @http = Net::HTTP.new(@uri.host, @uri.port)
-      configure_ssl if @uri.request_uri =~ /^https/
+      configure_ssl if url =~ /^https/
     end
     
     # Executes the HTTP request
     #
     # @param timeout [Integer] number of seconds to wait, before the http request is cancelled, defaults to 60 seconds
     # @return [Response] HTTP response object
-    def execute(timeout = 60)
+    def execute(timeout = nil)
+      timeout ||= 60
       @http.read_timeout = timeout.to_i
       
       request = @options[:request].new(@uri.request_uri)
@@ -37,7 +41,11 @@ module Grafana
       request['Authorization'] = @options[:authorization] if @options[:authorization]
       request.body = @options[:body]
 
-      @http.request(request)
+      @logger.debug("Requesting #{@uri} with '#{@options[:body]}' and timeout '#{timeout}'")
+      response = @http.request(request)
+      @logger.debug("Received response #{response}")
+
+      response
     end
 
     private
@@ -46,7 +54,7 @@ module Grafana
       @http.use_ssl = true
       @http.verify_mode = OpenSSL::SSL::VERIFY_PEER
       if @@ssl_cert && !File.exist?(@@ssl_cert)
-        # TODO: @logger.warn('SSL certificate file does not exist.')
+        @logger.warn('SSL certificate file does not exist.')
       elsif @ssl_cert
         @http.cert_store = OpenSSL::X509::Store.new
         @http.cert_store.set_default_paths
