@@ -148,7 +148,7 @@ module GrafanaReporter
           begin
             config.report_class.new(config, config.template, config.to_file).create_report
           rescue StandardError => e
-            puts e.message
+            puts "#{e.message}\n#{e.backtrace.join("\n")}"
           end
 
         when Configuration::MODE_SERVICE
