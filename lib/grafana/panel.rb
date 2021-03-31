@@ -5,6 +5,7 @@ module Grafana
   class Panel
     # @return [Dashboard] parent {Dashboard} object
     attr_reader :dashboard
+    attr_reader :model
 
     # @param model [Hash] converted JSON Hash of the panel
     # @param dashboard [Dashboard] parent {Dashboard} object
