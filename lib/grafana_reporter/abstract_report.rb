@@ -155,8 +155,8 @@ module GrafanaReporter
           res = listener.callback(event, self)
           logger.debug("Event listener '#{listener.class}' for event '#{event}' and report '#{object_id}' returned with result '#{res}'.")
         rescue StandardError => e
-          puts ("Event listener '#{listener.class}' for event '#{event}' and report '#{object_id}' returned with error: #{e.message}.")
-          logger.error("Event listener '#{listener.class}' for event '#{event}' and report '#{object_id}' returned with error: #{e.message}.")
+          puts ("Event listener '#{listener.class}' for event '#{event}' and report '#{object_id}' returned with error: #{e.message} - #{e.backtrace}.")
+          logger.error("Event listener '#{listener.class}' for event '#{event}' and report '#{object_id}' returned with error: #{e.message} - #{e.backtrace}.")
         end
       end
     end
