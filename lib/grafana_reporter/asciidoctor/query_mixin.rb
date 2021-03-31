@@ -244,36 +244,63 @@ module GrafanaReporter
         return orig_date if orig_date =~ /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/
         return orig_date if orig_date =~ /^\d+$/
 
-        # replace grafana from and to values using now, now-2d etc.
-        date_splitted = orig_date.match(%r{^(?<now>now)(?:-(?<sub_count>\d+)?(?<sub_unit>[smhdwMy]?))?(?:/(?<fit>[smhdwMy]))?$})
-        raise TimeRangeUnknownError, orig_date unless date_splitted
+        # check if a relative date is mentioned
+        date_spec = orig_date.clone
+
+        date_spec.slice!(/^now/)
+        raise TimeRangeUnknownError, orig_date unless date_spec
 
         date = DateTime.parse(report_time.raw_value)
         # TODO: allow from_translated or similar in ADOC template
         date = date.new_offset(timezone.raw_value) if timezone
 
-        # substract specified time
-        count = 1
-        count = date_splitted[:sub_count].to_i if date_splitted[:sub_count]
-        case date_splitted[:sub_unit]
-        when 's'
-          date = (date.to_time - (count * 1)).to_datetime
-        when 'm'
-          date = (date.to_time - (count * 60)).to_datetime
-        when 'h'
-          date = (date.to_time - (count * 60 * 60)).to_datetime
-        when 'd'
-          date = date.prev_day(count)
-        when 'w'
-          date = date.prev_day(count * 7)
-        when 'M'
-          date = date.prev_month(count)
-        when 'y'
-          date = date.prev_year(count)
+        until date_spec.empty?
+          fit_match = date_spec.match(%r{^/(?<fit>[smhdwMy])})
+          if fit_match
+            date = fit_date(date, fit_match[:fit], is_to_time)
+            date_spec.slice!(%r{^/#{fit_match[:fit]}})
+          end
+
+          delta_match = date_spec.match(%r{^(?<op>(?:-|\+))(?<count>\d+)?(?<unit>[smhdwMy])})
+          if delta_match
+            date = delta_date(date, ("#{delta_match[:op]}#{delta_match[:count] || 1}").to_i, delta_match[:unit])
+            date_spec.slice!(%r{^#{delta_match[:op]}#{delta_match[:count]}#{delta_match[:unit]}})
+          end
+
+          raise TimeRangeUnknownError, orig_date unless fit_match || delta_match
         end
 
+        # step back one second, if this is the 'to' time
+        date = (date.to_time - 1).to_datetime if is_to_time
+
+        (Time.at(date.to_time.to_i).to_i * 1000).to_s
+      end
+
+      private
+
+      def delta_date(date, delta_count, time_letter)
+        # substract specified time
+        case time_letter
+        when 's'
+          date = (date.to_time + (delta_count * 1)).to_datetime
+        when 'm'
+          date = (date.to_time + (delta_count * 60)).to_datetime
+        when 'h'
+          date = (date.to_time + (delta_count * 60 * 60)).to_datetime
+        when 'd'
+          date = date.next_day(delta_count)
+        when 'w'
+          date = date.next_day(delta_count * 7)
+        when 'M'
+          date = date.next_month(delta_count)
+        when 'y'
+          date = date.next_year(delta_count)
+        end
+      end
+
+      def fit_date(date, fit_letter, is_to_time)
         # fit to specified time frame
-        case date_splitted[:fit]
+        case fit_letter
         when 's'
           date = DateTime.new(date.year, date.month, date.day, date.hour, date.min, date.sec, date.zone)
           date = (date.to_time + 1).to_datetime if is_to_time
@@ -302,10 +329,7 @@ module GrafanaReporter
           date = date.next_year if is_to_time
         end
 
-        # step back one second, if this is the 'to' time
-        date = (date.to_time - 1).to_datetime if is_to_time
-
-        (Time.at(date.to_time.to_i).to_i * 1000).to_s
+        date
       end
     end
   end
