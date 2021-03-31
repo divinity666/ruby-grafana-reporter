@@ -13,6 +13,11 @@ module GrafanaReporter
         "#{toc}\n\n#{help_text(github_options.merge(level: headline_level))}"
       end
 
+      # (see AbstractQuery#self.build_demo_entry)
+      def self.build_demo_entry(panel)
+        "include::grafana_help[]"
+      end
+
       private
 
       def github_options
@@ -246,7 +251,7 @@ grafana_alerts:
   description: >-
     Returns a table of active alert states including the specified columns and the connected information. Supports
     all query parameters from the Grafana Alerting API, such as `query`, `state`, `limit`, `folderId` and others.
-  call: grafana_alerts[columns="<column_name_1>,<column_name_2>,...",options]
+  call: 'include::grafana_alerts[columns="<column_name_1>,<column_name_2>,...",options]'
   see: https://grafana.com/docs/grafana/latest/http_api/alerting/#get-alerts
   options:
     columns:
@@ -280,13 +285,13 @@ grafana_annotations:
   description: >-
     Returns a table of all annotations, matching the specified filter criteria and the specified columns. Supports all
     query parameters from the Grafana Alerting API, such as `limit`, `alertId`, `panelId` and others.
-  call: grafana_annotations[columns="<column_name_1>,<column_name_2>,...",options]
+  call: 'include::grafana_annotations[columns="<column_name_1>,<column_name_2>,...",options]'
   see: https://grafana.com/docs/grafana/latest/http_api/annotations/#find_annotations
   options:
     columns:
       description: >-
         Specified the columns that shall be returned. Valid columns are `id`, `alertId`, `dashboardId`, `panelId`, `userId`,
-        `userName`, `newState`, `prevState, `time`, `timeEnd`, `text`, `metric` and `type`.
+        `userName`, `newState`, `prevState`, `time`, `timeEnd`, `text`, `metric` and `type`.
       call: columns="<column_name_1>,<columns_name_2>,..."
     panel:
       description: >-
@@ -310,11 +315,11 @@ grafana_annotations:
     from_timezone:
     to_timezone:
 
-grafana_panel_description:
+grafana_panel_property:
   description: >-
-    Returns a description field for the specified panel. `<type>` can either be `title` or `description`.
+    Returns a property field for the specified panel. `<type>` can either be `title` or `description`.
     Grafana variables will be replaced in the returned value.
-  call: 'grafana_panel_description:<panel_id>["<type>",options]'
+  call: 'grafana_panel_property:<panel_id>["<type>",options]'
   see: https://grafana.com/docs/grafana/latest/variables/templates-and-variables/#variable-syntax
   standard_options:
     dashboard:
