@@ -204,7 +204,7 @@ module GrafanaReporter
       @logger.level = Object.const_get("::Logger::Severity::#{debug_level}") if debug_level =~ /DEBUG|INFO|WARN|
                                                                                                 ERROR|FATAL|UNKNOWN/x
       self.report_class = Object.const_get(rep_class) if rep_class
-      WebRequest.ssl_cert = get_config('grafana-reporter:ssl-cert')
+      ::Grafana::WebRequest.ssl_cert = get_config('grafana-reporter:ssl-cert')
 
       # register callbacks
       callbacks = get_config('grafana-reporter:callbacks')
@@ -287,6 +287,7 @@ module GrafanaReporter
            }
          ],
         'default-document-attributes' => [Hash, explicit ? 1 : 0],
+        'to_file' => [String, 0],
         'grafana-reporter' =>
         [
           Hash, 1,
