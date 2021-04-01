@@ -132,7 +132,7 @@ default-document-attributes:
         end
       end
 
-      classes = [Asciidoctor::AlertsTableQuery, Asciidoctor::AnnotationsTableQuery, Asciidoctor::PanelFirstValueQuery, Asciidoctor::PanelImageQuery, Asciidoctor::PanelPropertyQuery, Asciidoctor::PanelTableQuery, Asciidoctor::SqlFirstValueQuery, Asciidoctor::SqlTableQuery, Asciidoctor::Help]
+      classes = [Asciidoctor::AlertsTableQuery, Asciidoctor::AnnotationsTableQuery, Asciidoctor::PanelImageQuery, Asciidoctor::PanelPropertyQuery, Asciidoctor::PanelTableQuery, Asciidoctor::SqlTableQuery, Asciidoctor::PanelFirstValueQuery, Asciidoctor::SqlFirstValueQuery, Asciidoctor::Help]
       demo_report_content = DemoReportWizard.new(classes).build(::Grafana::Grafana.new(config.grafana_host, config.grafana_api_key))
 
       begin
