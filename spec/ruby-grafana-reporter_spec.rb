@@ -10,7 +10,7 @@ describe AbstractQuery do
   let(:query) { AbstractQuery.new }
 
   it 'has abstract methods' do
-    expect { query.uri }.to raise_error(NotImplementedError)
+    expect { query.url }.to raise_error(NotImplementedError)
     expect { query.request }.to raise_error(NotImplementedError)
     expect { query.pre_process(nil) }.to raise_error(NotImplementedError)
     expect { query.post_process }.to raise_error(NotImplementedError)
@@ -1081,7 +1081,7 @@ describe Grafana do
     end
 
     it 'raises error if datasource does not exist' do
-      expect { subject.datasource_id('blabla') }.to raise_error(DatasourceDoesNotExistError)
+      expect { subject.datasource_by_name('blabla') }.to raise_error(DatasourceDoesNotExistError)
     end
 
     it 'raises error if dashboard does not exist' do

@@ -27,8 +27,8 @@ module GrafanaReporter
       def pre_process(grafana)
         @sql = @panel.query(@query_letter)
         # resolve datasource name
-        @datasource = @panel.field('datasource')
-        @datasource_id = grafana.datasource_id(@datasource)
+        @datasource_name = @panel.field('datasource')
+        @datasource = grafana.datasource_by_name(@datasource_name)
         super(grafana)
         @from = translate_date(@from, @variables['grafana-report-timestamp'], false, @variables['from_timezone'] ||
                                @variables['grafana_default_from_timezone'])

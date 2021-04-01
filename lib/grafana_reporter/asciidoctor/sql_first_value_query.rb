@@ -52,7 +52,7 @@ module GrafanaReporter
         end
         return nil unless refId
 
-        "grafana_sql_value:#{panel.dashboard.grafana.datasource_id(panel.model["datasource"])}[sql=\"#{panel.query(refId).gsub(/"/,'\"').gsub("\n",' ').gsub(/\\/,"\\\\")}\",from=\"now-1h\",to=\"now\"]"
+        "grafana_sql_value:#{panel.dashboard.grafana.datasource_by_name(panel.model["datasource"]).id}[sql=\"#{panel.query(refId).gsub(/"/,'\"').gsub("\n",' ').gsub(/\\/,"\\\\")}\",from=\"now-1h\",to=\"now\"]"
       end
     end
   end

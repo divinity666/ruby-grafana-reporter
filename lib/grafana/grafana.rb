@@ -42,21 +42,24 @@ module Grafana
       'NON-Admin'
     end
 
-    # Returns the ID of a datasource, which has been queried by the datasource name.
+    # Returns the datasource, which has been queried by the datasource name.
     #
-    # @return [Integer] ID for the specified datasource name
-    def datasource_id(datasource_name)
+    # @return [Datasource] Datasource for the specified datasource name
+    def datasource_by_name(datasource_name)
       datasource_name ||= 'default'
-      return @datasources[datasource_name] if @datasources[datasource_name]
+      raise DatasourceDoesNotExistError.new('name', datasource_name) unless @datasources[datasource_name]
 
-      raise DatasourceDoesNotExistError.new('name', datasource_name)
+      @datasources[datasource_name]
     end
 
-    # Returns if the given datasource ID exists for the grafana instance.
+    # Returns the datasource, which has been queried by the datasource id.
     #
-    # @return [Boolean] true if exists, false otherwise
-    def datasource_id_exists?(datasource_id)
-      @datasources.value?(datasource_id)
+    # @return [Datasource] Datasource for the specified datasource id
+    def datasource_by_id(datasource_id)
+      datasource = @datasources.select { |_name, ds| ds.id == datasource_id }.values.first
+      raise DatasourceDoesNotExistError.new('id', datasource_id) unless datasource
+
+      datasource
     end
 
     # @return [Array] Array of dashboard uids within the current grafana object
@@ -119,7 +122,7 @@ module Grafana
 
       json = JSON.parse(settings.body)
       json['datasources'].select { |_k, v| v['id'].to_i.positive? }.each do |ds_name, ds_value|
-        @datasources[ds_name] = ds_value['id'].to_i
+        @datasources[ds_name] = AbstractDatasource.build_instance(ds_value)
       end
       @datasources['default'] = @datasources[json['defaultDatasource']]
     end

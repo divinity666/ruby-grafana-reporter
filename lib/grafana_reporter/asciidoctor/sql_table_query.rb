@@ -54,7 +54,7 @@ module GrafanaReporter
         end
         return nil unless refId
 
-        "|===\ninclude::grafana_sql_table:#{panel.dashboard.grafana.datasource_id(panel.model["datasource"])}[sql=\"#{panel.query(refId).gsub(/"/,'\"').gsub("\n",' ').gsub(/\\/,"\\\\")}\",filter_columns=\"time\",dashboard=\"#{panel.dashboard.id}\",from=\"now-1h\",to=\"now\"]\n|==="
+        "|===\ninclude::grafana_sql_table:#{panel.dashboard.grafana.datasource_by_name(panel.model["datasource"]).id}[sql=\"#{panel.query(refId).gsub(/"/,'\"').gsub("\n",' ').gsub(/\\/,"\\\\")}\",filter_columns=\"time\",dashboard=\"#{panel.dashboard.id}\",from=\"now-1h\",to=\"now\"]\n|==="
       end
     end
   end

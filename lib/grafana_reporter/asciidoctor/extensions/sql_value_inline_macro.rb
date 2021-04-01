@@ -46,11 +46,13 @@ module GrafanaReporter
           instance = attrs['instance'] || parent.document.attr('grafana_default_instance') || 'default'
           @report.logger.debug("Processing SqlValueInlineMacro (instance: #{instance}, datasource: #{target},"\
                                " sql: #{attrs['sql']})")
-          query = SqlFirstValueQuery.new(attrs['sql'], target)
-          query.merge_hash_variables(parent.document.attributes, attrs)
-          @report.logger.debug("from: #{query.from}, to: #{query.to}")
 
           begin
+            # catch properly if datasource could not be identified
+            query = SqlFirstValueQuery.new(attrs['sql'], @report.grafana(instance).datasource_by_id(target.to_i))
+            query.merge_hash_variables(parent.document.attributes, attrs)
+            @report.logger.debug("from: #{query.from}, to: #{query.to}")
+
             create_inline(parent, :quoted, query.execute(@report.grafana(instance)))
           rescue GrafanaReporterError => e
             @report.logger.error(e.message)
