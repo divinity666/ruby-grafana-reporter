@@ -26,12 +26,15 @@ module Grafana
       @model['id']
     end
 
-    # @return [String] SQL query string for the requested query letter
+    # @return [String] query string for the requested query letter
     def query(query_letter)
       query_item = @model['targets'].select { |item| item['refId'].to_s == query_letter.to_s }.first
-      raise QueryLetterDoesNotExistError.new(query_letter, self) if query_item.nil?
+      raise QueryLetterDoesNotExistError.new(query_letter, self) unless query_item
 
-      query_item['rawSql']
+      query_item['rawSql'] || #SQL
+      query_item['target'] || # Graphite
+      query_item['query'] || # Influx
+      query_item['expr'] # Prometheus
     end
 
     # @return [String] relative rendering URL for the panel, to create an image out of it
