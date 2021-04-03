@@ -98,8 +98,8 @@ module Grafana
 
     # @abstract
     #
-    # @return [String] String containing the relative URL to execute the query
-    def uri
+    # @return [String] URL which shall be used to execute the query
+    def url
       raise NotImplementedError
     end
 
