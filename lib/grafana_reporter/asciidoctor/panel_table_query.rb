@@ -20,7 +20,7 @@ module GrafanaReporter
         extract_dashboard_variables(@panel.dashboard)
       end
 
-      # Retrieves the SQL query and the configured datasource from the panel.
+      # Retrieves the query and the configured datasource from the panel.
       # @see Grafana::AbstractSqlQuery#pre_process
       # @param grafana [Grafana::Grafana] grafana instance against which the query shall be executed
       # @return [void]
