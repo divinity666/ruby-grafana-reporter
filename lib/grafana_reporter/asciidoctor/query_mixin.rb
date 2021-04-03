@@ -26,40 +26,6 @@ module GrafanaReporter
         self.to = item_hash['to'] || document_hash['to'] || to
       end
 
-      # Formats the SQL results returned from grafana to an easier to use format.
-      #
-      # The result is being formatted as stated below:
-      #
-      #   {
-      #     :header => [column_title_1, column_title_2],
-      #     :content => [
-      #                   [row_1_column_1, row_1_column_2],
-      #                   [row_2_column_1, row_2_column_2]
-      #                 ]
-      #   }
-      # @param raw_result [Hash] query result hash from grafana
-      # @return [Hash] sql result formatted as stated above
-      def preformat_sql_result(raw_result)
-        results = {}
-        results.default = []
-
-        JSON.parse(raw_result)['results'].each_value do |query_result|
-          if query_result.key?('error')
-            results[:header] = results[:header] << ['SQL Error']
-            results[:content] = [[query_result['error']]]
-
-          elsif query_result['tables']
-            query_result['tables'].each do |table|
-              results[:header] = results[:header] << table['columns'].map { |header| header['text'] }
-              results[:content] = table['rows']
-            end
-
-          end
-        end
-
-        results
-      end
-
       # Transposes the given result.
       #
       # NOTE: Only the +:content+ of the given result hash is transposed. The +:header+ is ignored.

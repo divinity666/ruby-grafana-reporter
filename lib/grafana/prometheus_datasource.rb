@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module Grafana
-  class TsdbDatasource < AbstractDatasource
+  class PrometheusDatasource < AbstractDatasource
 
     def initialize(ds_model)
       @model = ds_model
@@ -12,7 +12,7 @@ module Grafana
     end
 
     def url(query)
-      "/api/datasources/proxy/1/render?from=#{query.from}&until=#{query.to}&format=json&target=#{query.target}"
+      "/api/datasources/proxy/#{id}/api/v1/query_range?start=#{query.from}&end=#{query.to}&query=#{query.sql}"
     end
 
     def request(query)

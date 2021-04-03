@@ -3,15 +3,21 @@
 module Grafana
   class AbstractDatasource
     def self.build_instance(ds_model)
-      case ds_model['meta']['category']
-      when 'sql'
-        return SqlDatasource.new(ds_model)
+      return SqlDatasource.new(ds_model) if ds_model['meta']['category'] == 'sql'
 
-      when 'tsdb'
-        return TsdbDatasource.new(ds_model)
+      case ds_model['meta']['id']
+      when 'graphite'
+        return GraphiteDatasource.new(ds_model)
+
+      when 'influxdb'
+        return InfluxDbDatasource.new(ds_model)
+
+      when 'prometheus'
+        return PrometheusDatasource.new(ds_model)
 
       end
 
+      # TODO: raise no datasource found for id...
       SqlDatasource.new(ds_model)
     end
 
@@ -43,5 +49,8 @@ module Grafana
       raise NotImplementedError
     end
 
+    def preformat_response(response_body)
+      raise NotImplementedError
+    end
   end
 end

@@ -14,6 +14,7 @@ module Grafana
     def initialize(raw_sql, datasource)
       super()
       @sql = raw_sql
+      # TODO: move datasource to Abstract Query?
       @datasource = datasource
     end
 
@@ -31,12 +32,8 @@ module Grafana
     def pre_process(grafana)
       raise MissingSqlQueryError if @sql.nil?
 
+      # TODO: ensure that this fits to all datasources, or move to datasource class
       @sql = replace_variables(@sql, grafana_variables)
-      #TODO: remove this from here
-      # remove comments in query
-      @sql.gsub!(/--[^\r\n]*(?:[\r\n]+|$)/, ' ')
-      @sql.gsub!(/\r\n/, ' ')
-      @sql.gsub!(/\n/, ' ')
     end
   end
 end

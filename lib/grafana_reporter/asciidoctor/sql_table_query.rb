@@ -13,7 +13,7 @@ module GrafanaReporter
       # Finally the results are formatted as a asciidoctor table.
       # @return [void]
       def post_process
-        results = preformat_sql_result(@result.body)
+        results = @datasource.preformat_response(@result.body)
         results = format_columns(results, @variables['format'])
         results = replace_values(results, @variables.select { |k, _v| k =~ /^replace_values_\d+/ })
         results = filter_columns(results, @variables['filter_columns'])
