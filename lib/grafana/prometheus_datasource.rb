@@ -17,7 +17,15 @@ module Grafana
 
     def request(query)
       {
-        request: Net::HTTP::Post
+        request: Net::HTTP::Get
+      }
+    end
+
+    def preformat_response(response_body)
+      # TODO: support multiple metrics as return types
+      {
+        header: ['time', 'value'],
+        content: JSON.parse(response_body)['data']['result'].first['values']
       }
     end
   end
