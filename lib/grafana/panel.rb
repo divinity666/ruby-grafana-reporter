@@ -33,7 +33,8 @@ module Grafana
 
       query_item['rawSql'] || #SQL
       query_item['target'] || # Graphite
-      query_item['query'] || # Influx
+      # TODO: support influx
+      #query_item['query'] || # Influx
       query_item['expr'] # Prometheus
     end
 
