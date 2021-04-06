@@ -13,7 +13,7 @@ describe PanelQueryTableIncludeProcessor do
     @report = report
   end
 
-  context 'table' do
+  context 'sql table' do
     it 'can return full results' do
       expect(@report.logger).not_to receive(:error)
       expect(Asciidoctor.convert("include::grafana_panel_query_table:#{STUBS[:panel_sql][:id]}[query=\"#{STUBS[:panel_sql][:letter]}\",dashboard=\"#{STUBS[:dashboard]}\"]", to_file: false)).not_to include('GrafanaReporterError')
@@ -74,13 +74,16 @@ describe PanelQueryTableIncludeProcessor do
   end
 
   context 'graphite' do
-    xit 'test for graphite request https://play.grafana.org/api/datasources/proxy/1/render' do
-      request_body = 'from=-3h&until=now&format=json&target=aliasByNode%28movingAverage%28scaleToSeconds%28apps.fakesite.*.counters.requests.count%2C+1%29%2C+2%29%2C+2%29'
-
-      response = 'sample_graphite_response.json'
-
+    it 'can handle graphite requests' do
       expect(@report.logger).not_to receive(:error)
-      expect(Asciidoctor.convert("include::grafana_panel_query_table:#{STUBS[:panel_graphite][:id]}[query=\"#{STUBS[:panel_graphite][:letter]}\",dashboard=\"#{STUBS[:dashboard]}\"]", to_file: false)).to match(/<p>\| 27.700000000000003 \| 1617388470 030000 \|/)
+      expect(Asciidoctor.convert("include::grafana_panel_query_table:#{STUBS[:panel_graphite][:id]}[query=\"#{STUBS[:panel_graphite][:letter]}\",dashboard=\"#{STUBS[:dashboard]}\",from=\"0\",to=\"0\"]", to_file: false)).to match(/<p>\| 27.700000000000003 \| 1617388470\n\|/)
+    end
+  end
+
+  context 'prometheus' do
+    it 'can handle prometheus requests' do
+      expect(@report.logger).not_to receive(:error)
+      expect(Asciidoctor.convert("include::grafana_panel_query_table:#{STUBS[:panel_prometheus][:id]}[query=\"#{STUBS[:panel_prometheus][:letter]}\",dashboard=\"#{STUBS[:dashboard]}\",from=\"0\",to=\"0\"]", to_file: false)).to match(/<p>\| 1617729810 \| 0.0010000000000218278\n\|/)
     end
   end
 end

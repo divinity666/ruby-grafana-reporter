@@ -209,61 +209,28 @@
       "type": "mysql",
       "url": "/api/datasources/proxy/1"
     },
-    "bla": {
-      "database": "bla",
-      "id": 2,
-      "jsonData": {
-        "keepCookies": [
-
-        ]
-      },
+    "Graphite": {
+      "id": 3,
       "meta": {
         "type": "datasource",
-        "name": "InfluxDB",
-        "id": "influxdb",
-        "info": {
-          "author": {
-            "name": "Grafana Project",
-            "url": "https://grafana.com"
-          },
-          "description": "Open source time series database",
-          "links": null,
-          "logos": {
-            "small": "public/app/plugins/datasource/influxdb/img/influxdb_logo.svg",
-            "large": "public/app/plugins/datasource/influxdb/img/influxdb_logo.svg"
-          },
-          "build": {
-          },
-          "screenshots": null,
-          "version": "",
-          "updated": ""
-        },
-        "dependencies": {
-          "grafanaVersion": "*",
-          "plugins": [
-
-          ]
-        },
-        "includes": null,
-        "module": "app/plugins/datasource/influxdb/module",
-        "baseUrl": "public/app/plugins/datasource/influxdb",
-        "category": "tsdb",
-        "preload": false,
-        "annotations": true,
-        "metrics": true,
-        "alerting": true,
-        "explore": false,
-        "tables": false,
-        "logs": true,
-        "queryOptions": {
-          "minInterval": true
-        },
-        "routes": null,
-        "streaming": false
+        "name": "Graphite",
+        "id": "graphite",
+        "category":"tsdb"
       },
-      "name": "InfluxDB",
-      "type": "influxdb",
-      "url": "/api/datasources/proxy/2"
+      "name": "Graphite",
+      "url":"/api/datasources/proxy/3"
+    },
+    "Prometheus": {
+      "id": 4,
+      "meta": {
+        "type": "datasource",
+        "name": "Prometheus",
+        "id": "prometheus",
+        "category":"tsdb"
+      },
+      "name": "Prometheus",
+      "type": "prometheus",
+      "url":"/api/datasources/proxy/4"
     }
   },
   "defaultDatasource": "demo",

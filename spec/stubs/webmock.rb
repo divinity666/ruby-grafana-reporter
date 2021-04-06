@@ -9,9 +9,11 @@ STUBS = {
   key_viewer: 'viewerxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx',
   dashboard: 'IDBRfjSmz',
   panel_sql: { id: '11', letter: 'A', title: 'Temperaturen' },
-  panel_graphite: { id: '12' },
+  panel_graphite: { id: '12', letter: 'A' },
+  panel_prometheus: { id: '13', letter: 'A' },
   datasource_sql: '1',
-  datasource_graphite: '2'
+  datasource_graphite: '3',
+  datasource_prometheus: '4'
 }
 
 default_header = {
@@ -137,5 +139,25 @@ RSpec.configure do |config|
       })
     )
     .to_return(status: 200, body: File.read('./spec/tests/sample_alerts_response.json'), headers: {})
+
+    # Graphite
+    stub_request(:post, 'http://localhost/api/datasources/proxy/3/render').with(
+      body: {"format"=>"json", "from"=>"00:00_19700101", "target"=>"alias(movingAverage(scaleToSeconds(apps.fakesite.web_server_01.counters.request_status.code_302.count, 10), 20), 'cpu')", "until"=>"00:00_19700101"},
+      headers: default_header.merge({
+        'Authorization' => "Bearer #{STUBS[:key_admin]}",
+        'Content-Type' => 'application/x-www-form-urlencoded'
+      })
+    )
+    .to_return(status: 200, body: File.read('./spec/tests/sample_graphite_response.json'), headers: {})
+
+    # Prometheus
+    stub_request(:get, 'http://localhost/api/datasources/proxy/4/api/v1/query_range').with(
+      query: {"query": "sum by(mode)(irate(node_cpu_seconds_total{job=\"node\", instance=~\"$node:.*\", mode!=\"idle\"}[5m])) > 0", 'start': 0, 'end': 0},
+      headers: default_header.merge({
+        'Authorization' => "Bearer #{STUBS[:key_admin]}"
+      })
+    )
+    .to_return(status: 200, body: File.read('./spec/tests/sample_prometheus_response.json'), headers: {})
+
   end
 end

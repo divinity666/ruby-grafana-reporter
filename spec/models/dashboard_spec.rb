@@ -4,7 +4,7 @@ describe Dashboard do
   let(:dashboard) { Dashboard.new(JSON.parse(File.read('./spec/tests/demo_dashboard.json'))['dashboard'], Grafana::Grafana.new('')) }
 
   it 'contains panels' do
-    expect(dashboard.panels.length).to eq(7)
+    expect(dashboard.panels.length).to eq(9)
     expect(dashboard.panel(11)).to be_a(Panel)
     expect(dashboard.panel(11).field('id')).to eq(11)
     expect(dashboard.panel(11).field('no_field_exists')).to eq('')
