@@ -63,4 +63,19 @@ module Grafana
       super('No SQL statement has been specified.')
     end
   end
+
+  # Raised if a datasource shall be queried, which is not (yet) supported by the reporter
+  class DatasourceTypeNotSupportedError < GrafanaError
+    def initialize(name, type)
+      super("The configured datasource with name '#{name}' is of type '#{type}', which is currently not supported by ruby-grafana-reporter. It will only be usable in panel image queries.")
+    end
+  end
+
+  # Raised if a datasource shall be queried, which is not (yet) supported by the reporter
+  class InvalidDatasourceQueryProvidedError < GrafanaError
+    def initialize(query)
+      super("The datasource query provided, does not look like a grafana datasource target (received: #{query}).")
+    end
+  end
+
 end
