@@ -1,14 +1,14 @@
 include Grafana
 
 describe Panel do
-  let(:panel) { Dashboard.new(JSON.parse(File.read('./spec/tests/demo_dashboard.json'))['dashboard'], Grafana::Grafana.new('')).panel(11) }
+  let(:panel) { Grafana::Grafana.new(STUBS[:url], STUBS[:key_admin]).dashboard(STUBS[:dashboard]).panel(STUBS[:panel_sql][:id]) }
 
   it 'contains proper field values' do
     expect(panel.field('title')).to eq('Temperaturen')
   end
 
   it 'can return queries properly' do
-    expect(panel.query('D')).to be_a(String)
+    expect(panel.query(STUBS[:panel_sql][:letter])).to be_a(String)
     expect { panel.query('Z') }.to raise_error(QueryLetterDoesNotExistError)
     expect { panel.query(nil) }.to raise_error(QueryLetterDoesNotExistError)
   end
