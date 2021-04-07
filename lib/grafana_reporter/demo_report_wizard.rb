@@ -9,7 +9,7 @@ module GrafanaReporter
     def build(grafana)
       results = {}
 
-      grafana.dashboard_ids.shuffle.first(10).each do |dashboard_id|
+      grafana.dashboard_ids.shuffle.first(15).each do |dashboard_id|
         print "Evaluating dashboard '#{dashboard_id}' for building a demo report..."
         dashboard = grafana.dashboard(dashboard_id)
 
@@ -20,6 +20,8 @@ module GrafanaReporter
               results[query_class] = result if result
             rescue NotImplementedError
               results[query_class] = "Method 'build_demo_entry' not implemented for #{query_class.name}"
+            rescue StandardError => e
+              puts "#{e.message}\n#{e.backtrace.join("\n")}"
             end
           end
         end
