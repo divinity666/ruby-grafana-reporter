@@ -17,18 +17,23 @@ module Grafana
 
     def request(query)
       {
-        body: URI.encode_www_form({
-            'from': DateTime.strptime(query.from.to_s,'%Q').strftime('%H:%M_%Y%m%d'),
-            'until': DateTime.strptime(query.to.to_s,'%Q').strftime('%H:%M_%Y%m%d'),
-            'format': 'json',
-            'target': query.sql
-        }),
+        body: URI.encode_www_form(
+          'from': DateTime.strptime(query.from.to_s,'%Q').strftime('%H:%M_%Y%m%d'),
+          'until': DateTime.strptime(query.to.to_s,'%Q').strftime('%H:%M_%Y%m%d'),
+          'format': 'json',
+          'target': query.sql
+        ),
         content_type: 'application/x-www-form-urlencoded',
         request: Net::HTTP::Post
       }
     end
 
+    def raw_query(target)
+      target['target']
+    end
+
     def preformat_response(response_body)
+      # TODO: support multiple metrics as return types
       {
         header: ['value','time'],
         content: JSON.parse(response_body).first['datapoints']

@@ -60,6 +60,10 @@ module Grafana
       results
     end
 
+    def raw_query(target)
+      target['rawSql']
+    end
+
     private
 
     def prepare_sql(sql)

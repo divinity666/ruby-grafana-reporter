@@ -21,6 +21,10 @@ module Grafana
       }
     end
 
+    def raw_query(target)
+      target['expr']
+    end
+
     def preformat_response(response_body)
       # TODO: support multiple metrics as return types
       {

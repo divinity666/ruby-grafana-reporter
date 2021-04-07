@@ -26,16 +26,24 @@ module Grafana
       @model['id']
     end
 
+    # @return [Datasource] datasource object specified for the current panel
+    def datasource
+      dashboard.grafana.datasource_by_name(@model['datasource'])
+    end
+
     # @return [String] query string for the requested query letter
     def query(query_letter)
       query_item = @model['targets'].select { |item| item['refId'].to_s == query_letter.to_s }.first
       raise QueryLetterDoesNotExistError.new(query_letter, self) unless query_item
 
-      query_item['rawSql'] || #SQL
-      query_item['target'] || # Graphite
-      # TODO: support influx
-      #query_item['query'] || # Influx
-      query_item['expr'] # Prometheus
+      begin
+        return datasource.raw_query(query_item)
+      rescue DatasourceDoesNotExistError
+        return nil
+      rescue => e
+        puts e.backtrace
+        return nil
+      end
     end
 
     # @return [String] relative rendering URL for the panel, to create an image out of it

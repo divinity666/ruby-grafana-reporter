@@ -50,6 +50,10 @@ module Grafana
       raise NotImplementedError
     end
 
+    def raw_query(target)
+      raise NotImplementedError
+    end
+
     def preformat_response(response_body)
       raise NotImplementedError
     end
