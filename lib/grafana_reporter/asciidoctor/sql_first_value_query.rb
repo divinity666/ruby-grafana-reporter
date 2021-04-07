@@ -45,7 +45,7 @@ module GrafanaReporter
 
         refId = nil
         panel.model['targets'].each do |item|
-          if !item['hide'] && !item["rawSql"].to_s.empty?
+          if !item['hide'] && !panel.query(item["refId"]).to_s.empty?
             refId = item['refId']
             break
           end

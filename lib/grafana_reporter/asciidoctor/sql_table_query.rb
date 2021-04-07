@@ -43,11 +43,11 @@ module GrafanaReporter
       # (see AbstractQuery#self.build_demo_entry)
       def self.build_demo_entry(panel)
         return nil unless panel
-        return nil unless panel.model['transform'] == 'table'
+        return nil unless panel.model['type'].include?('table')
 
         refId = nil
         panel.model['targets'].each do |item|
-          if !item['hide'] && !item["rawSql"].to_s.empty?
+          if !item['hide'] && !panel.query(item["refId"]).to_s.empty?
             refId = item['refId']
             break
           end
