@@ -10,7 +10,7 @@ module GrafanaReporter
   # the retention time is over.
   class AbstractReport
     # Array of supported event callback symbols
-    EVENT_CALLBACKS= [:all, :on_before_create, :on_after_cancel, :on_after_finish]
+    EVENT_CALLBACKS = %i[all on_before_create on_after_cancel on_after_finish].freeze
 
     # Class variable for storing event listeners
     @@event_listeners = {}
@@ -66,11 +66,6 @@ module GrafanaReporter
       @@event_listeners.default = []
     end
 
-    def self.event_listener_count
-      # TODO: check if this is needed and/or correct calculation
-      @@event_listeners.length
-    end
-
     # Call to request cancelling the report generation.
     # @return [void]
     def cancel!
@@ -108,7 +103,8 @@ module GrafanaReporter
       @error || []
     end
 
-    # @return [String] status of the report as string, either 'not started', 'in progress', 'cancelling', 'cancelled', 'died' or 'finished'.
+    # @return [String] status of the report as string, either 'not started', 'in progress', 'cancelling',
+    #   'cancelled', 'died' or 'finished'.
     def status
       return 'not started' unless @start_time
       return 'cancelled' if done && cancel
@@ -153,10 +149,13 @@ module GrafanaReporter
         logger.debug("Informing event listener '#{listener.class}' about event '#{event}' for report '#{object_id}'.")
         begin
           res = listener.callback(event, self)
-          logger.debug("Event listener '#{listener.class}' for event '#{event}' and report '#{object_id}' returned with result '#{res}'.")
+          logger.debug("Event listener '#{listener.class}' for event '#{event}' and report '#{object_id}' returned "\
+                       "with result '#{res}'.")
         rescue StandardError => e
-          puts ("Event listener '#{listener.class}' for event '#{event}' and report '#{object_id}' returned with error: #{e.message} - #{e.backtrace}.")
-          logger.error("Event listener '#{listener.class}' for event '#{event}' and report '#{object_id}' returned with error: #{e.message} - #{e.backtrace}.")
+          msg = "Event listener '#{listener.class}' for event '#{event}' and report '#{object_id}' returned with "\
+                "error: #{e.message} - #{e.backtrace}."
+          puts msg
+          logger.error(msg)
         end
       end
     end

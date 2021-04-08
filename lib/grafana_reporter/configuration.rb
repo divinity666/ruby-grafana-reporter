@@ -301,13 +301,7 @@ module GrafanaReporter
             'report-retention' => [Integer, explicit ? 1 : 0],
             'ssl-cert' => [String, 0],
             'webservice-port' => [Integer, explicit ? 1 : 0],
-            'callbacks' =>
-              [
-                Hash, 0,
-                  {
-                    nil => [String, 1]
-                  }
-              ]
+            'callbacks' => [Hash, 0, { nil => [String, 1] }]
           }
         ]
       }

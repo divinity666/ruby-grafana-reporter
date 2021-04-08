@@ -64,7 +64,7 @@ module Grafana
 
     # @return [Array] Array of dashboard uids within the current grafana object
     def dashboard_ids
-      response = execute_http_request("/api/search")
+      response = execute_http_request('/api/search')
       return [] unless response.is_a?(Net::HTTPOK)
 
       dashboards = JSON.parse(response.body)
@@ -82,15 +82,10 @@ module Grafana
       return @dashboards[dashboard_uid] unless @dashboards[dashboard_uid].nil?
 
       response = execute_http_request("/api/dashboards/uid/#{dashboard_uid}")
-      model = nil
-      begin
-        model = JSON.parse(response.body)['dashboard']
-      rescue
-      end
-
-      raise DashboardDoesNotExistError, dashboard_uid if model.nil?
+      raise DashboardDoesNotExistError, dashboard_uid unless response.is_a?(Net::HTTPOK)
 
       # cache dashboard for reuse
+      model = JSON.parse(response.body)['dashboard']
       @dashboards[dashboard_uid] = Dashboard.new(model, self)
 
       @dashboards[dashboard_uid]
@@ -108,8 +103,8 @@ module Grafana
     # @param timeout [Integer] number of seconds to wait, before the http request is cancelled, defaults to 60 seconds
     def execute_http_request(relative_uri, options = {}, timeout = 60)
       auth = {}
-      auth = {authorization: "Bearer #{@key}"} if @key
-      WebRequest.new("#{@base_uri}#{relative_uri}", auth.merge({logger: @logger}).merge(options)).execute(timeout)
+      auth = { authorization: "Bearer #{@key}" } if @key
+      WebRequest.new("#{@base_uri}#{relative_uri}", auth.merge({ logger: @logger }).merge(options)).execute(timeout)
     end
 
     private

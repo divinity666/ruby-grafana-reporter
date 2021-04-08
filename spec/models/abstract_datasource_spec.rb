@@ -1,15 +1,13 @@
 include Grafana
 
 describe AbstractDatasource do
-  subject { AbstractDatasource.new }
+  subject { AbstractDatasource.new(nil) }
 
   it 'has abstract methods' do
-    expect { subject.name }.to raise_error(NotImplementedError)
-    expect { subject.category }.to raise_error(NotImplementedError)
-    expect { subject.model }.to raise_error(NotImplementedError)
     expect { subject.url(nil) }.to raise_error(NotImplementedError)
     expect { subject.request(nil) }.to raise_error(NotImplementedError)
     expect { subject.preformat_response(nil) }.to raise_error(NotImplementedError)
+    expect { subject.raw_query(nil) }.to raise_error(NotImplementedError)
   end
 
   it 'raises error if invalid datasource query is provided' do

@@ -76,6 +76,11 @@ module GrafanaReporter
         @result = result[:content].map { |row| "| #{row.map { |item| item.to_s.gsub('|', '\\|') }.join(' | ')}" }
       end
 
+      # @see AbstractQuery#self.build_demo_entry
+      def self.build_demo_entry(_panel)
+        "|===\ninclude::grafana_annotations[columns=\"time,panelId,newState,prevState,text\"]\n|==="
+      end
+
       private
 
       def url_parameters
@@ -90,11 +95,6 @@ module GrafanaReporter
         return '' if url_params.empty?
 
         "?#{url_params}"
-      end
-
-      # (see AbstractQuery#self.build_demo_entry)
-      def self.build_demo_entry(panel)
-        "|===\ninclude::grafana_annotations[columns=\"time,panelId,newState,prevState,text\"]\n|==="
       end
     end
   end

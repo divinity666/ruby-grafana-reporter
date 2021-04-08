@@ -40,14 +40,15 @@ module GrafanaReporter
         @result = replace_variables(@result, grafana_variables)
       end
 
-      # (see AbstractQuery#self.build_demo_entry)
+      # @see AbstractQuery#self.build_demo_entry
       def self.build_demo_entry(panel)
         return nil unless panel
-        return nil unless panel.model["title"]
-        return nil if panel.model["title"].strip == ''
-        return nil if panel.model["title"].strip == 'Panel Title'
+        return nil unless panel.model['title']
+        return nil if panel.model['title'].strip == ''
+        return nil if panel.model['title'].strip == 'Panel Title'
 
-        "this text includes the panel with title grafana_panel_property:#{panel.id}[\"title\",dashboard=\"#{panel.dashboard.id}\"]"
+        "this text includes the panel with title grafana_panel_property:#{panel.id}[\"title\","\
+        "dashboard=\"#{panel.dashboard.id}\"]"
       end
     end
   end

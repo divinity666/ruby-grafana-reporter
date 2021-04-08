@@ -37,12 +37,12 @@ module Grafana
       raise QueryLetterDoesNotExistError.new(query_letter, self) unless query_item
 
       begin
-        return datasource.raw_query(query_item)
+        datasource.raw_query(query_item)
       rescue DatasourceDoesNotExistError
-        return nil
-      rescue => e
+        nil
+      rescue StandardError => e
         puts e.backtrace
-        return nil
+        nil
       end
     end
 

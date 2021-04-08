@@ -30,7 +30,7 @@ module GrafanaReporter
       #
       # NOTE: Only the +:content+ of the given result hash is transposed. The +:header+ is ignored.
       #
-      # @param result [Hash] preformatted sql hash, (see {#preformat_sql_result})
+      # @param result [Hash] preformatted sql hash, (see {Grafana::AbstractDatasource#preformat_response})
       # @param transpose_variable [Grafana::Variable] true, if the result hash shall be transposed
       # @return [Hash] transposed query result
       def transpose(result, transpose_variable)
@@ -46,7 +46,7 @@ module GrafanaReporter
       #
       # Multiple columns may be filtered. Therefore the column titles have to be named in the
       # {Grafana::Variable#raw_value} and have to be separated by +,+ (comma).
-      # @param result [Hash] preformatted sql hash, (see {#preformat_sql_result})
+      # @param result [Hash] preformatted sql hash, (see {Grafana::AbstractDatasource#preformat_response})
       # @param filter_columns_variable [Grafana::Variable] column names, which shall be removed in the query result
       # @return [Hash] filtered query result
       def filter_columns(result, filter_columns_variable)
@@ -65,12 +65,12 @@ module GrafanaReporter
         result
       end
 
-      # Uses the {Kernel#format} method to format values in the query results.
+      # Uses the Kernel#format method to format values in the query results.
       #
       # The formatting will be applied separately for every column. Therefore the column formats have to be named
       # in the {Grafana::Variable#raw_value} and have to be separated by +,+ (comma). If no value is specified for
       # a column, no change will happen.
-      # @param result [Hash] preformatted sql hash, (see {#preformat_sql_result})
+      # @param result [Hash] preformatted sql hash, (see {Grafana::AbstractDatasource#preformat_response})
       # @param formats [Grafana::Variable] formats, which shall be applied to the columns in the query result
       # @return [Hash] formatted query result
       # TODO: make sure that caught errors are also visible in logger
@@ -120,7 +120,7 @@ module GrafanaReporter
       # '42 is the answer'. Important to know: the regular expressions always have to start
       # with +^+ and end with +$+, i.e. the expression itself always has to match
       # the whole content in one field.
-      # @param result [Hash] preformatted query result (see {#preformat_sql_result}.
+      # @param result [Hash] preformatted query result (see {Grafana::AbstractDatasource#preformat_response}.
       # @param configs [Array<Grafana::Variable>] one variable for replacing values in one column
       # @return [Hash] query result with replaced values
       # TODO: make sure that caught errors are also visible in logger
@@ -227,10 +227,10 @@ module GrafanaReporter
             date_spec.slice!(%r{^/#{fit_match[:fit]}})
           end
 
-          delta_match = date_spec.match(%r{^(?<op>(?:-|\+))(?<count>\d+)?(?<unit>[smhdwMy])})
+          delta_match = date_spec.match(/^(?<op>(?:-|\+))(?<count>\d+)?(?<unit>[smhdwMy])/)
           if delta_match
-            date = delta_date(date, ("#{delta_match[:op]}#{delta_match[:count] || 1}").to_i, delta_match[:unit])
-            date_spec.slice!(%r{^#{delta_match[:op]}#{delta_match[:count]}#{delta_match[:unit]}})
+            date = delta_date(date, "#{delta_match[:op]}#{delta_match[:count] || 1}".to_i, delta_match[:unit])
+            date_spec.slice!(/^#{delta_match[:op]}#{delta_match[:count]}#{delta_match[:unit]}/)
           end
 
           raise TimeRangeUnknownError, orig_date unless fit_match || delta_match
@@ -248,19 +248,19 @@ module GrafanaReporter
         # substract specified time
         case time_letter
         when 's'
-          date = (date.to_time + (delta_count * 1)).to_datetime
+          (date.to_time + (delta_count * 1)).to_datetime
         when 'm'
-          date = (date.to_time + (delta_count * 60)).to_datetime
+          (date.to_time + (delta_count * 60)).to_datetime
         when 'h'
-          date = (date.to_time + (delta_count * 60 * 60)).to_datetime
+          (date.to_time + (delta_count * 60 * 60)).to_datetime
         when 'd'
-          date = date.next_day(delta_count)
+          date.next_day(delta_count)
         when 'w'
-          date = date.next_day(delta_count * 7)
+          date.next_day(delta_count * 7)
         when 'M'
-          date = date.next_month(delta_count)
+          date.next_month(delta_count)
         when 'y'
-          date = date.next_year(delta_count)
+          date.next_year(delta_count)
         end
       end
 

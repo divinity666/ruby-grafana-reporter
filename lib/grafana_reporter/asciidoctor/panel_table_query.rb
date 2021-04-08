@@ -36,21 +36,22 @@ module GrafanaReporter
                              @variables['grafana_default_to_timezone'])
       end
 
-      # (see AbstractQuery#self.build_demo_entry)
+      # @see AbstractQuery#self.build_demo_entry
       def self.build_demo_entry(panel)
         return nil unless panel
         return nil unless panel.model['type'].include?('table')
 
-        refId = nil
+        ref_id = nil
         panel.model['targets'].each do |item|
           if !item['hide'] && !panel.query(item['refId']).to_s.empty?
-            refId = item['refId']
+            ref_id = item['refId']
             break
           end
         end
-        return nil unless refId
+        return nil unless ref_id
 
-        "|===\ninclude::grafana_panel_query_table:#{panel.id}[query=\"#{refId}\",filter_columns=\"time\",dashboard=\"#{panel.dashboard.id}\"]\n|==="
+        "|===\ninclude::grafana_panel_query_table:#{panel.id}[query=\"#{ref_id}\",filter_columns=\"time\","\
+        "dashboard=\"#{panel.dashboard.id}\"]\n|==="
       end
     end
   end

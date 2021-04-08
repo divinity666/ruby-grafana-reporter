@@ -40,21 +40,23 @@ module GrafanaReporter
                              @variables['grafana_default_to_timezone'])
       end
 
-      # (see AbstractQuery#self.build_demo_entry)
+      # @see AbstractQuery#self.build_demo_entry
       def self.build_demo_entry(panel)
         return nil unless panel
         return nil unless panel.model['type'].include?('table')
 
-        refId = nil
+        ref_id = nil
         panel.model['targets'].each do |item|
-          if !item['hide'] && !panel.query(item["refId"]).to_s.empty?
-            refId = item['refId']
+          if !item['hide'] && !panel.query(item['refId']).to_s.empty?
+            ref_id = item['refId']
             break
           end
         end
-        return nil unless refId
+        return nil unless ref_id
 
-        "|===\ninclude::grafana_sql_table:#{panel.dashboard.grafana.datasource_by_name(panel.model["datasource"]).id}[sql=\"#{panel.query(refId).gsub(/"/,'\"').gsub("\n",' ').gsub(/\\/,"\\\\")}\",filter_columns=\"time\",dashboard=\"#{panel.dashboard.id}\",from=\"now-1h\",to=\"now\"]\n|==="
+        "|===\ninclude::grafana_sql_table:#{panel.dashboard.grafana.datasource_by_name(panel.model['datasource']).id}"\
+        "[sql=\"#{panel.query(ref_id).gsub(/"/, '\"').gsub("\n", ' ').gsub(/\\/, '\\\\')}\",filter_columns=\"time\","\
+        "dashboard=\"#{panel.dashboard.id}\",from=\"now-1h\",to=\"now\"]\n|==="
       end
     end
   end

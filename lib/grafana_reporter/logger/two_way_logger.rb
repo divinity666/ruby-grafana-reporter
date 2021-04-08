@@ -25,7 +25,7 @@ module GrafanaReporter
       end
 
       # Sets the severity level of the additional logger to the given severity.
-      # @param severity one of {Logger::Severity}
+      # @param severity one of Logger::Severity
       def level=(severity)
         @additional_logger.level = severity
       end

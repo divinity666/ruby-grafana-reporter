@@ -1,20 +1,14 @@
 # frozen_string_literal: true
 
 module Grafana
+  # Implements the interface to all SQL based datasources (tested with PostgreSQL and MariaDB/MySQL).
   class SqlDatasource < AbstractDatasource
-
-    def initialize(ds_model)
-      @model = ds_model
-    end
-
-    def model
-      @model
-    end
-
-    def url(query)
+    # @see AbstractDatasource#url
+    def url(_query)
       '/api/tsdb/query'
     end
 
+    # @see AbstractDatasource#request
     def request(query)
       {
         body: {
@@ -26,19 +20,7 @@ module Grafana
       }
     end
 
-    # Formats the SQL results returned from grafana to an easier to use format.
-    #
-    # The result is being formatted as stated below:
-    #
-    #   {
-    #     :header => [column_title_1, column_title_2],
-    #     :content => [
-    #                   [row_1_column_1, row_1_column_2],
-    #                   [row_2_column_1, row_2_column_2]
-    #                 ]
-    #   }
-    # @param raw_result [Hash] query result hash from grafana
-    # @return [Hash] sql result formatted as stated above
+    # @see AbstractDatasource#preformat_response
     def preformat_response(response_body)
       results = {}
       results.default = []
@@ -60,6 +42,7 @@ module Grafana
       results
     end
 
+    # @see AbstractDatasource#raw_query
     def raw_query(target)
       target['rawSql']
     end

@@ -1,11 +1,12 @@
 # frozen_string_literal: true
 
 module Grafana
+  # This class standardizes all webcalls. Key functionality is to properly support HTTPS calls as a base functionality.
   class WebRequest
-    @@ssl_cert = nil
+    @ssl_cert = nil
 
-    def self.ssl_cert=(ssl_cert)
-      @@ssl_cert = ssl_cert
+    class << self
+      attr_writer :ssl_cert
     end
 
     # Initializes a specific HTTP request.
@@ -20,13 +21,13 @@ module Grafana
     def initialize(url, options = {})
       @uri = URI.parse(url)
       default_options = { accept: 'application/json', request: Net::HTTP::Get, content_type: 'application/json' }
-      @options = default_options.merge(options.select {|k,v| k != :logger})
+      @options = default_options.merge(options.reject { |k, _v| k == :logger })
       @logger = options[:logger] || Logger.new(nil)
 
       @http = Net::HTTP.new(@uri.host, @uri.port)
       configure_ssl if url =~ /^https/
     end
-    
+
     # Executes the HTTP request
     #
     # @param timeout [Integer] number of seconds to wait, before the http request is cancelled, defaults to 60 seconds
@@ -34,7 +35,7 @@ module Grafana
     def execute(timeout = nil)
       timeout ||= 60
       @http.read_timeout = timeout.to_i
-      
+
       request = @options[:request].new(@uri.request_uri)
       request['Accept'] = @options[:accept] if @options[:accept]
       request['Content-Type'] = @options[:content_type] if @options[:content_type]
@@ -53,12 +54,12 @@ module Grafana
     def configure_ssl
       @http.use_ssl = true
       @http.verify_mode = OpenSSL::SSL::VERIFY_PEER
-      if @@ssl_cert && !File.exist?(@@ssl_cert)
+      if self.class.ssl_cert && !File.exist?(self.class.ssl_cert)
         @logger.warn('SSL certificate file does not exist.')
-      elsif @ssl_cert
+      elsif self.class.ssl_cert
         @http.cert_store = OpenSSL::X509::Store.new
         @http.cert_store.set_default_paths
-        @http.cert_store.add_file(@@ssl_cert)
+        @http.cert_store.add_file(self.class.ssl_cert)
       end
     end
   end

@@ -51,7 +51,8 @@ module GrafanaReporter
 
           begin
             # catch properly if datasource could not be identified
-            query = SqlTableQuery.new(attrs['sql'], @report.grafana(instance).datasource_by_id(target.split(':')[1].to_i))
+            query = SqlTableQuery.new(attrs['sql'],
+                                      @report.grafana(instance).datasource_by_id(target.split(':')[1].to_i))
             query.merge_hash_variables(doc.attributes, attrs)
             @report.logger.debug("from: #{query.from}, to: #{query.to}")
 

@@ -37,11 +37,11 @@ module GrafanaReporter
         action_wizard = false
 
         parser = OptionParser.new do |opts|
-          if ENV['OCRA_EXECUTABLE']
-            opts.banner = "Usage: #{ENV['OCRA_EXECUTABLE'].gsub("#{Dir.pwd}/".gsub('/', '\\'), '')} [options]"
-          else
-            opts.banner = "Usage: #{Gem.ruby} #{$PROGRAM_NAME} [options]"
-          end
+          opts.banner = if ENV['OCRA_EXECUTABLE']
+                          "Usage: #{ENV['OCRA_EXECUTABLE'].gsub("#{Dir.pwd}/".gsub('/', '\\'), '')} [options]"
+                        else
+                          "Usage: #{Gem.ruby} #{$PROGRAM_NAME} [options]"
+                        end
 
           opts.on('-c', '--config CONFIG_FILE_NAME', 'Specify custom configuration file,'\
                   " instead of #{CONFIG_FILE}.") do |file_name|

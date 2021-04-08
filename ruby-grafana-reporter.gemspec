@@ -15,9 +15,9 @@ Gem::Specification.new do |s|
   s.version     = GRAFANA_REPORTER_VERSION.join('.')
   s.date        = GRAFANA_REPORTER_RELEASE_DATE
   s.summary     = 'Reporter Service for Grafana'
-  s.description = 'Provides a standalone and a webservice frontend for creating reports '\
-                  'based on asciidoctor, including interfaces to integrate dynamic content '\
-                  'captured from grafana.'\
+  s.description = 'Build reports based on grafana dashboards in asciidoctor syntax. Runs '\
+                  'as webservice for easy integration with grafana, or as a standalone, '\
+                  'command line utility.'
                   ''\
                   'By default the reports will be converted to PDF documents, whereas other '\
                   'target formats can be used as well.'

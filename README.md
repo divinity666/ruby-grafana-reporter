@@ -52,30 +52,36 @@ the reporter. Please follow the steps
 first.
 
 **Windows:**
-- [Download latest Windows executable](https://github.com/divinity666/ruby-grafana-reporter/releases/latest)
-- `ruby-grafana-reporter -w`
+
+* [Download latest Windows executable](https://github.com/divinity666/ruby-grafana-reporter/releases/latest)
+* `ruby-grafana-reporter -w`
 
 **Raspberry Pi:**
-- `sudo apt-get install ruby`
-- `gem install ruby-grafana-reporter`
-- `ruby-grafana-reporter -w`
+
+* `sudo apt-get install ruby`
+* `gem install ruby-grafana-reporter`
+* `ruby-grafana-reporter -w`
 
 **Ruby environment:**
-- `gem install ruby-grafana-reporter`
-- `ruby-grafana-reporter -w`
+
+* `gem install ruby-grafana-reporter`
+* `ruby-grafana-reporter -w`
 
 **Docker environment** (advanced users):
-- [Download latest single-rb file](https://github.com/divinity666/ruby-grafana-reporter/releases/latest)
+
+* [Download latest single-rb file](https://github.com/divinity666/ruby-grafana-reporter/releases/latest)
 to an empty folder
-- create a configuration file by calling `ruby ruby-grafana-reporter -w` (if in doubt,
+* create a configuration file by calling `ruby ruby-grafana-reporter -w` (if in doubt,
 run the command within your docker container)
-- create file `/<<path-to-single-rb-file-folder>>/startup.sh` with the following
+* create file `/<<path-to-single-rb-file-folder>>/startup.sh` with the following
 content:
+
 ```
 cd /documents
 ruby bin/ruby-grafana-reporter
 ```
-- add asciidoctor your compose yaml:
+* add asciidoctor your compose yaml:
+
 ```
 asciidoctor:
   image: asciidoctor/docker-asciidoctor
@@ -87,7 +93,7 @@ asciidoctor:
     sh /documents/startup.sh
   restart: unless-stopped
 ```
-- start/restart the asciidoctor docker container
+* start/restart the asciidoctor docker container
 
 ## Grafana integration
 

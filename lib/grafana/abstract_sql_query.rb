@@ -10,7 +10,7 @@ module Grafana
     attr_reader :sql, :datasource
 
     # @param raw_sql [String] raw sql statement, as it can be sent to a SQL database
-    # @param datasource_id [Integer] ID of the datasource against which the query is run
+    # @param datasource [AbstractDatasource] datasource object against which the query is run
     def initialize(raw_sql, datasource)
       super()
       @sql = raw_sql
@@ -29,7 +29,7 @@ module Grafana
     end
 
     # Replaces all variables in the SQL statement.
-    def pre_process(grafana)
+    def pre_process(_grafana)
       raise MissingSqlQueryError if @sql.nil?
 
       # TODO: ensure that this fits to all datasources, or move to datasource class

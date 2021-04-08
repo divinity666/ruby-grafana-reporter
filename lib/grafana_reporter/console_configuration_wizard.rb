@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 module GrafanaReporter
+  # This class provides a console configuration wizard, to reduce the manual efforts that have
+  # to be spent for that action and to reduce mistakes as good as possible.
   class ConsoleConfigurationWizard
     # Provides a command line configuration wizard for setting up the necessary configuration
     # file.
@@ -112,7 +114,9 @@ default-document-attributes:
         return nil
       end
 
-      create = user_input("Shall I create a demo report for your new configuration file? Please note that this report might contain confidential information, depending on the confidentiality of the information stored in your dashboard.", 'yN')
+      create = user_input('Shall I create a demo report for your new configuration file? Please note '\
+                          'that this report might contain confidential information, depending on the '\
+                          'confidentiality of the information stored in your dashboard.', 'yN')
       return nil unless create =~ /^(?:y|Y)$/
 
       demo_report = 'demo_report'
@@ -120,20 +124,26 @@ default-document-attributes:
 
       # ask to overwrite file
       if File.exist?(demo_report_file)
-        input = user_input("Demo template '#{demo_report_file}' does already exist. Do you want to overwrite it?", 'yN')
+        input = user_input("Demo template '#{demo_report_file}' does already exist. Do you want to"\
+                           'overwrite it?', 'yN')
 
         case input
         when /^(?:y|Y)$/
           puts 'Overwriting existing DEMO template.'
 
         else
-          puts "Skip creation of DEMO template."
+          puts 'Skip creation of DEMO template.'
           return demo_report
         end
       end
 
-      classes = [Asciidoctor::AlertsTableQuery, Asciidoctor::AnnotationsTableQuery, Asciidoctor::PanelImageQuery, Asciidoctor::PanelPropertyQuery, Asciidoctor::PanelTableQuery, Asciidoctor::SqlTableQuery, Asciidoctor::PanelFirstValueQuery, Asciidoctor::SqlFirstValueQuery, Asciidoctor::Help]
-      demo_report_content = DemoReportWizard.new(classes).build(::Grafana::Grafana.new(config.grafana_host, config.grafana_api_key))
+      classes = [Asciidoctor::AlertsTableQuery, Asciidoctor::AnnotationsTableQuery,
+                 Asciidoctor::PanelImageQuery, Asciidoctor::PanelPropertyQuery, Asciidoctor::PanelTableQuery,
+                 Asciidoctor::SqlTableQuery, Asciidoctor::PanelFirstValueQuery,
+                 Asciidoctor::SqlFirstValueQuery, Asciidoctor::Help]
+
+      grafana = ::Grafana::Grafana.new(config.grafana_host, config.grafana_api_key)
+      demo_report_content = DemoReportWizard.new(classes).build(grafana)
 
       begin
         File.write(demo_report_file, demo_report_content, mode: 'w')
@@ -184,7 +194,7 @@ default-document-attributes:
 
         when 'NON-Admin'
           print 'Access to grafana is permitted as NON-Admin.'
-	  valid = true
+          valid = true
 
         else
           tmp = user_input("Grafana could not be accessed at '#{url}'. Do you want to use an [a]pi key,"\
@@ -293,11 +303,13 @@ default-document-attributes:
 
       input = nil
       until input
-        input = user_input("Configuration file '#{config_file}' already exists. Do you want to [o]verwrite it, use it to for [d]emo report creation only, or [a]bort?", 'odA')
+        input = user_input("Configuration file '#{config_file}' already exists. Do you want to [o]verwrite it, "\
+                           'use it to for [d]emo report creation only, or [a]bort?', 'odA')
       end
 
       return 'demo_report' if input =~ /^(?:d|D)$/
       return 'abort' if input =~ /^(?:A|a|odA)$/
+
       'overwrite'
     end
   end

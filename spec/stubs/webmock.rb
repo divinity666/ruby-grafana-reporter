@@ -92,7 +92,7 @@ RSpec.configure do |config|
         'Authorization' => "Bearer #{STUBS[:key_admin]}"
       })
     )
-    .to_return(status: 200, body: '{"message":"Dashboard not found"}', headers: {})
+    .to_return(status: 404, body: '{"message":"Dashboard not found"}', headers: {})
 
     stub_request(:post, 'http://localhost/api/tsdb/query').with(
       body: /.*SELECT 1[^\d]*/,

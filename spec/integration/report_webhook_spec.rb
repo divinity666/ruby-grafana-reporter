@@ -36,10 +36,6 @@ default-document-attributes:
       # TODO: kill webservice properly and release port again
     end
 
-    it 'registers event listeners' do
-      expect(AbstractReport.event_listener_count).to eq(1)
-    end
-
     it 'calls event listener properly' do
       evt = ReportEventHandler.new(false)
       AbstractReport.add_event_listener(:on_after_finish, evt)
