@@ -6,7 +6,7 @@ module Grafana
     @ssl_cert = nil
 
     class << self
-      attr_writer :ssl_cert
+      attr_accessor :ssl_cert
     end
 
     # Initializes a specific HTTP request.

@@ -44,38 +44,38 @@ RSpec.configure do |config|
     )
     .to_return(status: 200, body: "called test webhook", headers: {})
 
-   stub_request(:get, 'http://localhost/api/frontend/settings').with(
+   stub_request(:get, %r{(?:http|https)://localhost/api/frontend/settings}).with(
       headers: default_header.merge({
         'Authorization' => /^Bearer (?:#{STUBS[:key_admin]}|#{STUBS[:key_viewer]})$/
       })
     )
     .to_return(status: 200, body: File.read('./spec/tests/frontend_settings.json'), headers: {})
 
-    stub_request(:get, 'http://localhost/api/frontend/settings').with { |request|
+    stub_request(:get, %r{(?:http|https)://localhost/api/frontend/settings}).with { |request|
       !request.headers.has_key?('Authorization') && request.headers.select { |k, v| k =~ /^(?:Accept|Accept-Encoding|Content-Type|User-Agent)$/ } == { 'Accept' => 'application/json', 'Accept-Encoding' => 'gzip;q=1.0,deflate;q=0.6,identity;q=0.3', 'Content-Type' => 'application/json', 'User-Agent' => 'Ruby' }
     }
     .to_return(status: 403, body: '{"message":"Permission denied"}', headers: {})
 
-    stub_request(:get, 'http://localhost/api/datasources').with(
+    stub_request(:get, %r{(?:http|https)://localhost/api/datasources}).with(
       headers: default_header
     )
     .to_return(status: 403, body: '{"message":"Permission denied"}', headers: {})
 
-    stub_request(:get, 'http://localhost/api/datasources').with(
+    stub_request(:get, %r{(?:http|https)://localhost/api/datasources}).with(
       headers: default_header.merge({
         'Authorization' => "Bearer #{STUBS[:key_admin]}"
       })
     )
     .to_return(status: 200, body: '[{"id":1,"orgId":1,"name":"demo","type":"mysql","typeLogoUrl":"public/app/plugins/datasource/mysql/img/mysql_logo.svg","access":"proxy","url":"localhost:3306","password":"demo","user":"demo","database":"demo","basicAuth":false,"isDefault":true,"jsonData":{},"readOnly":false}]', headers: {})
 
-    stub_request(:get, "http://localhost/api/dashboards/uid/#{STUBS[:dashboard]}").with(
+    stub_request(:get, %r{(?:http|https)://localhost/api/dashboards/uid/#{STUBS[:dashboard]}}).with(
       headers: default_header.merge({
         'Authorization' => "Bearer #{STUBS[:key_admin]}"
       })
     )
     .to_return(status: 200, body: File.read('./spec/tests/demo_dashboard.json'), headers: {})
 
-    stub_request(:get, 'http://localhost/api/dashboards/home').with(
+    stub_request(:get, %r{(?:http|https)://localhost/api/dashboards/home}).with(
       headers: default_header.merge({
         'Authorization' => /Bearer (?:#{STUBS[:key_admin]}|#{STUBS[:key_viewer]})/
       })
