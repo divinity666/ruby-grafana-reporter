@@ -214,7 +214,7 @@
         "bars": false,
         "dashLength": 10,
         "dashes": false,
-        "datasource": "demo",
+        "datasource": "",
         "decimals": 1,
         "fill": 1,
         "fillGradient": 0,

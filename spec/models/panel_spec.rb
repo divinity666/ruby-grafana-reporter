@@ -20,4 +20,8 @@ describe Panel do
   it "knows it's dashboard" do
     expect(panel.dashboard).to be_a(Dashboard)
   end
+
+  it 'retrieves default datasource, if not specified in panel' do
+    expect(panel.datasource.name).to eq('demo')
+  end
 end

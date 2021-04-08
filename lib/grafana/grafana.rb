@@ -46,7 +46,7 @@ module Grafana
     #
     # @return [Datasource] Datasource for the specified datasource name
     def datasource_by_name(datasource_name)
-      datasource_name ||= 'default'
+      datasource_name = 'default' if datasource_name.to_s.empty?
       raise DatasourceDoesNotExistError.new('name', datasource_name) unless @datasources[datasource_name]
 
       @datasources[datasource_name]
