@@ -9,7 +9,7 @@ module GrafanaReporter
       include QueryMixin
 
       # @option opts [Grafana::Dashboard] :dashboard  dashboard, if alerts shall be filtered for a dashboard
-      # @option opts [Grafnaa::Oanel] :panel panel, if alerts shall be filtered for a panel
+      # @option opts [Grafana::Panel] :panel panel, if alerts shall be filtered for a panel
       def initialize(opts = {})
         super()
 
