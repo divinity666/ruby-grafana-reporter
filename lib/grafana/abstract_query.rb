@@ -86,7 +86,8 @@ module Grafana
         variables.each do |var_name, obj|
           # only set ticks if value is string
           variable = var_name.gsub(/^var-/, '')
-          res = res.gsub(/(?:\$\{#{variable}(?::(?<format>\w+))?\}|(?<!\.)\$#{variable}(?!\.))/) do
+          res = res.gsub(/(?:\$\{#{variable}(?::(?<format>\w+))?\}|\$#{variable})/) do
+            # TODO: respect datasource requirements for formatting here
             obj.value_formatted($LAST_MATCH_INFO ? $LAST_MATCH_INFO[:format] : nil)
           end
         end
