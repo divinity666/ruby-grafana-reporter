@@ -30,7 +30,7 @@ module GrafanaReporter
         return nil unless panel.model['type'] == 'graph'
 
         ['block image:',
-         "grafana_panel_image::#{panel.id}[dashboard=\"#{panel.dashboard.id}\",width=\"50%\"]"\
+         "grafana_panel_image::#{panel.id}[dashboard=\"#{panel.dashboard.id}\",width=\"50%\"]",
          "inline image can also be created.grafana_panel_image:#{panel.id}[dashboard=\"#{panel.dashboard.id}\","\
          'render-width="200"]'].join("\n\n")
       end
