@@ -30,13 +30,13 @@ module Grafana
     #
     # @return [String] +Admin+, +NON-Admin+ or +Failed+ is returned, depending on the test results
     def test_connection
-      if execute_http_request('/api/datasources').is_a?(Net::HTTPOK)
+      if prepare_request({ relative_url: '/api/datasources' }).execute.is_a?(Net::HTTPOK)
         # we have admin rights
         @logger.warn('Reporter is running with Admin privileges on grafana. This is a potential security risk.')
         return 'Admin'
       end
       # check if we have lower rights
-      return 'Failed' unless execute_http_request('/api/dashboards/home').is_a?(Net::HTTPOK)
+      return 'Failed' unless prepare_request({ relative_url: '/api/dashboards/home' }).execute.is_a?(Net::HTTPOK)
 
       @logger.info('Reporter is running with NON-Admin privileges on grafana.')
       'NON-Admin'
@@ -44,6 +44,7 @@ module Grafana
 
     # Returns the datasource, which has been queried by the datasource name.
     #
+    # @param datasource_name [String] name of the searched datasource
     # @return [Datasource] Datasource for the specified datasource name
     def datasource_by_name(datasource_name)
       datasource_name = 'default' if datasource_name.to_s.empty?
@@ -54,9 +55,10 @@ module Grafana
 
     # Returns the datasource, which has been queried by the datasource id.
     #
+    # @param datasource_id [Integer] id of the searched datasource
     # @return [Datasource] Datasource for the specified datasource id
     def datasource_by_id(datasource_id)
-      datasource = @datasources.select { |_name, ds| ds.id == datasource_id }.values.first
+      datasource = @datasources.select { |_name, ds| ds.id == datasource_id.to_i }.values.first
       raise DatasourceDoesNotExistError.new('id', datasource_id) unless datasource
 
       datasource
@@ -64,7 +66,7 @@ module Grafana
 
     # @return [Array] Array of dashboard uids within the current grafana object
     def dashboard_ids
-      response = execute_http_request('/api/search')
+      response = prepare_request({ relative_url: '/api/search' }).execute
       return [] unless response.is_a?(Net::HTTPOK)
 
       dashboards = JSON.parse(response.body)
@@ -81,7 +83,7 @@ module Grafana
     def dashboard(dashboard_uid)
       return @dashboards[dashboard_uid] unless @dashboards[dashboard_uid].nil?
 
-      response = execute_http_request("/api/dashboards/uid/#{dashboard_uid}")
+      response = prepare_request({ relative_url: "/api/dashboards/uid/#{dashboard_uid}" }).execute
       raise DashboardDoesNotExistError, dashboard_uid unless response.is_a?(Net::HTTPOK)
 
       # cache dashboard for reuse
@@ -91,20 +93,17 @@ module Grafana
       @dashboards[dashboard_uid]
     end
 
-    # Runs a specific HTTP request against the current grafana instance.
+    # Prepares a {WebRequest} object for the current {Grafana} instance, which may be enriched
+    # with further properties and can then run {WebRequest#execute}.
     #
-    # Default (can be overridden, by specifying the options Hash):
-    #   accept: 'application/json'
-    #   request: Net::HTTP::Get
-    #   content_type: 'application/json'
-    #
-    # @param relative_uri [String] relative URL with a leading slash, which shall be queried
-    # @param options [Hash] options, which shall be merged to the request.
-    # @param timeout [Integer] number of seconds to wait, before the http request is cancelled, defaults to 60 seconds
-    def execute_http_request(relative_uri, options = {}, timeout = 60)
-      auth = {}
-      auth = { authorization: "Bearer #{@key}" } if @key
-      WebRequest.new("#{@base_uri}#{relative_uri}", auth.merge({ logger: @logger }).merge(options)).execute(timeout)
+    # @option options [Hash] :relative_url relative URL with a leading slash, which shall be queried
+    # @option options [Hash] :accept
+    # @option options [Hash] :body
+    # @option options [Hash] :content_type
+    # @return [WebRequest] webrequest prepared for execution
+    def prepare_request(options = {})
+      auth = @key ? { authorization: "Bearer #{@key}" } : {}
+      WebRequest.new(@base_uri, auth.merge({ logger: @logger }).merge(options))
     end
 
     private
@@ -112,7 +111,7 @@ module Grafana
     def initialize_datasources
       @datasources = {}
 
-      settings = execute_http_request('/api/frontend/settings')
+      settings = prepare_request({ relative_url: '/api/frontend/settings' }).execute
       return unless settings.is_a?(Net::HTTPOK)
 
       json = JSON.parse(settings.body)

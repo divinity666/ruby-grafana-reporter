@@ -3,22 +3,29 @@
 module Grafana
   # Implements the interface to Prometheus datasources.
   class PrometheusDatasource < AbstractDatasource
-    # @see AbstractDatasource#url
-    def url(query)
-      "/api/datasources/proxy/#{id}/api/v1/query_range?start=#{query.from}&end=#{query.to}&query=#{query.sql}"
-    end
-
+    # +:raw_query+ needs to contain a Prometheus query as String
     # @see AbstractDatasource#request
-    def request(_query)
-      {
-        request: Net::HTTP::Get
-      }
+    def request(query_description)
+      raise MissingSqlQueryError if query_description[:raw_query].nil?
+
+      url = "/api/datasources/proxy/#{id}/api/v1/query_range?"\
+            "start=#{query_description[:from]}&end=#{query_description[:to]}"\
+            "&query=#{replace_variables(query_description[:raw_query], query_description[:variables])}"
+
+      webrequest = query_description[:prepared_request]
+      webrequest.relative_url = url
+      webrequest.options.merge!({ request: Net::HTTP::Get })
+
+      result = webrequest.execute(query_description[:timeout])
+      preformat_response(result.body)
     end
 
-    # @see AbstractDatasource#raw_query
-    def raw_query(target)
-      target['expr']
+    # @see AbstractDatasource#raw_query_from_panel_model
+    def raw_query_from_panel_model(panel_query_target)
+      panel_query_target['expr']
     end
+
+    private
 
     # @see AbstractDatasource#preformat_response
     def preformat_response(response_body)

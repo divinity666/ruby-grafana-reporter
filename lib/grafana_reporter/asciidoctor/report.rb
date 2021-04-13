@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 module GrafanaReporter
+  # This module contains all classes, which are necessary to use the reporter in conjunction with asciidoctor.
   module Asciidoctor
     # Implementation of a specific {AbstractReport}. It is used to
     # build reports specifically for asciidoctor results.
@@ -29,19 +30,18 @@ module GrafanaReporter
         ::Asciidoctor::LoggerManager.logger = logger
 
         registry = ::Asciidoctor::Extensions::Registry.new
-        # TODO: dynamically register macros, which is also needed when supporting custom macros
-        registry.inline_macro Extensions::PanelImageInlineMacro.new.current_report(self)
-        registry.inline_macro Extensions::PanelQueryValueInlineMacro.new.current_report(self)
-        registry.inline_macro Extensions::PanelPropertyInlineMacro.new.current_report(self)
-        registry.inline_macro Extensions::SqlValueInlineMacro.new.current_report(self)
-        registry.block_macro Extensions::PanelImageBlockMacro.new.current_report(self)
-        registry.include_processor Extensions::ValueAsVariableIncludeProcessor.new.current_report(self)
-        registry.include_processor Extensions::PanelQueryTableIncludeProcessor.new.current_report(self)
-        registry.include_processor Extensions::SqlTableIncludeProcessor.new.current_report(self)
-        registry.include_processor Extensions::ShowEnvironmentIncludeProcessor.new.current_report(self)
-        registry.include_processor Extensions::ShowHelpIncludeProcessor.new.current_report(self)
-        registry.include_processor Extensions::AnnotationsTableIncludeProcessor.new.current_report(self)
-        registry.include_processor Extensions::AlertsTableIncludeProcessor.new.current_report(self)
+        registry.inline_macro PanelImageInlineMacro.new.current_report(self)
+        registry.inline_macro PanelQueryValueInlineMacro.new.current_report(self)
+        registry.inline_macro PanelPropertyInlineMacro.new.current_report(self)
+        registry.inline_macro SqlValueInlineMacro.new.current_report(self)
+        registry.block_macro PanelImageBlockMacro.new.current_report(self)
+        registry.include_processor ValueAsVariableIncludeProcessor.new.current_report(self)
+        registry.include_processor PanelQueryTableIncludeProcessor.new.current_report(self)
+        registry.include_processor SqlTableIncludeProcessor.new.current_report(self)
+        registry.include_processor ShowEnvironmentIncludeProcessor.new.current_report(self)
+        registry.include_processor ShowHelpIncludeProcessor.new.current_report(self)
+        registry.include_processor AnnotationsTableIncludeProcessor.new.current_report(self)
+        registry.include_processor AlertsTableIncludeProcessor.new.current_report(self)
 
         ::Asciidoctor.convert_file(@template, extension_registry: registry, backend: attrs['convert-backend'],
                                               to_file: path, attributes: attrs, header_footer: true)
@@ -154,6 +154,7 @@ module GrafanaReporter
         @total_steps = 0
         File.readlines(@template).each do |line|
           begin
+            # TODO: move these calls to the specific processors to ensure all are counted properly
             @total_steps += line.gsub(%r{//.*}, '').scan(/(?:grafana_panel_image|grafana_panel_query_value|
                                                          grafana_panel_query_table|grafana_sql_value|
                                                          grafana_sql_table|grafana_environment|grafana_help|

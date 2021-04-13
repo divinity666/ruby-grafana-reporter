@@ -1,5 +1,5 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 
-require_relative '../lib/ruby-grafana-reporter'
+require_relative '../lib/ruby_grafana_reporter'
 GrafanaReporter::Application::Application.new.configure_and_run(ARGV) unless defined?(Ocra)

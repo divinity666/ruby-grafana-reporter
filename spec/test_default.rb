@@ -10,5 +10,5 @@ else
   end
 end
 
-require_relative '../lib/ruby-grafana-reporter'
+require_relative '../lib/ruby_grafana_reporter'
 require_relative 'ruby-grafana-reporter_spec.rb'

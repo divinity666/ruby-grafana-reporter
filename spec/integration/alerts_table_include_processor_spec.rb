@@ -1,4 +1,4 @@
-include GrafanaReporter::Asciidoctor::Extensions
+include GrafanaReporter::Asciidoctor
 
 describe AlertsTableIncludeProcessor do
   before do

@@ -1,0 +1,7 @@
+= Test
+:grafana_default_dashboard: DdZ7TciRk
+
+grafana_panel_query_value:7[query="B",filter_columns="time"]
+
+grafana_panel_property:2["title",dashboard="9H7GV-kRk"]
+

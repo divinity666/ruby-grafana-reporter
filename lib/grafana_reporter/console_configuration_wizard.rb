@@ -124,7 +124,7 @@ default-document-attributes:
 
       # ask to overwrite file
       if File.exist?(demo_report_file)
-        input = user_input("Demo template '#{demo_report_file}' does already exist. Do you want to"\
+        input = user_input("Demo template '#{demo_report_file}' does already exist. Do you want to "\
                            'overwrite it?', 'yN')
 
         case input
@@ -137,10 +137,13 @@ default-document-attributes:
         end
       end
 
-      classes = [Asciidoctor::AlertsTableQuery, Asciidoctor::AnnotationsTableQuery,
-                 Asciidoctor::PanelImageQuery, Asciidoctor::PanelPropertyQuery, Asciidoctor::PanelTableQuery,
-                 Asciidoctor::SqlTableQuery, Asciidoctor::PanelFirstValueQuery,
-                 Asciidoctor::SqlFirstValueQuery, Asciidoctor::Help]
+      # TODO: move this to Asciidoctor::Report class
+      classes = [Asciidoctor::AlertsTableIncludeProcessor, Asciidoctor::AnnotationsTableIncludeProcessor,
+                 Asciidoctor::PanelImageBlockMacro, Asciidoctor::PanelImageInlineMacro,
+                 Asciidoctor::PanelPropertyInlineMacro, Asciidoctor::PanelQueryTableIncludeProcessor,
+                 Asciidoctor::PanelQueryValueInlineMacro, Asciidoctor::SqlTableIncludeProcessor,
+                 Asciidoctor::SqlValueInlineMacro, Asciidoctor::ShowHelpIncludeProcessor,
+                 Asciidoctor::ShowEnvironmentIncludeProcessor]
 
       grafana = ::Grafana::Grafana.new(config.grafana_host, config.grafana_api_key)
       demo_report_content = DemoReportWizard.new(classes).build(grafana)

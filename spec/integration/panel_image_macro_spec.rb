@@ -1,4 +1,4 @@
-include GrafanaReporter::Asciidoctor::Extensions
+include GrafanaReporter::Asciidoctor
 
 describe PanelImageBlockMacro do
   before do
@@ -16,6 +16,11 @@ describe PanelImageBlockMacro do
   it 'can be processed' do
     expect(@report.logger).not_to receive(:error)
     expect(Asciidoctor.convert("grafana_panel_image::#{STUBS[:panel_sql][:id]}[dashboard=\"#{STUBS[:dashboard]}\"]", to_file: false)).to include('<img src="gf_image_').and match(/(?!Error)/)
+  end
+
+  it 'shows errors properly' do
+    expect(@report.logger).to receive(:fatal)
+    expect(Asciidoctor.convert("grafana_panel_image::999[dashboard=\"#{STUBS[:dashboard]}\"]", to_file: false)).to include('Error')
   end
 end
 
@@ -42,6 +47,7 @@ describe PanelImageInlineMacro do
     ts = Time.now.to_s
     result = Asciidoctor.convert("grafana_panel_image:#{STUBS[:panel_sql][:id]}[dashboard=\"#{STUBS[:dashboard]}\"]", to_file: false, attributes: { 'grafana-report-timestamp' => ts })
     tmp_file = result.to_s.gsub(/.*img src="([^"]+)".*/m, '\1')
+# TODO: ensure that the file existed before
     expect(File.exist?("./spec/templates/images/#{tmp_file}")).to be false
   end
 

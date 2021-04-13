@@ -29,8 +29,8 @@ module Grafana
       raise DatasourceTypeNotSupportedError.new(ds_model['name'], ds_model['meta']['id'])
     end
 
-    def initialize(ds_model)
-      @model = ds_model || {}
+    def initialize(model)
+      @model = model
     end
 
     # @return [String] name of the datasource
@@ -43,46 +43,11 @@ module Grafana
       @model['id'].to_i
     end
 
-    # @return [String] grafana datasource category, e.g. +sql+ or +tsdb+
-    def category
-      return nil unless @model['meta']
-
-      @model['meta']['category']
-    end
-
     # @abstract
     #
-    # Builds a proper URL to be used for the given {AbstractQuery} object. This URL will
-    # then be requested with a {WebRequest}.
+    # Executes a request for the current database with the given options.
     #
-    # @param query [AbstractQuery] query, which will be sent to this datasource object
-    # @return [String] URL, which shall be requested to receive the datasource results
-    def url(query)
-      raise NotImplementedError
-    end
-
-    # @abstract
-    #
-    # Builds a proper request Hash, for the given {AbstractQuery} object. This will then
-    # be passed to the {WebRequest#initialize} method as +options+ parameter.
-    #
-    # @param query [AbstractQuery] query, which will be sent to this datasource object
-    # @return [Hash] request parameters, which will be passed to {WebRequest#initialize} as +options+
-    def request(query)
-      raise NotImplementedError
-    end
-
-    # @abstract
-    #
-    # @param target [Hash] grafana panel target, which stores the query description
-    # @return [String] query string, which will be used as {AbstractSqlQuery#sql}
-    def raw_query(target)
-      raise NotImplementedError
-    end
-
-    # @abstract
-    #
-    # Used to format the query response to the following standard format:
+    # Used format of the response will always be the following:
     #
     #   {
     #     :header => [column_title_1, column_title_2],
@@ -91,10 +56,61 @@ module Grafana
     #                   [row_2_column_1, row_2_column_2]
     #                 ]
     #   }
-    # @param response_body [String] returned from the database request in an unchanged format
+    #
+    # @param query_description [Hash] query description, which will requested:
+    # @option [String] :from +from+ timestamp
+    # @option [String] :to +to+ timestamp
+    # @option [Integer] :timeout expected timeout for the request
+    # @option [WebRequest] :prepared_request prepared web request for relevant {Grafana} instance, if this is needed by datasource
+    # @option [String] :raw_query raw query, which shall be executed. May include variables, which will be replaced before execution
+    # @option [Hash<Variable>] :variables hash of variables, which can potentially be replaced in the given +:raw_query+
     # @return [Hash] sql result formatted as stated above
-    def preformat_response(response_body)
+    def request(query_description)
       raise NotImplementedError
+    end
+
+    # @abstract
+    #
+    # The different datasources supported by grafana use different ways to store the query in the
+    # panel's JSON model. This method extracts a query from that description, that can be used
+    # by the {AbstractDatasource} implementation of the datasource.
+    #
+    # @param panel_query_target [Hash] grafana panel target, which contains the query description
+    # @return [String] query string, which can be used as +raw_query+ in a {#request}
+    def raw_query_from_panel_model(panel_query_target)
+      raise NotImplementedError
+    end
+
+    private
+
+    # Replaces the grafana variables in the given string with their replacement value.
+    #
+    # @param string [String] string in which the variables shall be replaced
+    # @param variables [Hash<String,Variable>] Hash containing the variables, which shall be replaced in the
+    #  given string
+    # @return [String] string in which all variables are properly replaced
+    def replace_variables(string, variables = {})
+      res = string
+      repeat = true
+      repeat_count = 0
+
+      # TODO: find a proper way to replace variables recursively instead of over and over again
+      # TODO: add tests for recursive replacement of variable
+      while repeat && (repeat_count < 3)
+        repeat = false
+        repeat_count += 1
+        variables.each do |var_name, obj|
+          # only set ticks if value is string
+          variable = var_name.gsub(/^var-/, '')
+          res = res.gsub(/(?:\$\{#{variable}(?::(?<format>\w+))?\}|\$#{variable})/) do
+            # TODO: respect datasource requirements for formatting here
+            obj.value_formatted($LAST_MATCH_INFO ? $LAST_MATCH_INFO[:format] : nil)
+          end
+        end
+        repeat = true if res.include?('$')
+      end
+
+      res
     end
   end
 end

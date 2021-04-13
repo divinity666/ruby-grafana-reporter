@@ -1,42 +1,7 @@
-include Grafana
+include GrafanaReporter
 
-describe PanelImageQuery do
+describe GrafanaReporter::PanelImageQuery do
   subject { PanelImageQuery.new(Dashboard.new(JSON.parse(File.read('./spec/tests/demo_dashboard.json'))['dashboard'], Grafana::Grafana.new('')).panel(11)) }
-
-  it 'can build uri without parameters' do
-    subject.pre_process(nil)
-    expect(subject.url).to match(%r{/render/d-solo/IDBRfjSmz\?panelId=11(?:&var-[^&]+)*&fullscreen=true&theme=light&timeout=60})
-  end
-
-  it 'can build uri with parameters' do
-    subject.merge_variables(height: Variable.new(200), width: Variable.new(500))
-    subject.pre_process(nil)
-    expect(subject.url).to match(%r{/render/d-solo/IDBRfjSmz\?panelId=11(?:&var-[^&]+)*&height=200&width=500&fullscreen=true&theme=light&timeout=60&from=\d+&to=\d+})
-  end
-
-  it 'can merge existing variable and keep all meta data' do
-    expect(subject.variables['var-test'].text).to eq('ten')
-    subject.merge_variables("var-test": Variable.new(1))
-    expect(subject.variables['var-test'].raw_value).to eq('1')
-    expect(subject.variables['var-test'].text).to eq('one')
-  end
-
-  it 'can build request' do
-    subject.pre_process(nil)
-    expect(subject.request).to eq(accept: 'image/png')
-  end
-
-  it 'can rename render- variables' do
-    subject.merge_variables("render-height": Variable.new(200), "render-width": Variable.new(500))
-    subject.pre_process(nil)
-    expect(subject.url).to match(%r{/render/d-solo/IDBRfjSmz\?panelId=11(?:&var-[^&]+)*&height=200&width=500&fullscreen=true&theme=light&timeout=60})
-  end
-
-  it 'filters out non-url parameters' do
-    subject.merge_variables("test-height": Variable.new(200), "render-width": Variable.new(500))
-    subject.pre_process(nil)
-    expect(subject.url).to match(%r{/render/d-solo/IDBRfjSmz\?panelId=11(?:&var-[^&]+)*&width=500&fullscreen=true&theme=light&timeout=60})
-  end
 
   context 'translate date' do
     it 'can translate now' do

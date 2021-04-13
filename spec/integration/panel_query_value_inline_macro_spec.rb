@@ -1,4 +1,4 @@
-include GrafanaReporter::Asciidoctor::Extensions
+include GrafanaReporter::Asciidoctor
 
 describe PanelQueryValueInlineMacro do
   before do
@@ -22,13 +22,9 @@ describe PanelQueryValueInlineMacro do
   it 'can translate times' do
     @report.logger.level = ::Logger::Severity::DEBUG
     expect(@report.logger).to receive(:debug).with(/Processing PanelQueryValueInlineMacro/)
-    expect(@report.logger).to receive(:debug).with(/Requesting http:\/\/localhost\/api\/frontend\/settings/)
-    expect(@report.logger).to receive(:debug).with(/Received response/)
-    expect(@report.logger).to receive(:debug).with(/Requesting http:\/\/localhost\/api\/dashboards\/uid\//)
-    expect(@report.logger).to receive(:debug).with(/Received response/)
-    expect(@report.logger).to receive(:debug).with(/from: /)
-    expect(@report.logger).to receive(:debug).with(/"from":"#{Time.utc(Time.new.year,1,1).to_i * 1000}".*"to":"#{(Time.utc(Time.new.year + 1,1,1) - 1).to_i * 1000}"/)
-    expect(@report.logger).to receive(:debug).with(/Received response/)
+    #expect(@report.logger).to receive(:debug).exactly(5)
+    allow(@report.logger).to receive(:debug)
+    expect(@report.logger).to receive(:debug).with(/Requesting.*"from":"#{Time.utc(Time.new.year,1,1).to_i * 1000}".*"to":"#{(Time.utc(Time.new.year + 1,1,1) - 1).to_i * 1000}"/).exactly(:once)
     expect(Asciidoctor.convert("grafana_panel_query_value:#{STUBS[:panel_sql][:id]}[from_timezone=\"UTC\",to_timezone=\"UTC\",query=\"#{STUBS[:panel_sql][:letter]}\",dashboard=\"#{STUBS[:dashboard]}\",from=\"now/y\",to=\"now/y\"]", to_file: false)).not_to include('GrafanaReporterError')
   end
 

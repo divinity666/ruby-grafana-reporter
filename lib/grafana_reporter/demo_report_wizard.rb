@@ -26,6 +26,8 @@ module GrafanaReporter
         puts "done - #{(@query_classes - results.keys).length} examples to go"
         break if (@query_classes - results.keys).empty?
       end
+      puts 'Aborting evaluating further dashboards after 15 samples.' if grafana.dashboard_ids.length > 15 and !(@query_classes - results.keys).empty?
+      puts "For #{(@query_classes - results.keys).length} reporter functionalities no appropriate examples could be found in the configured grafana instance." unless (@query_classes - results.keys).empty?
 
       format_results(default_result(@query_classes - results.keys).merge(results))
     end
@@ -48,7 +50,7 @@ module GrafanaReporter
       dashboard.panels.shuffle.each do |panel|
         query_classes.each do |query_class|
           begin
-            result = query_class.build_demo_entry(panel)
+            result = query_class.new.build_demo_entry(panel)
             results[query_class] = result if result
           rescue NotImplementedError
             results[query_class] = "Method 'build_demo_entry' not implemented for #{query_class.name}"
@@ -61,8 +63,8 @@ module GrafanaReporter
       results
     end
 
+    # TODO: move this method to Asciidoctor::Report
     def format_results(raw_results)
-      # TODO: do not specify the format in this generic class
       results = ['= Demo report',
                  "Created by `+ruby-grafana-reporter+` version #{GRAFANA_REPORTER_VERSION.join('.')}",
                  '== Examples']
@@ -75,9 +77,6 @@ module GrafanaReporter
                       'Result:', v.to_s]
                    end
       end
-
-      # TODO: move this to the configuration caller
-      results << 'include::grafana_environment[]'
 
       results.join("\n\n")
     end
