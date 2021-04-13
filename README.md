@@ -39,6 +39,7 @@ dependencies in the standard asciidoctor docker container!
 * Comes with a complete configuration wizard, including functionality to build a
 demo report on top of the configured grafana host
 * Solid as a rock, also in case of template errors and whatever else may happen
+* Full [API documentation](https://rubydoc.info/gems/ruby-grafana-reporter) available
 
 ## Quick Start
 
