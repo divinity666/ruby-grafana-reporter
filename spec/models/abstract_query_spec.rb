@@ -1,4 +1,4 @@
-include Grafana
+include GrafanaReporter
 
 describe AbstractQuery do
   subject { AbstractQuery.new(nil) }
