@@ -36,14 +36,7 @@ module Grafana
       query_item = @model['targets'].select { |item| item['refId'].to_s == query_letter.to_s }.first
       raise QueryLetterDoesNotExistError.new(query_letter, self) unless query_item
 
-      begin
-        datasource.raw_query_from_panel_model(query_item)
-      rescue DatasourceDoesNotExistError
-        nil
-      rescue StandardError => e
-        puts e.backtrace
-        nil
-      end
+      datasource.raw_query_from_panel_model(query_item)
     end
 
     # @return [String] relative rendering URL for the panel, to create an image out of it
