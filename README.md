@@ -57,6 +57,10 @@ first.
 * [Download latest Windows executable](https://github.com/divinity666/ruby-grafana-reporter/releases/latest)
 * `ruby-grafana-reporter -w`
 
+Known issues:
+* images are currently not included in PDF conversions due to missing support in Prawn gem for windows;
+other target formats do work properly with images
+
 **Raspberry Pi:**
 
 * `sudo apt-get install ruby`
