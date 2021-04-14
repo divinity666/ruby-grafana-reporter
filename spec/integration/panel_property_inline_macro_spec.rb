@@ -24,4 +24,9 @@ describe PanelPropertyInlineMacro do
     expect(Asciidoctor.convert("grafana_panel_property:#{STUBS[:panel_sql][:id]}[\"description\",dashboard=\"#{STUBS[:dashboard]}\"]", to_file: false, attributes: { 'var-my-var' => 'Meine Ersetzung' })).to include('Meine Ersetzung')
   end
 
+  it 'raises error on non existring panel' do
+    expect(@report.logger).to receive(:fatal)
+    expect(Asciidoctor.convert("grafana_panel_property:50[\"description\",dashboard=\"#{STUBS[:dashboard]}\"]", to_file: false)).to include('Error')
+  end
+
 end

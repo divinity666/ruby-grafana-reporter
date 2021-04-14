@@ -49,11 +49,14 @@ module GrafanaReporter
 
       dashboard.panels.shuffle.each do |panel|
         query_classes.each do |query_class|
+          unless query_class.public_instance_methods.include?(:build_demo_entry)
+            results[query_class] = "Method 'build_demo_entry' not implemented for #{query_class.name}"
+            next
+          end
+
           begin
             result = query_class.new.build_demo_entry(panel)
             results[query_class] = result if result
-          rescue NotImplementedError
-            results[query_class] = "Method 'build_demo_entry' not implemented for #{query_class.name}"
           rescue StandardError => e
             puts "#{e.message}\n#{e.backtrace.join("\n")}"
           end
