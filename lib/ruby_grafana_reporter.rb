@@ -18,14 +18,6 @@ require 'asciidoctor-pdf'
 require 'zip'
 require_relative 'VERSION'
 
-# TODO: show error in document, if grafana could not be accessed
-# TODO: WINDOWS prawn-gmagick not packaged
-# TODO: WINDOWS tests do not start automatically
-# TODO: show backtrace in extension error rescues
-
-# TODO: enable as asciidoctor extension
-# TODO: build ADOC template as a result with resolved grafana content for further editing
-
 folders = [
   %w[grafana],
   %w[grafana_reporter logger],
