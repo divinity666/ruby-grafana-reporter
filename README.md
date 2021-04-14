@@ -38,6 +38,7 @@ dependencies in the standard asciidoctor docker container!
   * standalone command line tool, e.g. to be automated with cron or bash scrips
 * Comes with a complete configuration wizard, including functionality to build a
 demo report on top of the configured grafana host
+* Supports all SQL based datasources, as well as graphite and prometheus
 * Solid as a rock, also in case of template errors and whatever else may happen
 * Full [API documentation](https://rubydoc.info/gems/ruby-grafana-reporter) available
 
@@ -151,8 +152,7 @@ However, if you would like to see, currently running report generations and prev
 
 This is just a collection of things, I am heading for in future, without a schedule.
 
-* Support table/single value renderings also for non-sql databases
-* Clean and properly setup test environment (currently it's a real mess...)
+* Support all grafana datasources
 * Solve code TODOs
 * Become [rubocop](https://rubocop.org/) ready
 
