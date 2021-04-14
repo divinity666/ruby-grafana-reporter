@@ -10,6 +10,7 @@ module Grafana
   class Variable
     attr_reader :name, :text, :raw_value
 
+    # Translation table to support {https://momentjs.com/docs/#/displaying/}.
     DATE_MATCHES = { 'M' => '%-m', 'MM' => '%m', 'MMM' => '%b',  'MMMM' => '%B',
                      'D' => '%-d', 'DD' => '%d', 'DDD' => '%-j', 'DDDD' => '%j',
                      'd' => '%w',                'ddd' => '%a',  'dddd' => '%A',

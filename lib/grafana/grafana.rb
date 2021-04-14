@@ -13,12 +13,11 @@ module Grafana
     #   trailing slash, e.g. +https://localhost:3000+.
     # @param key [String] API key for the grafana instance, if required
     # @param opts [Hash] additional options.
-    #   Currently supporting +:logger+ and +:ssl_cert+.
+    #   Currently supporting +:logger+.
     def initialize(base_uri, key = nil, opts = {})
       @base_uri = base_uri
       @key = key
       @dashboards = {}
-      @ssl_cert = opts[:ssl_cert]
       @logger = opts[:logger] || ::Logger.new(nil)
 
       initialize_datasources unless @base_uri.empty?
@@ -31,33 +30,52 @@ module Grafana
     #
     # @return [String] +Admin+, +NON-Admin+ or +Failed+ is returned, depending on the test results
     def test_connection
-      if execute_http_request('/api/datasources').is_a?(Net::HTTPOK)
+      if prepare_request({ relative_url: '/api/datasources' }).execute.is_a?(Net::HTTPOK)
         # we have admin rights
         @logger.warn('Reporter is running with Admin privileges on grafana. This is a potential security risk.')
         return 'Admin'
       end
       # check if we have lower rights
-      return 'Failed' unless execute_http_request('/api/dashboards/home').is_a?(Net::HTTPOK)
+      return 'Failed' unless prepare_request({ relative_url: '/api/dashboards/home' }).execute.is_a?(Net::HTTPOK)
 
       @logger.info('Reporter is running with NON-Admin privileges on grafana.')
       'NON-Admin'
     end
 
-    # Returns the ID of a datasource, which has been queried by the datasource name.
+    # Returns the datasource, which has been queried by the datasource name.
     #
-    # @return [Integer] ID for the specified datasource name
-    def datasource_id(datasource_name)
-      datasource_name ||= 'default'
-      return @datasources[datasource_name] if @datasources[datasource_name]
+    # @param datasource_name [String] name of the searched datasource
+    # @return [Datasource] Datasource for the specified datasource name
+    def datasource_by_name(datasource_name)
+      datasource_name = 'default' if datasource_name.to_s.empty?
+      raise DatasourceDoesNotExistError.new('name', datasource_name) unless @datasources[datasource_name]
 
-      raise DatasourceDoesNotExistError.new('name', datasource_name)
+      @datasources[datasource_name]
     end
 
-    # Returns if the given datasource ID exists for the grafana instance.
+    # Returns the datasource, which has been queried by the datasource id.
     #
-    # @return [Boolean] true if exists, false otherwise
-    def datasource_id_exists?(datasource_id)
-      @datasources.value?(datasource_id)
+    # @param datasource_id [Integer] id of the searched datasource
+    # @return [Datasource] Datasource for the specified datasource id
+    def datasource_by_id(datasource_id)
+      datasource = @datasources.select { |_name, ds| ds.id == datasource_id.to_i }.values.first
+      raise DatasourceDoesNotExistError.new('id', datasource_id) unless datasource
+
+      datasource
+    end
+
+    # @return [Array] Array of dashboard uids within the current grafana object
+    def dashboard_ids
+      response = prepare_request({ relative_url: '/api/search' }).execute
+      return [] unless response.is_a?(Net::HTTPOK)
+
+      dashboards = JSON.parse(response.body)
+
+      dashboards.each do |dashboard|
+        @dashboards[dashboard['uid']] = nil unless @dashboards[dashboard['uid']]
+      end
+
+      @dashboards.keys
     end
 
     # @param dashboard_uid [String] UID of the searched {Dashboard}
@@ -65,54 +83,27 @@ module Grafana
     def dashboard(dashboard_uid)
       return @dashboards[dashboard_uid] unless @dashboards[dashboard_uid].nil?
 
-      response = execute_http_request("/api/dashboards/uid/#{dashboard_uid}")
-      model = JSON.parse(response.body)['dashboard']
-
-      raise DashboardDoesNotExistError, dashboard_uid if model.nil?
+      response = prepare_request({ relative_url: "/api/dashboards/uid/#{dashboard_uid}" }).execute
+      raise DashboardDoesNotExistError, dashboard_uid unless response.is_a?(Net::HTTPOK)
 
       # cache dashboard for reuse
+      model = JSON.parse(response.body)['dashboard']
       @dashboards[dashboard_uid] = Dashboard.new(model, self)
 
       @dashboards[dashboard_uid]
     end
 
-    # Runs a specific HTTP request against the current grafana instance.
+    # Prepares a {WebRequest} object for the current {Grafana} instance, which may be enriched
+    # with further properties and can then run {WebRequest#execute}.
     #
-    # Default (can be overridden, by specifying the options Hash):
-    #   accept: 'application/json'
-    #   request: Net::HTTP::Get
-    #   content_type: 'application/json'
-    #
-    # @param relative_uri [String] relative URL with a leading slash, which shall be queried
-    # @param options [Hash] options, which shall be merged to the request.
-    # @param timeout [Integer] number of seconds to wait, before the http request is cancelled, defaults to 60 seconds
-    def execute_http_request(relative_uri, options = {}, timeout = nil)
-      uri = URI.parse(@base_uri + relative_uri)
-      default_options = { accept: 'application/json', request: Net::HTTP::Get, content_type: 'application/json' }
-      options = default_options.merge(options)
-
-      http = Net::HTTP.new(uri.host, uri.port)
-      if @base_uri =~ /^https/
-        http.use_ssl = true
-        http.verify_mode = OpenSSL::SSL::VERIFY_PEER
-        if @ssl_cert && !File.exist?(@ssl_cert)
-          @logger.warn('SSL certificate file does not exist.')
-        elsif @ssl_cert
-          http.cert_store = OpenSSL::X509::Store.new
-          http.cert_store.set_default_paths
-          http.cert_store.add_file(@ssl_cert)
-        end
-      end
-      http.read_timeout = timeout.to_i if timeout
-
-      request = options[:request].new(uri.request_uri)
-      request['Accept'] = options[:accept]
-      request['Content-Type'] = options[:content_type]
-      request['Authorization'] = "Bearer #{@key}" unless @key.nil?
-      request.body = options[:body]
-
-      @logger.debug("Requesting #{relative_uri} with '#{options[:body]}' and timeout '#{http.read_timeout}'")
-      http.request(request)
+    # @option options [Hash] :relative_url relative URL with a leading slash, which shall be queried
+    # @option options [Hash] :accept
+    # @option options [Hash] :body
+    # @option options [Hash] :content_type
+    # @return [WebRequest] webrequest prepared for execution
+    def prepare_request(options = {})
+      auth = @key ? { authorization: "Bearer #{@key}" } : {}
+      WebRequest.new(@base_uri, auth.merge({ logger: @logger }).merge(options))
     end
 
     private
@@ -120,12 +111,18 @@ module Grafana
     def initialize_datasources
       @datasources = {}
 
-      settings = execute_http_request('/api/frontend/settings')
+      settings = prepare_request({ relative_url: '/api/frontend/settings' }).execute
       return unless settings.is_a?(Net::HTTPOK)
 
       json = JSON.parse(settings.body)
       json['datasources'].select { |_k, v| v['id'].to_i.positive? }.each do |ds_name, ds_value|
-        @datasources[ds_name] = ds_value['id'].to_i
+        begin
+          @datasources[ds_name] = AbstractDatasource.build_instance(ds_value)
+        rescue DatasourceTypeNotSupportedError => e
+          # an unsupported datasource type has been configured in the dashboard
+          # - no worries here
+          @logger.warn(e.message)
+        end
       end
       @datasources['default'] = @datasources[json['defaultDatasource']]
     end

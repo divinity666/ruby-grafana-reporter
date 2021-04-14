@@ -6,21 +6,30 @@ module GrafanaReporter
     # make use of `webrick` or similar, so that it can be used without futher dependencies
     # in conjunction with the standard asciidoctor docker container.
     class Webservice
-      def initialize(config)
+      def initialize
         @reports = []
-        @config = config
-        @logger = config.logger
+        @running = false
       end
 
-      # Runs the webservice with the current set {Configuration} object.
-      def run
+      # Runs the webservice with the given {Configuration} object.
+      def run(config)
+        @config = config
+        @logger = config.logger
+
         # start webserver
         @server = TCPServer.new(@config.webserver_port)
         @logger.info("Server listening on port #{@config.webserver_port}...")
+        @running = true
 
         @progress_reporter = Thread.new {}
 
         accept_requests_loop
+        @running = false
+      end
+
+      # @return True, if webservice is up and running, false otherwise
+      def running?
+        @running
       end
 
       private
@@ -163,9 +172,9 @@ module GrafanaReporter
         content = File.read(report.path, mode: 'rb')
         return http_response(200, 'OK', content, "Content-Type": 'application/pdf') if content.start_with?('%PDF')
 
-        # TODO: properly provide file as zip
         http_response(200, 'OK', content, "Content-Type": 'application/octet-stream',
-                                          "Content-Disposition": 'attachment; filename=report.zip')
+                                          "Content-Disposition": 'attachment; '\
+                                                                 "filename=report_#{attrs['report_id']}.zip")
       end
 
       def render_report(attrs)
@@ -211,7 +220,9 @@ module GrafanaReporter
                     "<td>#{report.start_time}</td>"\
                     "<td>#{report.end_time}</td>"\
                     "<td>#{report.template}</td>"\
-                    "<td>#{report.execution_time.to_i} secs</td><td>#{report.status} (#{(report.progress * 100).to_i}%)</td><td>#{report.error.join('<br>')}</td>"\
+                    "<td>#{report.execution_time.to_i} secs</td>"\
+                    "<td>#{report.status} (#{(report.progress * 100).to_i}%)</td>"\
+                    "<td>#{report.error.join('<br>')}</td>"\
                     "<td>#{!report.done && !report.cancel ? "<a href=\"/cancel_report?report_id=#{report.object_id}\">Cancel</a>&nbsp;" : ''}"\
                     "#{(report.status == 'finished') || (report.status == 'cancelled') ? "<a href=\"/view_report?report_id=#{report.object_id}\">View</a>&nbsp;" : '&nbsp;'}"\
                     "<a href=\"/view_log?report_id=#{report.object_id}\">Log</a></td>"\

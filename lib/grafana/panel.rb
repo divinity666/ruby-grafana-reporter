@@ -5,6 +5,7 @@ module Grafana
   class Panel
     # @return [Dashboard] parent {Dashboard} object
     attr_reader :dashboard
+    attr_reader :model
 
     # @param model [Hash] converted JSON Hash of the panel
     # @param dashboard [Dashboard] parent {Dashboard} object
@@ -25,12 +26,17 @@ module Grafana
       @model['id']
     end
 
-    # @return [String] SQL query string for the requested query letter
+    # @return [Datasource] datasource object specified for the current panel
+    def datasource
+      dashboard.grafana.datasource_by_name(@model['datasource'])
+    end
+
+    # @return [String] query string for the requested query letter
     def query(query_letter)
       query_item = @model['targets'].select { |item| item['refId'].to_s == query_letter.to_s }.first
-      raise QueryLetterDoesNotExistError.new(query_letter, self) if query_item.nil?
+      raise QueryLetterDoesNotExistError.new(query_letter, self) unless query_item
 
-      query_item['rawSql']
+      datasource.raw_query_from_panel_model(query_item)
     end
 
     # @return [String] relative rendering URL for the panel, to create an image out of it

@@ -1,51 +1,18 @@
 # frozen_string_literal: true
 
 module GrafanaReporter
+  # This class provides a console configuration wizard, to reduce the manual efforts that have
+  # to be spent for that action and to reduce mistakes as good as possible.
   class ConsoleConfigurationWizard
     # Provides a command line configuration wizard for setting up the necessary configuration
     # file.
     # TODO: refactor class
     def start_wizard(config_file, console_config)
-      config = Configuration.new
+      action = overwrite_or_use_config_file(config_file)
+      return if action == 'abort'
 
-      return unless overwrite_file(config_file)
-
-      puts 'This wizard will guide you through an initial configuration for'\
-           ' the ruby-grafana-reporter. The configuration file will be created'\
-           ' in the current folder. Please make sure to specify necessary paths'\
-           ' either with a relative or an absolute path properly.'
-      puts
-      puts "Wizard is creating configuration file '#{config_file}'."
-      puts
-      port = ui_config_port
-      grafana = ui_config_grafana(console_config)
-      templates = ui_config_templates_folder
-      reports = ui_config_reports_folder
-      images = ui_config_images_folder(templates)
-      retention = ui_config_retention
-
-      config_yaml = %(# This configuration has been built with the configuration wizard.
-
-#{grafana}
-
-grafana-reporter:
-  report-class: GrafanaReporter::Asciidoctor::Report
-  templates-folder: #{templates}
-  reports-folder: #{reports}
-  report-retention: #{retention}
-  webservice-port: #{port}
-
-default-document-attributes:
-  imagesdir: #{images}
-# feel free to add here additional asciidoctor document attributes which are applied to all your templates
-)
-
-      begin
-        File.write(config_file, config_yaml, mode: 'w')
-        puts 'Configuration file successfully created.'
-      rescue StandardError => e
-        raise e
-      end
+      config = create_config_wizard(config_file, console_config) if action == 'overwrite'
+      config ||= Configuration.new
 
       begin
         config.config = YAML.load_file(config_file)
@@ -84,28 +51,105 @@ default-document-attributes:
 
     private
 
+    def create_config_wizard(config_file, console_config)
+      config = Configuration.new
+
+      puts 'This wizard will guide you through an initial configuration for'\
+           ' the ruby-grafana-reporter. The configuration file will be created'\
+           ' in the current folder. Please make sure to specify necessary paths'\
+           ' either with a relative or an absolute path properly.'
+      puts
+      puts "Wizard is creating configuration file '#{config_file}'."
+      puts
+      port = ui_config_port
+      grafana = ui_config_grafana(console_config)
+      templates = ui_config_templates_folder
+      reports = ui_config_reports_folder
+      images = ui_config_images_folder(templates)
+      retention = ui_config_retention
+
+      config_yaml = %(# This configuration has been built with the configuration wizard.
+
+#{grafana}
+
+grafana-reporter:
+  report-class: GrafanaReporter::Asciidoctor::Report
+  templates-folder: #{templates}
+  reports-folder: #{reports}
+  report-retention: #{retention}
+  webservice-port: #{port}
+# you may want to configure the following webhook callbacks to get informed on certain events
+#  callbacks:
+#    all:
+#      - <<your_callback_url>>
+#      - ...
+#    on_before_create:
+#      - <<your_callback_url>>
+#      - ...
+#    on_after_cancel:
+#      - <<your_callback_url>>
+#      - ...
+#    on_after_finish:
+#      - <<your_callback_url>>
+#      - ...
+
+default-document-attributes:
+  imagesdir: #{images}
+# feel free to add here additional asciidoctor document attributes which are applied to all your templates
+)
+
+      begin
+        File.write(config_file, config_yaml, mode: 'w')
+        puts 'Configuration file successfully created.'
+      rescue StandardError => e
+        raise e
+      end
+
+      config
+    end
+
     def create_demo_report(config)
       unless Dir.exist?(config.templates_folder)
         puts "Skip creation of DEMO template, as folder '#{config.templates_folder}' does not exist."
         return nil
       end
 
+      create = user_input('Shall I create a demo report for your new configuration file? Please note '\
+                          'that this report might contain confidential information, depending on the '\
+                          'confidentiality of the information stored in your dashboard.', 'yN')
+      return nil unless create =~ /^(?:y|Y)$/
+
       demo_report = 'demo_report'
       demo_report_file = "#{config.templates_folder}#{demo_report}.adoc"
 
-      # TODO: add question to overwrite file
+      # ask to overwrite file
       if File.exist?(demo_report_file)
-        puts "Skip creation of DEMO template, as file '#{demo_report_file}' already exists."
-        return demo_report
+        input = user_input("Demo template '#{demo_report_file}' does already exist. Do you want to "\
+                           'overwrite it?', 'yN')
+
+        case input
+        when /^(?:y|Y)$/
+          puts 'Overwriting existing DEMO template.'
+
+        else
+          puts 'Skip creation of DEMO template.'
+          return demo_report
+        end
       end
 
-      demo_report = %(= First Grafana Report Template
+      # TODO: move this to Asciidoctor::Report class
+      classes = [Asciidoctor::AlertsTableIncludeProcessor, Asciidoctor::AnnotationsTableIncludeProcessor,
+                 Asciidoctor::PanelImageBlockMacro, Asciidoctor::PanelImageInlineMacro,
+                 Asciidoctor::PanelPropertyInlineMacro, Asciidoctor::PanelQueryTableIncludeProcessor,
+                 Asciidoctor::PanelQueryValueInlineMacro, Asciidoctor::SqlTableIncludeProcessor,
+                 Asciidoctor::SqlValueInlineMacro, Asciidoctor::ShowHelpIncludeProcessor,
+                 Asciidoctor::ShowEnvironmentIncludeProcessor]
 
-include::grafana_help[]
+      grafana = ::Grafana::Grafana.new(config.grafana_host, config.grafana_api_key)
+      demo_report_content = DemoReportWizard.new(classes).build(grafana)
 
-include::grafana_environment[])
       begin
-        File.write(demo_report_file, demo_report, mode: 'w')
+        File.write(demo_report_file, demo_report_content, mode: 'w')
         puts "DEMO template '#{demo_report_file}' successfully created."
       rescue StandardError => e
         puts e.message
@@ -123,10 +167,9 @@ include::grafana_environment[])
         url ||= user_input('Specify grafana host', 'http://localhost:3000')
         print "Testing connection to '#{url}' #{api_key ? '_with_' : '_without_'} API key..."
         begin
-          # TODO: how to handle if ssl access if not working properly?
           res = Grafana::Grafana.new(url,
                                      api_key,
-                                     logger: config.logger, ssl_cert: config.ssl_cert).test_connection
+                                     logger: config.logger).test_connection
         rescue StandardError => e
           puts
           puts e.message
@@ -135,34 +178,38 @@ include::grafana_environment[])
 
         case res
         when 'Admin'
-          valid = true
+          tmp = user_input('Access to grafana is permitted as Admin, which is a potential security risk.'\
+                ' Do you want to use another [a]pi key, [r]e-enter url key or [i]gnore?', 'aRi')
 
-        when 'NON-Admin'
-          print 'Access to grafana is permitted as NON-Admin. Do you want to use an [a]pi key,'\
-                ' [r]e-enter api key or [i]gnore? [aRi]: '
-
-          case gets
+          case tmp
           when /(?:i|I)$/
             valid = true
 
-          # TODO: what is difference between 'a' and 'r'?
           when /(?:a|A)$/
             print 'Enter API key: '
-            api_key = gets.sub(/\n$/, '')
+            api_key = gets.strip
 
-          when /(?:r|R|adRi)$/
+          else
+            url = nil
             api_key = nil
 
           end
 
-        # TODO: ask to enter API key, if grafana cannot be accessed without that
-        else
-          print "Grafana could not be accessed at '#{url}'. Do you want do [r]e-enter url, or"\
-               ' [i]gnore and proceed? [Ri]: '
+        when 'NON-Admin'
+          print 'Access to grafana is permitted as NON-Admin.'
+          valid = true
 
-          case gets
+        else
+          tmp = user_input("Grafana could not be accessed at '#{url}'. Do you want to use an [a]pi key,"\
+                ' [r]e-enter url, or [i]gnore and proceed?', 'aRi')
+
+          case tmp
           when /(?:i|I)$/
             valid = true
+
+          when /(?:a|A)$/
+            print 'Enter API key: '
+            api_key = gets.strip
 
           else
             url = nil
@@ -174,7 +221,7 @@ include::grafana_environment[])
       end
       %(grafana:
   default:
-    host: #{url}#{api_key ? "\n    api_key: #{api_key}" : ''}}
+    host: #{url}#{api_key ? "\n    api_key: #{api_key}" : ''}
 )
     end
 
@@ -254,16 +301,19 @@ include::grafana_environment[])
       false
     end
 
-    def overwrite_file(config_file)
-      return true unless File.exist?(config_file)
+    def overwrite_or_use_config_file(config_file)
+      return 'overwrite' unless File.exist?(config_file)
 
       input = nil
       until input
-        input = user_input("Configuration file '#{config_file}' already exists. Do you want to overwrite it?", 'yN')
-        return false if input =~ /^(?:n|N|yN)$/
+        input = user_input("Configuration file '#{config_file}' already exists. Do you want to [o]verwrite it, "\
+                           'use it to for [d]emo report creation only, or [a]bort?', 'odA')
       end
 
-      true
+      return 'demo_report' if input =~ /^(?:d|D)$/
+      return 'abort' if input =~ /^(?:A|a|odA)$/
+
+      'overwrite'
     end
   end
 end

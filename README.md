@@ -9,15 +9,11 @@ Reporting Service for Grafana
 ## Table of Contents
 
 * [About the project](#about-the-project)
-* [Getting started](#getting-started)
-  * [Grafana integration](#grafana-integration)
-  * [Webservice overview](#webservice-overview)
-* [Documentation](#documentation)
 * [Features](#features)
+* [Quick Start](#quick-start)
+* [Grafana integration](#grafana-integration)
+* [Webservice overview](#webservice-overview)
 * [Roadmap](#roadmap)
-* [Contributing](#contributing)
-* [Licensing](#licensing)
-* [Acknowledgements](#acknowledgements)
 * [Donations](#donations)
 
 ## About the project
@@ -26,53 +22,87 @@ Did you ever want to create (professional) reports based on Grafana dashboards?
 I did so in order to being able to automatically get monthly reports of my
 home's energy usage. That's how it started.
 
-The reporter provides reporting capabilities for Grafana. It is based on
-(but not limited to) [asciidoctor](https://github.com/asciidoctor/asciidoctor)
-report templates, which can dynamically integrate Grafana panels, queries,
-images etc. to create dynamic PDF reports on the fly.
+## Features
 
-The report may also be returned in any other format that asciidoctor supports.
+* Build PDF reports based on [grafana](https://github.com/grafana/grafana) dashboards
+(other formats supported)
+* Include dynamic content from grafana (see [function documentation](FUNCTION_CALLS.md)
+as a detailed reference):
+  * panels as images
+  * tables based on grafana panel queries or custom database queries (no images!)
+  * single values to be integrated in text, based on grafana panel queries or custom
+database queries
+* Multi purpose use of the reporter
+  * webservice to be called directly from grafana - it also runs without further
+dependencies in the standard asciidoctor docker container!
+  * standalone command line tool, e.g. to be automated with cron or bash scrips
+* Comes with a complete configuration wizard, including functionality to build a
+demo report on top of the configured grafana host
+* Solid as a rock, also in case of template errors and whatever else may happen
+* Full [API documentation](https://rubydoc.info/gems/ruby-grafana-reporter) available
 
-The reporter can run standalone or as a webservice. It is built to
-integrate without further dependencies with the asciidoctor docker image.
+## Quick Start
 
-Can't wait to see, what functions the reporter provides within the asciidoctor
-templates? Have a look at the [function documentation](FUNCTION_CALLS.md).
+You don't have a grafana setup runnning already? No worries, just configure
+`https://play.grafana.org` in the configuration wizard and see the magic
+happen for that!
 
-## Getting started
+If your grafana setup requires a login, you'll have to setup an api key for
+the reporter. Please follow the steps
+[described here](https://github.com/divinity666/ruby-grafana-reporter/issues/2#issuecomment-811836757)
+first.
 
-There exist several ways of installing the reporter. If you need further
-installation help, or want to use a "baremetal" ruby setup or a docker
-integration, please have a look at the more extended
-[installation documentation](INSTALL.md).
+**Windows:**
 
-Windows users may directly use the provided executable.
+* [Download latest Windows executable](https://github.com/divinity666/ruby-grafana-reporter/releases/latest)
+* `ruby-grafana-reporter -w`
 
-Following these steps sets up the reporter on a fresh Raspberry Pi installation:
+Known issues:
+* images are currently not included in PDF conversions due to missing support in Prawn gem for windows;
+other target formats do work properly with images
 
-    sudo apt-get install ruby
-    gem install ruby-grafana-reporter
+**Raspberry Pi:**
 
-That's it. Let's now configure a grafana setup with the configuration wizard:
+* `sudo apt-get install ruby`
+* `gem install ruby-grafana-reporter`
+* `ruby-grafana-reporter -w`
 
-    ruby-grafana-reporter -w
+**Ruby environment:**
 
-It is strongly recommended, to also create the demo PDF file, as stated at the end
-of the procedure, to get a detailed documentation of all the reporter capabilities.
-The whole [function documentation](FUNCTION_CALLS.md) is also available at the
-previous link.
+* `gem install ruby-grafana-reporter`
+* `ruby-grafana-reporter -w`
 
-To run the reporter as a service, you only need to call it like this:
+**Docker environment** (advanced users):
 
-    ruby-grafana-reporter
+* [Download latest single-rb file](https://github.com/divinity666/ruby-grafana-reporter/releases/latest)
+to an empty folder
+* create a configuration file by calling `ruby ruby-grafana-reporter -w` (if in doubt,
+run the command within your docker container)
+* create file `/<<path-to-single-rb-file-folder>>/startup.sh` with the following
+content:
 
-Neat, isn't it?
+```
+cd /documents
+ruby bin/ruby-grafana-reporter
+```
+* add asciidoctor your compose yaml:
 
-### Grafana integration
+```
+asciidoctor:
+  image: asciidoctor/docker-asciidoctor
+  container_name: asciidoctor
+  hostname: asciidoctor
+  volumes:
+    - /<<path-to-single-rb-file-folder>>:/documents
+  command:
+    sh /documents/startup.sh
+  restart: unless-stopped
+```
+* start/restart the asciidoctor docker container
 
-The key feature of the report is, that it can easily be integrated with grafana
-(I've not even been talking about the features it is providing for that, but
-you'll find them having a look in the example results above).
+## Grafana integration
+
+The key feature of the report is, that it can easily be integrated with grafana.
 
 For accessing the reporter from grafana, you need to simply add a link to your
 grafana dashboard:
@@ -82,27 +112,27 @@ grafana dashboard:
 * Select `Add`
 * Fill out as following:
   * Type: `link`
-  * Url: `http://<<your-server-url>>:<<your-webservice-port>>/render?var-template=myfirsttemplate`
-  * Title: `MyFirstReport`
+  * Url: `http://<<your-server-url>>:<<your-webservice-port>>/render?var-template=demo_report`
+  * Title: `Demo Report`
   * Select `Time range`
   * Select `Variable values`
 * Select `Add`
 
-Now go back to your dashboard and click the newly generated 'MyFirstReport'
+Now go back to your dashboard and click the newly generated `Demo Report`
 link on it. Now the renderer should start it's task and show you the expected
 results.
 
-But now the fun just starts! Try out the functions stated in the
-'MyFirstReport' PDF file, to include the dynamic content in your asciidoctor
-template.
+Please note, that the reporter won't automatically refresh your screen to update
+the progress. Simply hit `F5` to refresh your browser. After the report has been
+successfully built, it will show the PDF after the next refresh automatically.
 
-Additionally you might want to make the selection of the template variable.
+You want to select a template in grafana, which shall then be rendered?
 Piece of cake: Just add a dashboard variable to your grafana dashboard named
 `template` and let the user select or enter a template name. To make use of it,
-you should change the link of the 'MyFirstReport' link to
-`http://<<your-server-url>>:<<your-webservice-port>>/render?`
-
-That's it. Let me know your feedback!
+you should change the link of the `Demo Report` link to
+`http://<<your-server-url>>:<<your-webservice-port>>/render?`. On
+hitting the new link in the dashboard, grafana will add the selected template as
+a variable and forward it to the reporter.
 
 ## Webservice overview
 
@@ -117,33 +147,14 @@ The main endpoint to call for report generation is configured in the previous ch
 
 However, if you would like to see, currently running report generations and previously generated reports, you may want to call the endpoint `/overview`.
 
-## Documentation
-
-The [function documentation](FUNCTION_CALLS.md) contains a complete overview of
-all possible grafana calls, to generate dynamic report templates.
-
-The [API documentation](https://rubydoc.info/gems/ruby-grafana-reporter) can be
-found here.
-
-## Features
-
-* Build report template including all imaginable grafana content:
-  * panels as images
-  * panel table query or custom query results as real document tables (not images!)
-  * single panel value or custom query single value result integrated in texts
-* Solid as a rock, also in case of template errors and whatever else may happen
-* Fully controllable as command line application or as a webservice
-* Seamlessly integrates with asciidoctor docker container
-* Developed to support other tools than asciidoctor as well
-
 ## Roadmap
 
 This is just a collection of things, I am heading for in future, without a schedule.
 
-* Add a simple plugin system to support specific asciidoctor modifications
+* Support table/single value renderings also for non-sql databases
+* Clean and properly setup test environment (currently it's a real mess...)
 * Solve code TODOs
 * Become [rubocop](https://rubocop.org/) ready
-* Clean and properly setup test cases
 
 ## Contributing
 
@@ -167,4 +178,3 @@ If this project saves you as much time as I hope it does, and if you'd like to
 support my work, feel free donate, even a cup of coffee is appreciated :)
 
 [![paypal](https://www.paypalobjects.com/en_US/i/btn/btn_donateCC_LG.gif)](https://www.paypal.com/donate?hosted_button_id=35LH6JNLPHPHQ)
-

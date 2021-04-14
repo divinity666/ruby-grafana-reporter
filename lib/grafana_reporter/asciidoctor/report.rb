@@ -1,10 +1,11 @@
 # frozen_string_literal: true
 
 module GrafanaReporter
+  # This module contains all classes, which are necessary to use the reporter in conjunction with asciidoctor.
   module Asciidoctor
     # Implementation of a specific {AbstractReport}. It is used to
     # build reports specifically for asciidoctor results.
-    class Report < GrafanaReporter::AbstractReport
+    class Report < ::GrafanaReporter::AbstractReport
       # (see AbstractReport#initialize)
       def initialize(config, template, destination_file_or_path = nil, custom_attributes = {})
         super
@@ -18,10 +19,9 @@ module GrafanaReporter
       # @see AbstractReport#create_report
       # @return [void]
       def create_report
-        @start_time = Time.now
+        super
         attrs = { 'convert-backend' => 'pdf' }.merge(@config.default_document_attributes.merge(@custom_attributes))
         attrs['grafana-report-timestamp'] = @start_time.to_s
-        logger.info("Report started at #{@start_time}")
         logger.debug("Document attributes: #{attrs}")
 
         initialize_step_counter
@@ -30,19 +30,18 @@ module GrafanaReporter
         ::Asciidoctor::LoggerManager.logger = logger
 
         registry = ::Asciidoctor::Extensions::Registry.new
-        # TODO: dynamically register macros, which is also needed when supporting custom macros
-        registry.inline_macro Extensions::PanelImageInlineMacro.new.current_report(self)
-        registry.inline_macro Extensions::PanelQueryValueInlineMacro.new.current_report(self)
-        registry.inline_macro Extensions::PanelPropertyInlineMacro.new.current_report(self)
-        registry.inline_macro Extensions::SqlValueInlineMacro.new.current_report(self)
-        registry.block_macro Extensions::PanelImageBlockMacro.new.current_report(self)
-        registry.include_processor Extensions::ValueAsVariableIncludeProcessor.new.current_report(self)
-        registry.include_processor Extensions::PanelQueryTableIncludeProcessor.new.current_report(self)
-        registry.include_processor Extensions::SqlTableIncludeProcessor.new.current_report(self)
-        registry.include_processor Extensions::ShowEnvironmentIncludeProcessor.new.current_report(self)
-        registry.include_processor Extensions::ShowHelpIncludeProcessor.new.current_report(self)
-        registry.include_processor Extensions::AnnotationsTableIncludeProcessor.new.current_report(self)
-        registry.include_processor Extensions::AlertsTableIncludeProcessor.new.current_report(self)
+        registry.inline_macro PanelImageInlineMacro.new.current_report(self)
+        registry.inline_macro PanelQueryValueInlineMacro.new.current_report(self)
+        registry.inline_macro PanelPropertyInlineMacro.new.current_report(self)
+        registry.inline_macro SqlValueInlineMacro.new.current_report(self)
+        registry.block_macro PanelImageBlockMacro.new.current_report(self)
+        registry.include_processor ValueAsVariableIncludeProcessor.new.current_report(self)
+        registry.include_processor PanelQueryTableIncludeProcessor.new.current_report(self)
+        registry.include_processor SqlTableIncludeProcessor.new.current_report(self)
+        registry.include_processor ShowEnvironmentIncludeProcessor.new.current_report(self)
+        registry.include_processor ShowHelpIncludeProcessor.new.current_report(self)
+        registry.include_processor AnnotationsTableIncludeProcessor.new.current_report(self)
+        registry.include_processor AlertsTableIncludeProcessor.new.current_report(self)
 
         ::Asciidoctor.convert_file(@template, extension_registry: registry, backend: attrs['convert-backend'],
                                               to_file: path, attributes: attrs, header_footer: true)
@@ -51,15 +50,11 @@ module GrafanaReporter
 
         # store report including als images as ZIP file, if the result is not a PDF
         if attrs['convert-backend'] != 'pdf'
-          dest_path = nil
-          case
-          when @destination_file_or_path.is_a?(File)
-            dest_path = @destination_file_or_path.path
-          when @destination_file_or_path.is_a?(Tempfile)
-            dest_path = @destination_file_or_path.path
-          else
-            dest_path = @destination_file_or_path
-          end
+          dest_path = if @destination_file_or_path.is_a?(File) || @destination_file_or_path.is_a?(Tempfile)
+                        @destination_file_or_path.path
+                      else
+                        @destination_file_or_path
+                      end
 
           # build zip file
           zip_file = Tempfile.new('gf_zip')
@@ -92,9 +87,7 @@ module GrafanaReporter
         end
 
         clean_image_files
-        @end_time = Time.now
-        logger.info("Report finished after #{@end_time - @start_time} seconds.")
-        @done = true
+        done!
       rescue StandardError => e
         # catch all errors during execution
         died_with_error(e)
@@ -115,7 +108,7 @@ module GrafanaReporter
         unless @grafana_instances[instance]
           @grafana_instances[instance] = ::Grafana::Grafana.new(@config.grafana_host(instance),
                                                                 @config.grafana_api_key(instance),
-                                                                logger: @logger, ssl_cert: @config.ssl_cert)
+                                                                logger: @logger)
         end
         @grafana_instances[instance]
       end
@@ -147,8 +140,7 @@ module GrafanaReporter
       # @return [void]
       def died_with_error(error)
         @error = [error.message] << [error.backtrace]
-        @end_time = Time.now
-        @done = true
+        done!
       end
 
       private
@@ -162,6 +154,7 @@ module GrafanaReporter
         @total_steps = 0
         File.readlines(@template).each do |line|
           begin
+            # TODO: move these calls to the specific processors to ensure all are counted properly
             @total_steps += line.gsub(%r{//.*}, '').scan(/(?:grafana_panel_image|grafana_panel_query_value|
                                                          grafana_panel_query_table|grafana_sql_value|
                                                          grafana_sql_table|grafana_environment|grafana_help|

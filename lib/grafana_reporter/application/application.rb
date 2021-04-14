@@ -19,8 +19,12 @@ module GrafanaReporter
       # Contains the {Configuration} object of the application.
       attr_accessor :config
 
+      # Stores the {Webservice} object of the application
+      attr_reader :webservice
+
       def initialize
         @config = Configuration.new
+        @webservice = Webservice.new
       end
 
       # This is the main method, which is called, if the application is
@@ -33,11 +37,11 @@ module GrafanaReporter
         action_wizard = false
 
         parser = OptionParser.new do |opts|
-          if ENV['OCRA_EXECUTABLE']
-            opts.banner = "Usage: #{ENV['OCRA_EXECUTABLE'].gsub("#{Dir.pwd}/".gsub('/', '\\'), '')} [options]"
-          else
-            opts.banner = "Usage: #{Gem.ruby} #{$PROGRAM_NAME} [options]"
-          end
+          opts.banner = if ENV['OCRA_EXECUTABLE']
+                          "Usage: #{ENV['OCRA_EXECUTABLE'].gsub("#{Dir.pwd}/".gsub('/', '\\'), '')} [options]"
+                        else
+                          "Usage: #{Gem.ruby} #{$PROGRAM_NAME} [options]"
+                        end
 
           opts.on('-c', '--config CONFIG_FILE_NAME', 'Specify custom configuration file,'\
                   " instead of #{CONFIG_FILE}.") do |file_name|
@@ -137,18 +141,18 @@ module GrafanaReporter
         when Configuration::MODE_CONNECTION_TEST
           res = Grafana::Grafana.new(config.grafana_host(config.test_instance),
                                      config.grafana_api_key(config.test_instance),
-                                     logger: config.logger, ssl_cert: config.ssl_cert).test_connection
+                                     logger: config.logger).test_connection
           puts res
 
         when Configuration::MODE_SINGLE_RENDER
           begin
             config.report_class.new(config, config.template, config.to_file).create_report
           rescue StandardError => e
-            puts e.message
+            puts "#{e.message}\n#{e.backtrace.join("\n")}"
           end
 
         when Configuration::MODE_SERVICE
-          Webservice.new(config).run
+          @webservice.run(config)
         end
 
         0

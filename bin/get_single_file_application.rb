@@ -28,7 +28,7 @@ end
 
 def get_result(type)
   unless @result
-    require_relative '/../lib/ruby-grafana-reporter'
+    require_relative '/../lib/ruby_grafana_reporter'
     @result = [File.read('./LICENSE').gsub(/^/, '# '), required_contents]
   end
 

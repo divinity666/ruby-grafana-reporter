@@ -4,3 +4,5 @@ Show a valid value: grafana_sql_value:1[sql="SELECT 1"]
 
 Parameter 1: {par1}
 Parameter 2: {par2}
+
+grafana_panel_image::11[dashboard="IDBRfjSmz",from="0",to="0"]
