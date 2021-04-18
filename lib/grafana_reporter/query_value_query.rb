@@ -15,8 +15,8 @@ module GrafanaReporter
       @variables['result_type'] ||= Variable.new('')
     end
 
-    # Executes {QueryMixin#format_columns}, {QueryMixin#replace_values} and
-    # {QueryMixin#filter_columns} on the query results.
+    # Executes {AbstractQuery#format_columns}, {AbstractQuery#replace_values} and
+    # {AbstractQuery#filter_columns} on the query results.
     #
     # Finally the results are formatted as a asciidoctor table.
     # @see Grafana::AbstractQuery#post_process

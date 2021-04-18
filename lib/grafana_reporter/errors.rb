@@ -46,7 +46,7 @@ module GrafanaReporter
     end
   end
 
-  # Thrown, if the value configuration in {QueryMixin#replace_values} is
+  # Thrown, if the value configuration in {AbstractQuery#replace_values} is
   # invalid.
   class MalformedReplaceValuesStatementError < GrafanaReporterError
     def initialize(statement)

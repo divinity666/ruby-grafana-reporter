@@ -28,8 +28,8 @@ module GrafanaReporter
     # Filters the query result for the given columns and sets the result
     # in the preformatted SQL result style.
     #
-    # Additionally it applies {QueryMixin#format_columns}, {QueryMixin#replace_values} and
-    # {QueryMixin#filter_columns}.
+    # Additionally it applies {AbstractQuery#format_columns}, {AbstractQuery#replace_values} and
+    # {AbstractQuery#filter_columns}.
     # @return [void]
     def post_process
       @result = format_columns(@result, @variables['format'])

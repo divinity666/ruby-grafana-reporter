@@ -14,8 +14,8 @@ module GrafanaReporter
         @grafana_instances = {}
       end
 
-      # Starts to create an asciidoctor report. It utilizes all {Extensions} to
-      # realize the conversion.
+      # Starts to create an asciidoctor report. It utilizes all extensions in the {GrafanaReporter::Asciidoctor}
+      # namespace to realize the conversion.
       # @see AbstractReport#create_report
       # @return [void]
       def create_report

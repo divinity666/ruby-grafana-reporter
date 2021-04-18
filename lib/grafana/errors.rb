@@ -57,7 +57,7 @@ module Grafana
     end
   end
 
-  # Raised if no SQL query is specified in a {AbstractSqlQuery} object.
+  # Raised if no SQL query is specified.
   class MissingSqlQueryError < GrafanaError
     def initialize
       super('No SQL statement has been specified.')

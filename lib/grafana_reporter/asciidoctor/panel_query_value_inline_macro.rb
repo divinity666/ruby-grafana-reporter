@@ -32,11 +32,11 @@ module GrafanaReporter
     #
     # +to+ - 'to' time for the sql query
     #
-    # +format+ - see {QueryMixin#format_columns}
+    # +format+ - see {AbstractQuery#format_columns}
     #
-    # +replace_values+ - see {QueryMixin#replace_values}
+    # +replace_values+ - see {AbstractQuery#replace_values}
     #
-    # +filter_columns+ - see {QueryMixin#filter_columns}
+    # +filter_columns+ - see {AbstractQuery#filter_columns}
     class PanelQueryValueInlineMacro < ::Asciidoctor::Extensions::InlineMacroProcessor
       include ProcessorMixin
       use_dsl
