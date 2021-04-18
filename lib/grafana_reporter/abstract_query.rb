@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module GrafanaReporter
-  # @abstract Override {#pre_process}, {#post_process} and {#self.build_demo_entry} in subclass.
+  # @abstract Override {#pre_process} and {#post_process} in subclass.
   #
   # Superclass containing everything for all queries towards grafana.
   class AbstractQuery
@@ -9,7 +9,7 @@ module GrafanaReporter
     attr_writer :raw_query
     attr_reader :variables, :result, :panel
 
-    # @param grafana_or_panel [Object] {Grafana} or {Panel} object for which the query is executed
+    # @param grafana_or_panel [Object] {Grafana::Grafana} or {Grafana::Panel} object for which the query is executed
     def initialize(grafana_or_panel)
       if grafana_or_panel.is_a?(Grafana::Panel)
         @panel = grafana_or_panel
@@ -24,7 +24,7 @@ module GrafanaReporter
     #
     # Runs the whole process to receive values properly from this query:
     # - calls {#pre_process}
-    # - executes this query against the {Grafana} instance
+    # - executes this query against the {Grafana::AbstractDatasource} implementation instance
     # - calls {#post_process}
     #
     # @return [Hash] result of the query in standardized format
@@ -38,13 +38,13 @@ module GrafanaReporter
       @result
     end
 
-    # Sets default configurations from the given {Dashboard} and store them as settings in the query.
+    # Sets default configurations from the given {Grafana::Dashboard} and store them as settings in the query.
     #
     # Following data is extracted:
-    # - +from+, by {Dashboard#from_time}
-    # - +to+, by {Dashboard#to_time}
-    # - and all variables as {Variable}, prefixed with +var-+, as grafana also does it
-    # @param dashboard [Dashboard] dashboard from which the defaults are captured
+    # - +from+, by {Grafana::Dashboard#from_time}
+    # - +to+, by {Grafana::Dashboard#to_time}
+    # - and all variables as {Grafana::Variable}, prefixed with +var-+, as grafana also does it
+    # @param dashboard [Grafana::Dashboard] dashboard from which the defaults are captured
     def set_defaults_from_dashboard(dashboard)
       @from = dashboard.from_time
       @to = dashboard.to_time
@@ -82,7 +82,7 @@ module GrafanaReporter
     # @param document_hash [Hash] variables from report template level
     # @param item_hash [Hash] variables from item configuration level, i.e. specific call, which may override document
     # @return [void]
-    # TODO: rename method
+    # TODO: move method to processor mixin
     def merge_hash_variables(document_hash, item_hash)
       sel_doc_items = document_hash.select do |k, _v|
         k =~ /^var-/ || k == 'grafana-report-timestamp' || k =~ /grafana_default_(?:from|to)_timezone/
@@ -105,7 +105,7 @@ module GrafanaReporter
     #
     # NOTE: Only the +:content+ of the given result hash is transposed. The +:header+ is ignored.
     #
-    # @param result [Hash] preformatted sql hash, (see {Grafana::AbstractDatasource#preformat_response})
+    # @param result [Hash] preformatted sql hash, (see {Grafana::AbstractDatasource#request})
     # @param transpose_variable [Grafana::Variable] true, if the result hash shall be transposed
     # @return [Hash] transposed query result
     def transpose(result, transpose_variable)
@@ -121,7 +121,7 @@ module GrafanaReporter
     #
     # Multiple columns may be filtered. Therefore the column titles have to be named in the
     # {Grafana::Variable#raw_value} and have to be separated by +,+ (comma).
-    # @param result [Hash] preformatted sql hash, (see {Grafana::AbstractDatasource#preformat_response})
+    # @param result [Hash] preformatted sql hash, (see {Grafana::AbstractDatasource#request})
     # @param filter_columns_variable [Grafana::Variable] column names, which shall be removed in the query result
     # @return [Hash] filtered query result
     def filter_columns(result, filter_columns_variable)
@@ -145,7 +145,7 @@ module GrafanaReporter
     # The formatting will be applied separately for every column. Therefore the column formats have to be named
     # in the {Grafana::Variable#raw_value} and have to be separated by +,+ (comma). If no value is specified for
     # a column, no change will happen.
-    # @param result [Hash] preformatted sql hash, (see {Grafana::AbstractDatasource#preformat_response})
+    # @param result [Hash] preformatted sql hash, (see {Grafana::AbstractDatasource#request})
     # @param formats [Grafana::Variable] formats, which shall be applied to the columns in the query result
     # @return [Hash] formatted query result
     # TODO: make sure that caught errors are also visible in logger
@@ -195,7 +195,7 @@ module GrafanaReporter
     # '42 is the answer'. Important to know: the regular expressions always have to start
     # with +^+ and end with +$+, i.e. the expression itself always has to match
     # the whole content in one field.
-    # @param result [Hash] preformatted query result (see {Grafana::AbstractDatasource#preformat_response}.
+    # @param result [Hash] preformatted query result (see {Grafana::AbstractDatasource#request}.
     # @param configs [Array<Grafana::Variable>] one variable for replacing values in one column
     # @return [Hash] query result with replaced values
     # TODO: make sure that caught errors are also visible in logger
@@ -379,15 +379,14 @@ module GrafanaReporter
       date
     end
 
-    # Merges the given Hash with the stored variables.
+    private
+
+    # Merges the given Hash with the stored variables. This merge is needed, to not loose
+    # configurations of an existing variable.
     #
     # Can be used to easily set many values at once in the local variables hash.
     #
-    # Please note, that the values of the Hash need to be of type {Variable}.
-    #
     # @param hash [Hash<String,Variable>] Hash containing variable name as key and {Variable} as value
-    # @return [AbstractQuery] this object
-    # TODO: test if this method can be removed, or make it private at least
     def merge_variables(hash)
       hash.each do |k, v|
         if @variables[k.to_s].nil?
