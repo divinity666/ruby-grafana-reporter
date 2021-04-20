@@ -38,19 +38,6 @@ module GrafanaReporter
       @result
     end
 
-    # Sets default configurations from the given {Grafana::Dashboard} and store them as settings in the query.
-    #
-    # Following data is extracted:
-    # - +from+, by {Grafana::Dashboard#from_time}
-    # - +to+, by {Grafana::Dashboard#to_time}
-    # - and all variables as {Grafana::Variable}, prefixed with +var-+, as grafana also does it
-    # @param dashboard [Grafana::Dashboard] dashboard from which the defaults are captured
-    def set_defaults_from_dashboard(dashboard)
-      @from = dashboard.from_time
-      @to = dashboard.to_time
-      dashboard.variables.each { |item| merge_variables({ "var-#{item.name}": item }) }
-    end
-
     # Overwrite this function to extract a proper raw query value from this object.
     #
     # If the property +@raw_query+ is not set manually by the calling object, this
@@ -77,28 +64,15 @@ module GrafanaReporter
       raise NotImplementedError
     end
 
-    # Merges the given hashes to the current object by using the {#merge_variables} method.
-    # It respects the priorities of the hashes and the object and allows only valid variables to be passed.
-    # @param document_hash [Hash] variables from report template level
-    # @param item_hash [Hash] variables from item configuration level, i.e. specific call, which may override document
-    # @return [void]
-    # TODO: move method to processor mixin
-    def merge_hash_variables(document_hash, item_hash)
-      sel_doc_items = document_hash.select do |k, _v|
-        k =~ /^var-/ || k == 'grafana-report-timestamp' || k =~ /grafana_default_(?:from|to)_timezone/
-      end
-      merge_variables(sel_doc_items.each_with_object({}) { |(k, v), h| h[k] = ::Grafana::Variable.new(v) })
+    # Used to specify variables to be used for this query. This method ensures, that only the values of the
+    # {Grafana::Variable} stored in the +variables+ Array are overwritten.
+    # @param name [String] name of the variable to set
+    # @param variable [Grafana::Variable] variable from which the {Grafana::Variable#raw_value} will be assigned to the query variables
+    def assign_variable(name, variable)
+      raise GrafanaReporterError, "Unsupported variable given for assignment (name: '#{name}', value: '#{value}')" unless variable.is_a?(Grafana::Variable)
 
-      sel_items = item_hash.select do |k, _v|
-        # TODO: specify accepted options in each class or check if simply all can be allowed with prefix +var-+
-        k =~ /^var-/ || k =~ /^render-/ || k =~ /filter_columns|format|replace_values_.*|transpose|column_divider|
-                                                 row_divider|from_timezone|to_timezone|result_type|query/x
-      end
-      merge_variables(sel_items.each_with_object({}) { |(k, v), h| h[k] = ::Grafana::Variable.new(v) })
-
-      @timeout = item_hash['timeout'] || document_hash['grafana-default-timeout'] || @timeout
-      @from = item_hash['from'] || document_hash['from'] || @from
-      @to = item_hash['to'] || document_hash['to'] || @to
+      @variables[name] ||= variable
+      @variables[name].raw_value = variable.raw_value
     end
 
     # Transposes the given result.
@@ -377,24 +351,6 @@ module GrafanaReporter
       end
 
       date
-    end
-
-    private
-
-    # Merges the given Hash with the stored variables. This merge is needed, to not loose
-    # configurations of an existing variable.
-    #
-    # Can be used to easily set many values at once in the local variables hash.
-    #
-    # @param hash [Hash<String,Variable>] Hash containing variable name as key and {Variable} as value
-    def merge_variables(hash)
-      hash.each do |k, v|
-        if @variables[k.to_s].nil?
-          @variables[k.to_s] = v
-        else
-          @variables[k.to_s].raw_value = v.raw_value
-        end
-      end
     end
   end
 end

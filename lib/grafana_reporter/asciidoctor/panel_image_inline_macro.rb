@@ -44,13 +44,15 @@ module GrafanaReporter
         dashboard = attrs['dashboard'] || parent.document.attr('grafana_default_dashboard')
         @report.logger.debug("Processing PanelImageInlineMacro (instance: #{instance}, dashboard: #{dashboard},"\
                              " panel: #{target})")
-        query = PanelImageQuery.new(@report.grafana(instance).dashboard(dashboard).panel(target))
-        # set alt text to a default, because otherwise asciidoctor fails
-        attrs['alt'] = '' unless attrs['alt']
-        query.merge_hash_variables(parent.document.attributes, attrs)
-        @report.logger.debug("from: #{query.from}, to: #{query.to}")
 
         begin
+          query = PanelImageQuery.new(@report.grafana(instance).dashboard(dashboard).panel(target))
+          # set alt text to a default, because otherwise asciidoctor fails
+          attrs['alt'] = '' unless attrs['alt']
+          assign_dashboard_defaults(query, @report.grafana(instance).dashboard(dashboard))
+          assign_doc_and_item_variables(query, parent.document.attributes, attrs)
+          @report.logger.debug("from: #{query.from}, to: #{query.to}")
+
           image = query.execute
           image_path = @report.save_image_file(image)
         rescue GrafanaReporterError => e

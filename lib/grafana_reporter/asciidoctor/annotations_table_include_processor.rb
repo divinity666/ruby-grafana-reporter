@@ -55,12 +55,12 @@ module GrafanaReporter
         @report.logger.debug("Processing AnnotationsTableIncludeProcessor (instance: #{instance})")
 
         query = AnnotationsTableQuery.new(@report.grafana(instance))
-        query.set_defaults_from_dashboard(@report.grafana(instance).dashboard(dashboard_id)) if dashboard_id
+        assign_dashboard_defaults(query, @report.grafana(instance).dashboard(dashboard_id)) if dashboard_id
         defaults = {}
         defaults['dashboardId'] = dashboard_id if dashboard_id
         defaults['panelId'] = panel_id if panel_id
 
-        query.merge_hash_variables(doc.attributes, attrs)
+        assign_doc_and_item_variables(query, doc.attributes, attrs)
         selected_attrs = attrs.select do |k, _v|
           k =~ /(?:columns|limit|alertId|dashboardId|panelId|userId|type|tags)/
         end
