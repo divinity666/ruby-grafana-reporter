@@ -65,7 +65,7 @@ module GrafanaReporter
 
           opts.on('--ssl-cert FILE', 'Manually specify a SSL cert file for HTTPS connection to grafana. Only '\
                   'needed if not working properly otherwise.') do |file|
-            if File.exist?(file)
+            if File.file?(file)
               tmp_config.set_param('grafana-reporter:ssl-cert', file)
             else
               config.logger.warn("SSL certificate file #{file} does not exist. Setting will be ignored.")
@@ -106,7 +106,7 @@ module GrafanaReporter
         end
 
         # abort if config file does not exist
-        unless File.exist?(config_file)
+        unless File.file?(config_file)
           puts "Config file '#{config_file}' does not exist. Consider calling the configuration wizard"\
                ' with option \'-w\' or use \'-h\' to see help message. Aborting.'
           return -1

@@ -59,7 +59,7 @@ module Grafana
     def configure_ssl
       @http.use_ssl = true
       @http.verify_mode = OpenSSL::SSL::VERIFY_PEER
-      if self.class.ssl_cert && !File.exist?(self.class.ssl_cert)
+      if self.class.ssl_cert && !File.file?(self.class.ssl_cert)
         @logger.warn('SSL certificate file does not exist.')
       elsif self.class.ssl_cert
         @http.cert_store = OpenSSL::X509::Store.new
