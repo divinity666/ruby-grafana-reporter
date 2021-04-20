@@ -42,6 +42,15 @@ demo report on top of the configured grafana host
 * Solid as a rock, also in case of template errors and whatever else may happen
 * Full [API documentation](https://rubydoc.info/gems/ruby-grafana-reporter) available
 
+Functionalities are provided as shown here:
+
+Database | Image rendering | Panel-based rendering | Raw query-based rendering
+----------------------- | :-------: | :-----------: | :------------:
+all SQL based databases | supported | supported     | supported
+Graphite                | supported | supported     | supported
+Prometheus              | supported | supported     | supported
+other databases         | supported | not-supported | not-supported
+
 ## Quick Start
 
 You don't have a grafana setup runnning already? No worries, just configure
