@@ -231,6 +231,18 @@
       "name": "Prometheus",
       "type": "prometheus",
       "url":"/api/datasources/proxy/4"
+    },
+    "UnknownDatasource": {
+      "id": 5,
+      "meta": {
+        "type": "datasource",
+        "name": "UnknownDatasource",
+        "id": "UnknownDatasource",
+        "category":"tsdb"
+      },
+      "name": "UnknownDatasource",
+      "type": "UnknownDatasource",
+      "url":"/api/datasources/proxy/4"
     }
   },
   "defaultDatasource": "demo",

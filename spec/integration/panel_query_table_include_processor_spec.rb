@@ -73,6 +73,13 @@ describe PanelQueryTableIncludeProcessor do
 
   end
 
+  context 'unknown datasource' do
+    it 'returns error on unknown datasource requests' do
+      expect(@report.logger).to receive(:error)
+      expect(Asciidoctor.convert("include::grafana_panel_query_table:#{STUBS[:panel_ds_unknown][:id]}[query=\"A\",dashboard=\"#{STUBS[:dashboard]}\",from=\"0\",to=\"0\"]", to_file: false)).to include('Error')
+    end
+  end
+
   context 'graphite' do
     it 'can handle graphite requests' do
       expect(@report.logger).not_to receive(:error)

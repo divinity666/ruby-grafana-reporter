@@ -47,6 +47,18 @@
     "links": [],
     "panels": [
       {
+        "datasource": "UnknownDatasource",
+        "id": 10,
+        "targets": [
+          {
+            "hide": false,
+            "refId": "A",
+            "target": "alias(movingAverage(scaleToSeconds(apps.fakesite.web_server_01.counters.request_status.code_302.count, 10), 20), 'cpu')"
+          }
+        ],
+        "type": "singlestat"
+      },
+      {
         "datasource": "Graphite",
         "id": 12,
         "targets": [

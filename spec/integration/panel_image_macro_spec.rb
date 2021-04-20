@@ -18,7 +18,13 @@ describe PanelImageBlockMacro do
     expect(Asciidoctor.convert("grafana_panel_image::#{STUBS[:panel_sql][:id]}[dashboard=\"#{STUBS[:dashboard]}\"]", to_file: false)).to include('<img src="gf_image_').and match(/(?!Error)/)
   end
 
-  it 'shows errors properly' do
+  it 'can be processed for datasources with unknown type' do
+    expect(@report.logger).not_to receive(:error)
+    expect(@report.logger).not_to receive(:warn)
+    expect(Asciidoctor.convert("grafana_panel_image::#{STUBS[:panel_ds_unknown][:id]}[dashboard=\"#{STUBS[:dashboard]}\"]", to_file: false)).to include('<img src="gf_image_').and match(/(?!Error)/)
+  end
+
+  it 'shows errors properly if panel is unknown' do
     expect(@report.logger).to receive(:fatal)
     expect(Asciidoctor.convert("grafana_panel_image::999[dashboard=\"#{STUBS[:dashboard]}\"]", to_file: false)).to include('Error')
   end

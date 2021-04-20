@@ -12,7 +12,7 @@ describe AbstractDatasource do
     expect { AbstractDatasource.build_instance(nil) }.to raise_error(InvalidDatasourceQueryProvidedError)
   end
 
-  it 'raises error if unknown datasource definition is provided' do
-    expect { AbstractDatasource.build_instance({'meta' => {'category' => 'unknown', 'id' => 'unknown_ds'}}) }.to raise_error(DatasourceTypeNotSupportedError)
+  it 'returns unsupported datasource if not supported' do
+    expect(AbstractDatasource.build_instance({'meta' => {'category' => 'unknown', 'id' => 'unknown_ds'}})).to be_a(Grafana::UnsupportedDatasource)
   end
 end

@@ -26,7 +26,7 @@ module Grafana
 
       end
 
-      raise DatasourceTypeNotSupportedError.new(ds_model['name'], ds_model['meta']['id'])
+      UnsupportedDatasource.new(ds_model)
     end
 
     def initialize(model)
