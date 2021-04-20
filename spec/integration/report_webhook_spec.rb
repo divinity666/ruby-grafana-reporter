@@ -32,8 +32,9 @@ default-document-attributes:
     after(:context) do
       WebMock.enable!
       AbstractReport.clear_event_listeners
-      @webserver.kill
-      # TODO: kill webservice properly and release port again
+      # kill webservice properly and release port again
+      @app.webservice.stop!
+      sleep 0.1 until @app.webservice.stopped?
     end
 
     it 'calls event listener properly' do

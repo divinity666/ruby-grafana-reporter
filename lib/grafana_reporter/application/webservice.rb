@@ -6,9 +6,12 @@ module GrafanaReporter
     # make use of `webrick` or similar, so that it can be used without futher dependencies
     # in conjunction with the standard asciidoctor docker container.
     class Webservice
+      # Array of possible webservice running states
+      STATUS = [:stopped, :running, :stopping]
+
       def initialize
         @reports = []
-        @running = false
+        @status = :stopped
       end
 
       # Runs the webservice with the given {Configuration} object.
@@ -19,17 +22,32 @@ module GrafanaReporter
         # start webserver
         @server = TCPServer.new(@config.webserver_port)
         @logger.info("Server listening on port #{@config.webserver_port}...")
-        @running = true
 
         @progress_reporter = Thread.new {}
 
+        @status = :running
         accept_requests_loop
-        @running = false
+        @status = :stopped
+      end
+
+      # @return True, if webservice is stopped, false otherwise
+      def stopped?
+        @status == :stopped
       end
 
       # @return True, if webservice is up and running, false otherwise
       def running?
-        @running
+        @status == :running
+      end
+
+      # Forces stopping the webservice.
+      def stop!
+        @status = :stopping
+
+        # invoke a new request, so that the webservice stops.
+        socket = TCPSocket.new('localhost', @config.webserver_port)
+        socket.send '', 0
+        socket.close
       end
 
       private
@@ -38,6 +56,14 @@ module GrafanaReporter
         loop do
           # step 1) accept incoming connection
           socket = @server.accept
+
+          # TODO: shutdown properly on SIGINT/SIGHUB
+
+          # stop webservice properly, if shall be shutdown
+          if @status == :stopping
+            socket.close
+            break
+          end
 
           # step 2) print the request headers (separated by a blank line e.g. \r\n)
           request = ''
