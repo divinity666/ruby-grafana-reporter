@@ -53,7 +53,7 @@ module GrafanaReporter
     def template
       return nil if get_config('default-document-attributes:var-template').nil?
 
-      "#{templates_folder}#{get_config('default-document-attributes:var-template')}.adoc"
+      "#{templates_folder}#{get_config('default-document-attributes:var-template')}"
     end
 
     # @return [String] destination filename for the report in {MODE_SINGLE_RENDER}.

@@ -205,7 +205,7 @@ module GrafanaReporter
 
       def render_report(attrs)
         # build report
-        template_file = "#{@config.templates_folder}#{attrs['var-template']}.adoc"
+        template_file = "#{@config.templates_folder}#{attrs['var-template']}"
 
         file = Tempfile.new('gf_pdf_', @config.reports_folder)
         begin

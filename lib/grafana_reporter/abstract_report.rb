@@ -35,7 +35,7 @@ module GrafanaReporter
     attr_reader :done
 
     # @param config [Configuration] configuration object
-    # @param template [String] path to the template to be used
+    # @param template [String] path to the template to be used, trailing +.adoc+ extension may be omitted
     # @param destination_file_or_path [String or File] path to the destination report or file object to use
     # @param custom_attributes [Hash] custom attributes, which shall be merged with priority over the configuration
     def initialize(config, template, destination_file_or_path = nil, custom_attributes = {})
@@ -49,7 +49,10 @@ module GrafanaReporter
       @start_time = nil
       @end_time = nil
       @cancel = false
-      raise MissingTemplateError, @template.to_s unless File.exist?(@template.to_s)
+
+      # automatically add extension, if a file with adoc extension exists
+      @template = "#{@template}.adoc" if File.file?("#{@template}.adoc") && !File.file?(@template.to_s)
+      raise MissingTemplateError, @template.to_s unless File.file?(@template.to_s)
     end
 
     # Registers a new event listener object.

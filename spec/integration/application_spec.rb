@@ -81,6 +81,12 @@ describe Application do
       File.delete('./result.pdf') if File.exist?('./result.pdf')
     end
 
+    it 'can single render a template with extension' do
+      expect(subject.config.logger).not_to receive(:error)
+      expect { subject.configure_and_run(['-c', './spec/tests/demo_config.txt', '-t', 'spec/tests/demo_report.adoc', '-o', './result.pdf', '-d', 'ERROR']) }.not_to output(/ERROR/).to_stderr
+      expect(File.exist?('./result.pdf')).to be true
+    end
+
     it 'can single render a template and output to custom folder' do
       expect(subject.config.logger).not_to receive(:error)
       expect { subject.configure_and_run(['-c', './spec/tests/demo_config.txt', '-t', 'spec/tests/demo_report', '-o', './result.pdf', '-d', 'ERROR']) }.not_to output(/ERROR/).to_stderr
