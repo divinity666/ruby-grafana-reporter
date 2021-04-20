@@ -18,11 +18,6 @@ module GrafanaReporter
       "#{toc}\n\n#{help_text(github_options.merge(level: headline_level))}"
     end
 
-    # @see AbstractQuery#self.build_demo_entry
-    def self.build_demo_entry(_panel)
-      'include::grafana_help[]'
-    end
-
     private
 
     def github_options
