@@ -11,13 +11,12 @@ module Grafana
     # @return [AbstractDatasource] instance of a fitting datasource implementation
     def self.build_instance(ds_model)
       raise InvalidDatasourceQueryProvidedError, ds_model unless ds_model.is_a?(Hash)
-      raise InvalidDatasourceQueryProvidedError, ds_model unless ds_model['meta']
-      raise InvalidDatasourceQueryProvidedError, ds_model unless ds_model['meta']['id']
-      raise InvalidDatasourceQueryProvidedError, ds_model unless ds_model['meta']['category']
+      raise InvalidDatasourceQueryProvidedError, ds_model unless ds_model['meta'].is_a?(Hash)
 
-      return SqlDatasource.new(ds_model) if ds_model['meta']['category'] == 'sql'
+      tmp_datasource = AbstractDatasource.new(ds_model)
+      return SqlDatasource.new(ds_model) if tmp_datasource.category == 'sql'
 
-      case ds_model['meta']['id']
+      case tmp_datasource.type
       when 'graphite'
         return GraphiteDatasource.new(ds_model)
 
@@ -31,6 +30,16 @@ module Grafana
 
     def initialize(model)
       @model = model
+    end
+
+    # @return [String] category of the datasource, e.g. `tsdb` or `sql`
+    def category
+      @model['meta']['category']
+    end
+
+    # @return [String] type of the datasource, e.g. `mysql`
+    def type
+      @model['type'] || @model['meta']['id']
     end
 
     # @return [String] name of the datasource
