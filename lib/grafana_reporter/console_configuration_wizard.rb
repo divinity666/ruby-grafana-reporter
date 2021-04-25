@@ -137,16 +137,8 @@ default-document-attributes:
         end
       end
 
-      # TODO: move this to Asciidoctor::Report class
-      classes = [Asciidoctor::AlertsTableIncludeProcessor, Asciidoctor::AnnotationsTableIncludeProcessor,
-                 Asciidoctor::PanelImageBlockMacro, Asciidoctor::PanelImageInlineMacro,
-                 Asciidoctor::PanelPropertyInlineMacro, Asciidoctor::PanelQueryTableIncludeProcessor,
-                 Asciidoctor::PanelQueryValueInlineMacro, Asciidoctor::SqlTableIncludeProcessor,
-                 Asciidoctor::SqlValueInlineMacro, Asciidoctor::ShowHelpIncludeProcessor,
-                 Asciidoctor::ShowEnvironmentIncludeProcessor]
-
       grafana = ::Grafana::Grafana.new(config.grafana_host, config.grafana_api_key)
-      demo_report_content = DemoReportWizard.new(classes).build(grafana)
+      demo_report_content = DemoReportWizard.new(config.report_class.demo_report_classes).build(grafana)
 
       begin
         File.write(demo_report_file, demo_report_content, mode: 'w')

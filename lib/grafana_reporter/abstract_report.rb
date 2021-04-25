@@ -138,6 +138,13 @@ module GrafanaReporter
       raise NotImplementedError
     end
 
+    # @abstract
+    # Provided class objects need to implement a method +build_demo_entry(panel)+.
+    # @return [Array<Class>] array of class objects, which shall be included in a demo report
+    def self.demo_report_classes
+      raise NotImplementedError
+    end
+
     private
 
     def done!
