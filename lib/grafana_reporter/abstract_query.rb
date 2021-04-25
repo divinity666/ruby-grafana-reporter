@@ -71,7 +71,7 @@ module GrafanaReporter
     # @param name [String] name of the variable to set
     # @param variable [Grafana::Variable] variable from which the {Grafana::Variable#raw_value} will be assigned to the query variables
     def assign_variable(name, variable)
-      raise GrafanaReporterError, "Unsupported variable given for assignment (name: '#{name}', value: '#{value}')" unless variable.is_a?(Grafana::Variable)
+      raise GrafanaReporterError, "Provided variable is not of type Grafana::Variable (name: '#{name}', value: '#{value}')" unless variable.is_a?(Grafana::Variable)
 
       @variables[name] ||= variable
       @variables[name].raw_value = variable.raw_value
