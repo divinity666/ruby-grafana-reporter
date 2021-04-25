@@ -9,10 +9,10 @@ module GrafanaReporter
   end
 
   # Raised if a datasource shall be queried, which is not (yet) supported by the reporter
-  # TODO: show also unsupported datasource type
   class DatasourceNotSupportedError < GrafanaReporterError
     def initialize(ds, query)
-      super("The datasource '#{ds.name}' is currently not supported for the query type '#{query}'.")
+      super("The datasource '#{ds.name}' is of type '#{ds.type}' which is currently not supported for "\
+            "the query type '#{query}'.")
     end
   end
 
