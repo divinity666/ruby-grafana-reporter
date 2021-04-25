@@ -48,6 +48,8 @@ module GrafanaReporter
       results = {}
 
       dashboard.panels.shuffle.each do |panel|
+        next if panel.datasource.is_a?(Grafana::UnsupportedDatasource)
+
         query_classes.each do |query_class|
           unless query_class.public_instance_methods.include?(:build_demo_entry)
             results[query_class] = "Method 'build_demo_entry' not implemented for #{query_class.name}"
@@ -57,6 +59,11 @@ module GrafanaReporter
           begin
             result = query_class.new.build_demo_entry(panel)
             results[query_class] = result if result
+          rescue Grafana::DatasourceDoesNotExistError
+            # properly catch DatasourceDoesNotExist errors here, as they don't lead to a real issue
+            # during demo report creation
+            # This may e.g. happen if a panel asks e.g. for datasource '-- Dashboard --' which is
+            # currently not allowed
           rescue StandardError => e
             puts "#{e.message}\n#{e.backtrace.join("\n")}"
           end
