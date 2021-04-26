@@ -145,12 +145,9 @@ module GrafanaReporter
 
       # @see AbstractReport#demo_report_classes
       def self.demo_report_classes
-        [Asciidoctor::AlertsTableIncludeProcessor, Asciidoctor::AnnotationsTableIncludeProcessor,
-         Asciidoctor::PanelImageBlockMacro, Asciidoctor::PanelImageInlineMacro,
-         Asciidoctor::PanelPropertyInlineMacro, Asciidoctor::PanelQueryTableIncludeProcessor,
-         Asciidoctor::PanelQueryValueInlineMacro, Asciidoctor::SqlTableIncludeProcessor,
-         Asciidoctor::SqlValueInlineMacro, Asciidoctor::ShowHelpIncludeProcessor,
-         Asciidoctor::ShowEnvironmentIncludeProcessor]
+        [AlertsTableIncludeProcessor, AnnotationsTableIncludeProcessor, PanelImageBlockMacro, PanelImageInlineMacro,
+         PanelPropertyInlineMacro, PanelQueryTableIncludeProcessor, PanelQueryValueInlineMacro,
+         SqlTableIncludeProcessor, SqlValueInlineMacro, ShowHelpIncludeProcessor, ShowEnvironmentIncludeProcessor]
       end
 
       private
