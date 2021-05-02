@@ -33,9 +33,9 @@ as a detailed reference):
   * single values to be integrated in text, based on grafana panel queries or custom
 database queries
 * Multi purpose use of the reporter
-  * webservice to be called directly from grafana - it also runs without further
-dependencies in the standard asciidoctor docker container!
+  * webservice to be called directly from grafana
   * standalone command line tool, e.g. to be automated with cron or bash scrips
+  * seemlessly runs from asciidocotor docker container without further dependencies
 * Comes with a complete configuration wizard, including functionality to build a
 demo report on top of the configured grafana host
 * Supports all SQL based datasources, as well as graphite and prometheus
@@ -44,12 +44,12 @@ demo report on top of the configured grafana host
 
 Functionalities are provided as shown here:
 
-Database | Image rendering | Panel-based rendering | Raw query-based rendering
------------------------ | :-------: | :-----------: | :------------:
-all SQL based databases | supported | supported     | supported
-Graphite                | supported | supported     | supported
-Prometheus              | supported | supported     | supported
-other databases         | supported | not-supported | not-supported
+Database | Image rendering | Panel-based rendering | Query-based rendering
+------------------------ | :-------: | :-----------: | :------------:
+all SQL based datasource | supported | supported     | supported
+Graphite                 | supported | supported     | supported
+Prometheus               | supported | supported     | supported
+other datasources        | supported | not-supported | not-supported
 
 ## Quick Start
 
