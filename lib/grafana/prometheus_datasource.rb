@@ -3,6 +3,12 @@
 module Grafana
   # Implements the interface to Prometheus datasources.
   class PrometheusDatasource < AbstractDatasource
+    # @see AbstractDatasource#handles?
+    def self.handles?(model)
+      tmp = self.new(model)
+      return tmp.type == 'prometheus'
+    end
+
     # +:raw_query+ needs to contain a Prometheus query as String
     # @see AbstractDatasource#request
     def request(query_description)
