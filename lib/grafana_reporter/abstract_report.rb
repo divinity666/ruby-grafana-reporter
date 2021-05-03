@@ -35,24 +35,14 @@ module GrafanaReporter
     attr_reader :done
 
     # @param config [Configuration] configuration object
-    # @param template [String] path to the template to be used, trailing +.adoc+ extension may be omitted
-    # @param destination_file_or_path [String or File] path to the destination report or file object to use
-    # @param custom_attributes [Hash] custom attributes, which shall be merged with priority over the configuration
-    def initialize(config, template, destination_file_or_path = nil, custom_attributes = {})
+    def initialize(config)
       @config = config
       @logger = Logger::TwoWayDelegateLogger.new
       @logger.additional_logger = @config.logger
       @done = false
-      @template = template
-      @destination_file_or_path = destination_file_or_path
-      @custom_attributes = custom_attributes
       @start_time = nil
       @end_time = nil
       @cancel = false
-
-      # automatically add extension, if a file with adoc extension exists
-      @template = "#{@template}.adoc" if File.file?("#{@template}.adoc") && !File.file?(@template.to_s)
-      raise MissingTemplateError, @template.to_s unless File.file?(@template.to_s)
     end
 
     # Registers a new event listener object.
@@ -125,8 +115,19 @@ module GrafanaReporter
     end
 
     # Is being called to start the report generation.
+    # @param template [String] path to the template to be used, trailing +.adoc+ extension may be omitted
+    # @param destination_file_or_path [String or File] path to the destination report or file object to use
+    # @param custom_attributes [Hash] custom attributes, which shall be merged with priority over the configuration
     # @return [void]
-    def create_report
+    def create_report(template, destination_file_or_path = nil, custom_attributes = {})
+      @template = template
+      @destination_file_or_path = destination_file_or_path
+      @custom_attributes = custom_attributes
+
+      # automatically add extension, if a file with adoc extension exists
+      @template = "#{@template}.adoc" if File.file?("#{@template}.adoc") && !File.file?(@template.to_s)
+      raise MissingTemplateError, @template.to_s unless File.file?(@template.to_s)
+
       notify(:on_before_create)
       @start_time = Time.new
       logger.info("Report started at #{@start_time}")
@@ -148,9 +149,12 @@ module GrafanaReporter
     private
 
     def done!
+      return if @done
+
       @done = true
       @end_time = Time.new
-      logger.info("Report creation ended after #{@end_time - @start_time} seconds with status '#{status}'")
+      @start_time = @end_time unless @start_time
+      logger.info("Report creation ended after #{@end_time.to_i - @start_time.to_i} seconds with status '#{status}'")
       notify(:on_after_finish)
     end
 

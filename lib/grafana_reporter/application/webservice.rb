@@ -83,9 +83,6 @@ module GrafanaReporter
           rescue WebserviceUnknownPathError => e
             @logger.debug(e.message)
             socket.write http_response(404, '', e.message)
-          rescue MissingTemplateError => e
-            @logger.error(e.message)
-            socket.write http_response(400, 'Bad Request', e.message)
           rescue WebserviceGeneralRenderingError => e
             @logger.fatal(e.message)
             socket.write http_response(400, 'Bad Request', e.message)
@@ -214,9 +211,9 @@ module GrafanaReporter
           @logger.debug("File permissions could not be set for #{file.path}: #{e.message}")
         end
 
-        report = @config.report_class.new(@config, template_file, file, attrs)
+        report = @config.report_class.new(@config)
         Thread.new do
-          report.create_report
+          report.create_report(template_file, file, attrs)
         end
         @reports << report
 

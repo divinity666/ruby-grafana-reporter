@@ -5,7 +5,7 @@ describe PanelImageBlockMacro do
     config = Configuration.new
     config.logger.level = ::Logger::Severity::WARN
     config.config = { 'grafana' => { 'default' => { 'host' => STUBS[:url], 'api_key' => STUBS[:key_admin] } } }
-    report = Report.new(config, './spec/tests/demo_report.adoc')
+    report = Report.new(config)
     Asciidoctor::Extensions.unregister_all
     Asciidoctor::Extensions.register do
       block_macro PanelImageBlockMacro.new.current_report(report)
@@ -35,7 +35,7 @@ describe PanelImageInlineMacro do
     config = Configuration.new
     config.config = { 'grafana' => { 'default' => { 'host' => STUBS[:url], 'api_key' => STUBS[:key_admin] } } }
     config.logger.level = ::Logger::Severity::WARN
-    report = Report.new(config, './spec/tests/demo_report.adoc')
+    report = Report.new(config)
     Asciidoctor::Extensions.unregister_all
     Asciidoctor::Extensions.register do
       inline_macro PanelImageInlineMacro.new.current_report(report)

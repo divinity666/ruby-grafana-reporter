@@ -6,8 +6,8 @@ module GrafanaReporter
     # Implementation of a specific {AbstractReport}. It is used to
     # build reports specifically for asciidoctor results.
     class Report < ::GrafanaReporter::AbstractReport
-      # (see AbstractReport#initialize)
-      def initialize(config, template, destination_file_or_path = nil, custom_attributes = {})
+      # @see AbstractReport#initialize
+      def initialize(config)
         super
         @current_pos = 0
         @image_files = []
@@ -17,8 +17,7 @@ module GrafanaReporter
       # Starts to create an asciidoctor report. It utilizes all extensions in the {GrafanaReporter::Asciidoctor}
       # namespace to realize the conversion.
       # @see AbstractReport#create_report
-      # @return [void]
-      def create_report
+      def create_report(template, destination_file_or_path = nil, custom_attributes = {})
         super
         attrs = { 'convert-backend' => 'pdf' }.merge(@config.default_document_attributes.merge(@custom_attributes))
         attrs['grafana-report-timestamp'] = @start_time.to_s
@@ -87,17 +86,23 @@ module GrafanaReporter
         end
 
         clean_image_files
+      rescue MissingTemplateError => e
+        @logger.error(e.message)
+        @error = [e.message]
         done!
+        raise e
       rescue StandardError => e
         # catch all errors during execution
         died_with_error(e)
         raise e
+      ensure
+        done!
       end
 
       # @see AbstractReport#progress
       # @return [Float] number between 0 and 1 reflecting the current progress.
       def progress
-        return 0 if @total_steps.to_i.zero?
+        return @current_pos.to_i if @total_steps.to_i.zero?
 
         @current_pos.to_f / @total_steps
       end

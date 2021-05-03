@@ -1,7 +1,7 @@
 include GrafanaReporter
 
 describe AbstractReport do
-  subject { AbstractReport.new(Configuration.new, './spec/tests/demo_report.adoc') }
+  subject { AbstractReport.new(Configuration.new) }
 
   it 'has abstract methods' do
     expect { subject.progress }.to raise_error(NotImplementedError)

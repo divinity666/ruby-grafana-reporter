@@ -5,7 +5,7 @@ describe AnnotationsTableIncludeProcessor do
     config = Configuration.new
     config.logger.level = ::Logger::Severity::WARN
     config.config = { 'grafana' => { 'default' => { 'host' => STUBS[:url], 'api_key' => STUBS[:key_admin] } } }
-    report = Report.new(config, './spec/tests/demo_report.adoc')
+    report = Report.new(config)
     Asciidoctor::Extensions.unregister_all
     Asciidoctor::Extensions.register do
       include_processor AnnotationsTableIncludeProcessor.new.current_report(report)

@@ -13,6 +13,10 @@ module GrafanaReporter
   class Configuration
     # @return [AbstractReport] specific report class, which should be used.
     attr_accessor :report_class
+    attr_accessor :logger
+
+    # Default file name for grafana reporter configuration file
+    DEFAULT_CONFIG_FILE_NAME = 'grafana_reporter.config'
 
     # Returned by {#mode} if only a connection test shall be executed.
     MODE_CONNECTION_TEST = 'test'
@@ -30,7 +34,16 @@ module GrafanaReporter
       @logger = ::Logger.new($stderr, level: :info)
     end
 
-    attr_accessor :logger
+    # Reads a given configuration file.
+    # @param config_file [String] path to configuration file, defaults to DEFAULT_CONFIG_FILE_NAME
+    # @return [Hash] configuration hash to be set as {Configuration#config}
+    def load_config_from_file(config_file = nil)
+      config_file ||= DEFAULT_CONFIG_FILE_NAME
+      self.config = YAML.load_file(config_file)
+
+    rescue StandardError => e
+      raise ConfigurationError, "Could not read config file '#{config_file}' (Error: #{e.message})"
+    end
 
     # Used to overwrite the current configuration.
     def config=(new_config)

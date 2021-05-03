@@ -104,6 +104,7 @@ describe Application do
     end
 
     it 'does not raise error on non existing template' do
+      expect(subject.config.logger).to receive(:error).with(/is not a valid template/)
       expect { subject.configure_and_run(['-c', './spec/tests/demo_config.txt', '-t', 'does_not_exist']) }.to output(/report template .* is not a valid template/).to_stdout
     end
   end
@@ -252,11 +253,9 @@ default-document-attributes:
     it 'returns error on render without proper template' do
       expect(@app.config.logger).to receive(:error).with(/is not a valid template\./)
       res = Net::HTTP.get(URI('http://localhost:8033/render'))
-      expect(res).to include("is not a valid template.")
 
       expect(@app.config.logger).to receive(:error).with(/is not a valid template\./)
       res = Net::HTTP.get(URI('http://localhost:8033/render?var-template=does_not_exist'))
-      expect(res).to include("is not a valid template.")
     end
   end
 end

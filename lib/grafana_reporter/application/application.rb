@@ -13,8 +13,6 @@ module GrafanaReporter
     # It can be run to test the grafana connection, render a single template
     # or run as a service.
     class Application
-      # Default file name for grafana reporter configuration file
-      CONFIG_FILE = 'grafana_reporter.config'
 
       # Contains the {Configuration} object of the application.
       attr_accessor :config
@@ -32,7 +30,7 @@ module GrafanaReporter
       # @param params [Array<String>] command line parameters, mainly ARGV can be used.
       # @return [Integer] 0 if everything is fine, -1 if execution aborted.
       def configure_and_run(params = [])
-        config_file = CONFIG_FILE
+        config_file = Configuration::DEFAULT_CONFIG_FILE_NAME
         tmp_config = Configuration.new
         action_wizard = false
 
@@ -44,7 +42,7 @@ module GrafanaReporter
                         end
 
           opts.on('-c', '--config CONFIG_FILE_NAME', 'Specify custom configuration file,'\
-                  " instead of #{CONFIG_FILE}.") do |file_name|
+                  " instead of #{Configuration::DEFAULT_CONFIG_FILE_NAME}.") do |file_name|
             config_file = file_name
           end
 
@@ -112,16 +110,8 @@ module GrafanaReporter
           return -1
         end
 
-        # read config file
-        config_hash = nil
-        begin
-          config_hash = YAML.load_file(config_file)
-        rescue StandardError => e
-          raise ConfigurationError, "Could not read config file '#{config_file}' (Error: #{e.message})"
-        end
-
         # merge command line configuration with read config file
-        @config.config = config_hash
+        @config.load_config_from_file(config_file)
         @config.merge!(tmp_config)
 
         run
@@ -146,7 +136,7 @@ module GrafanaReporter
 
         when Configuration::MODE_SINGLE_RENDER
           begin
-            config.report_class.new(config, config.template, config.to_file).create_report
+            config.report_class.new(config).create_report(config.template, config.to_file)
           rescue StandardError => e
             puts "#{e.message}\n#{e.backtrace.join("\n")}"
           end
