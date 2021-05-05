@@ -109,6 +109,30 @@ describe Application do
     end
   end
 
+  context 'custom plugins' do
+    subject { GrafanaReporter::Application::Application.new }
+
+    before do
+      File.delete('./result.pdf') if File.exist?('./result.pdf')
+    end
+
+    after do
+      # remove temporary added plugin from respective places, so that other test cases run
+      # as if that would have never happened
+      expect(Object.constants.include?(:MyUnknownDatasource)).to be true
+      AbstractDatasource.class_eval('@@subclasses -= [MyUnknownDatasource]')
+      Object.send(:remove_const, :MyUnknownDatasource)
+      Object.send(:const_set, :MyUnknownDatasource, Class.new)
+    end
+
+    it 'can register and apply custom plugins' do
+      expect { subject.configure_and_run(['-c', './spec/tests/demo_config.txt', '-t', 'spec/tests/custom_demo_report', '-o', './result.pdf']) }.to output(/ERROR/).to_stderr
+      expect(subject.config.logger).not_to receive(:error)
+      expect { subject.configure_and_run(['-c', './spec/tests/demo_config.txt', '-t', 'spec/tests/custom_demo_report', '-o', './result.pdf', '-r', './spec/tests/custom_plugin']) }.not_to output(/ERROR/).to_stderr
+      expect(Object.constants.include?(:MyUnknownDatasource)).to be true
+    end
+  end
+
   context 'webserver' do
     before(:context) do
       WebMock.disable_net_connect!(allow: ['http://localhost:8033'])

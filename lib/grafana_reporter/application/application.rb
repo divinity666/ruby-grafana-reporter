@@ -46,6 +46,10 @@ module GrafanaReporter
             config_file = file_name
           end
 
+          opts.on('-r', '--register FILE', 'Register a custom plugin, e.g. your own Datasource implementation') do |plugin|
+            require plugin
+          end
+
           opts.on('-d', '--debug LEVEL', 'Specify detail level: FATAL, ERROR, WARN, INFO, DEBUG.') do |level|
             tmp_config.set_param('grafana-reporter:debug-level', level)
           end
