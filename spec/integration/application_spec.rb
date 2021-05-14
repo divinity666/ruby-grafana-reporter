@@ -133,6 +133,28 @@ describe Application do
     end
   end
 
+  context 'ERB templating' do
+    subject { GrafanaReporter::Application::Application.new }
+
+    before do
+      File.delete('./result.txt') if File.exist?('./result.txt')
+      allow(subject.config.logger).to receive(:debug)
+      allow(subject.config.logger).to receive(:info)
+      allow(subject.config.logger).to receive(:warn)
+    end
+
+    after do
+      File.delete('./result.txt') if File.exist?('./result.txt')
+    end
+
+    it 'can single render a template with extension' do
+      expect(subject.config.logger).not_to receive(:error)
+      expect { subject.configure_and_run(['-c', './spec/tests/erb.config', '-t', 'spec/tests/erb.template', '-o', './result.txt', '-d', 'ERROR']) }.not_to output(/ERROR/).to_stderr
+      expect(File.exist?('./result.txt')).to be true
+      expect(File.read('./result.txt')).to include('This is a test 1594308060000.')
+    end
+  end
+
   context 'webserver' do
     before(:context) do
       WebMock.disable_net_connect!(allow: ['http://localhost:8033'])

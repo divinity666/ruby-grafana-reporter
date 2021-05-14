@@ -24,6 +24,7 @@ folders = [
   %w[grafana_reporter],
   %w[grafana_reporter asciidoctor extensions],
   %w[grafana_reporter asciidoctor],
+  %w[grafana_reporter erb],
   %w[grafana_reporter application]
 ]
 folders.each { |folder| Dir[File.join(__dir__, *folder, '*.rb')].sort.each { |file| require_relative file } }

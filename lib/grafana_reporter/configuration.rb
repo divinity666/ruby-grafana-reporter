@@ -1,6 +1,4 @@
 # frozen_string_literal: true
-# TODO: ensure that all grafana reporter are initialized prior to this class
-require_relative 'erb/report'
 
 # In this namespace all objects needed for the grafana reporter are collected.
 module GrafanaReporter
