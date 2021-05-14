@@ -60,6 +60,11 @@ describe PanelQueryValueInlineMacro do
     expect(Asciidoctor.convert("grafana_panel_query_value:#{STUBS[:panel_sql][:id]}[query=\"#{STUBS[:panel_sql][:letter]}\",dashboard=\"#{STUBS[:dashboard]}\",format=\",%.2f\",filter_columns=\"time_sec\"]", to_file: false)).to include('<p>43.90')
   end
 
+  it 'can filter columns and handle wront format definitions' do
+    expect(@report.logger).to receive(:error).with('invalid format character - %').at_least(:once)
+    expect(Asciidoctor.convert("grafana_panel_query_value:#{STUBS[:panel_sql][:id]}[query=\"#{STUBS[:panel_sql][:letter]}\",dashboard=\"#{STUBS[:dashboard]}\",format=\",%2%2f\",filter_columns=\"time_sec\"]", to_file: false)).to include('<p>invalid format character')
+  end
+
   it 'shows fatal error if query is missing' do
     expect(@report.logger).to receive(:fatal).with(/GrafanaError: The specified query '' does not exist in the panel '11' in dashboard.*/)
     expect(Asciidoctor.convert("grafana_panel_query_value:#{STUBS[:panel_sql][:id]}[dashboard=\"#{STUBS[:dashboard]}\",format=\",%.2f\",filter_columns=\"time_sec\"]", to_file: false)).to include('GrafanaError: The specified query \'\' does not exist in the panel \'11\' in dashboard')

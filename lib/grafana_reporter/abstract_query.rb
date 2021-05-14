@@ -124,7 +124,6 @@ module GrafanaReporter
     # @param result [Hash] preformatted sql hash, (see {Grafana::AbstractDatasource#request})
     # @param formats [Grafana::Variable] formats, which shall be applied to the columns in the query result
     # @return [Hash] formatted query result
-    # TODO: make sure that caught errors are also visible in logger
     def format_columns(result, formats)
       return result unless formats
 
@@ -138,6 +137,7 @@ module GrafanaReporter
           begin
             row[i] = format % row[i] if row[i]
           rescue StandardError => e
+            @grafana.logger.error(e.message)
             row[i] = e.message
           end
         end
