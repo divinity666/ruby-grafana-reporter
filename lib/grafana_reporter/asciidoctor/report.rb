@@ -9,7 +9,6 @@ module GrafanaReporter
       # @see AbstractReport#initialize
       def initialize(config)
         super
-        @current_pos = 0
         @image_files = []
       end
 
@@ -97,21 +96,6 @@ module GrafanaReporter
         done!
       end
 
-      # @see AbstractReport#progress
-      # @return [Float] number between 0 and 1 reflecting the current progress.
-      def progress
-        return @current_pos.to_i if @total_steps.to_i.zero?
-
-        @current_pos.to_f / @total_steps
-      end
-
-      # Increments the progress.
-      # @return [Integer] number of the current progress position.
-      def next_step
-        @current_pos += 1
-        @current_pos
-      end
-
       # Called to save a temporary image file. After the final generation of the
       # report, these temporary files will automatically be removed.
       # @param img_data [String] image file raw data, which shall be saved
@@ -125,14 +109,6 @@ module GrafanaReporter
         file.close
 
         path
-      end
-
-      # Called, if the report generation has died with an error.
-      # @param error [StandardError] occured error
-      # @return [void]
-      def died_with_error(error)
-        @error = [error.message] << [error.backtrace]
-        done!
       end
 
       # @see AbstractReport#demo_report_classes

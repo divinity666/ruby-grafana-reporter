@@ -39,11 +39,9 @@ module GrafanaReporter
       @config = config
       @logger = Logger::TwoWayDelegateLogger.new
       @logger.additional_logger = @config.logger
-      @done = false
-      @start_time = nil
-      @end_time = nil
-      @cancel = false
       @grafana_instances = {}
+
+      init_before_create
     end
 
     # Registers a new event listener object.
@@ -132,6 +130,7 @@ module GrafanaReporter
     # @param custom_attributes [Hash] custom attributes, which shall be merged with priority over the configuration
     # @return [void]
     def create_report(template, destination_file_or_path = nil, custom_attributes = {})
+      init_before_create
       @template = template
       @destination_file_or_path = destination_file_or_path
       @custom_attributes = custom_attributes
@@ -145,10 +144,20 @@ module GrafanaReporter
       logger.info("Report started at #{@start_time}")
     end
 
-    # @abstract
+    # Used to calculate the progress of a report. By default expects +@total_steps+ to contain the total
+    # number of steps, which will be processed with each call of {#next_step}.
     # @return [Integer] number between 0 and 100, representing the current progress of the report creation.
     def progress
-      raise NotImplementedError
+      return @current_pos.to_i if @total_steps.to_i.zero?
+
+      @current_pos.to_f / @total_steps
+    end
+
+    # Increments the progress.
+    # @return [Integer] number of the current progress position.
+    def next_step
+      @current_pos += 1
+      @current_pos
     end
 
     # @abstract
@@ -159,6 +168,22 @@ module GrafanaReporter
     end
 
     private
+
+    # Called, if the report generation has died with an error.
+    # @param error [StandardError] occured error
+    # @return [void]
+    def died_with_error(error)
+      @error = [error.message] << [error.backtrace]
+      done!
+    end
+
+    def init_before_create
+      @done = false
+      @start_time = nil
+      @end_time = nil
+      @cancel = false
+      @current_pos = 0
+    end
 
     def done!
       return if @done
