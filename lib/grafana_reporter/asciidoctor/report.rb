@@ -11,7 +11,6 @@ module GrafanaReporter
         super
         @current_pos = 0
         @image_files = []
-        @grafana_instances = {}
       end
 
       # Starts to create an asciidoctor report. It utilizes all extensions in the {GrafanaReporter::Asciidoctor}
@@ -104,17 +103,6 @@ module GrafanaReporter
         return @current_pos.to_i if @total_steps.to_i.zero?
 
         @current_pos.to_f / @total_steps
-      end
-
-      # @param instance [String] requested grafana instance
-      # @return [Grafana::Grafana] the requested grafana instance.
-      def grafana(instance)
-        unless @grafana_instances[instance]
-          @grafana_instances[instance] = ::Grafana::Grafana.new(@config.grafana_host(instance),
-                                                                @config.grafana_api_key(instance),
-                                                                logger: @logger)
-        end
-        @grafana_instances[instance]
       end
 
       # Increments the progress.

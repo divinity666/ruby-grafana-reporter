@@ -43,6 +43,7 @@ module GrafanaReporter
       @start_time = nil
       @end_time = nil
       @cancel = false
+      @grafana_instances = {}
     end
 
     # Registers a new event listener object.
@@ -57,6 +58,17 @@ module GrafanaReporter
     def self.clear_event_listeners
       @@event_listeners = {}
       @@event_listeners.default = []
+    end
+
+    # @param instance [String] requested grafana instance
+    # @return [Grafana::Grafana] the requested grafana instance.
+    def grafana(instance)
+      unless @grafana_instances[instance]
+        @grafana_instances[instance] = ::Grafana::Grafana.new(@config.grafana_host(instance),
+                                                              @config.grafana_api_key(instance),
+                                                              logger: @logger)
+      end
+      @grafana_instances[instance]
     end
 
     # Call to request cancelling the report generation.
