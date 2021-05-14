@@ -42,7 +42,7 @@ module GrafanaReporter
       # @return [void]
       def assign_doc_and_item_variables(query, document_hash, item_hash)
         sel_doc_items = document_hash.select do |k, _v|
-          k =~ /^var-/ || k == 'grafana-report-timestamp' || k =~ /grafana_default_(?:from|to)_timezone/
+          k =~ /^var-/ || k == 'localdatetime' || k =~ /grafana_default_(?:from|to)_timezone/
         end
         sel_doc_items.each { |k, v| query.assign_variable(k, ::Grafana::Variable.new(v)) }
 

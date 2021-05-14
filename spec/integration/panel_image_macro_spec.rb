@@ -50,8 +50,7 @@ describe PanelImageInlineMacro do
 
   it 'cleans up created temporary files' do
     expect(@report.logger).not_to receive(:error)
-    ts = Time.now.to_s
-    result = Asciidoctor.convert("grafana_panel_image:#{STUBS[:panel_sql][:id]}[dashboard=\"#{STUBS[:dashboard]}\"]", to_file: false, attributes: { 'grafana-report-timestamp' => ts })
+    result = Asciidoctor.convert("grafana_panel_image:#{STUBS[:panel_sql][:id]}[dashboard=\"#{STUBS[:dashboard]}\"]", to_file: false)
     tmp_file = result.to_s.gsub(/.*img src="([^"]+)".*/m, '\1')
 # TODO: ensure that the file existed before
     expect(File.exist?("./spec/templates/images/#{tmp_file}")).to be false

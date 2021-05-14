@@ -20,7 +20,6 @@ module GrafanaReporter
       def create_report(template, destination_file_or_path = nil, custom_attributes = {})
         super
         attrs = { 'convert-backend' => 'pdf' }.merge(@config.default_document_attributes.merge(@custom_attributes))
-        attrs['grafana-report-timestamp'] = @start_time.to_s
         logger.debug("Document attributes: #{attrs}")
 
         initialize_step_counter

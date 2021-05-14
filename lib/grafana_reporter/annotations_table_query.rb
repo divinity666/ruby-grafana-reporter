@@ -18,9 +18,9 @@ module GrafanaReporter
     def pre_process
       raise MissingMandatoryAttributeError, 'columns' unless @raw_query['columns']
 
-      @from = translate_date(@from, @variables['grafana-report-timestamp'], false, @variables['from_timezone'] ||
+      @from = translate_date(@from, @variables['localdatetime'], false, @variables['from_timezone'] ||
                              @variables['grafana_default_from_timezone'])
-      @to = translate_date(@to, @variables['grafana-report-timestamp'], true, @variables['to_timezone'] ||
+      @to = translate_date(@to, @variables['localdatetime'], true, @variables['to_timezone'] ||
                            @variables['grafana_default_to_timezone'])
       @datasource = Grafana::GrafanaAnnotationsDatasource.new(nil)
     end
