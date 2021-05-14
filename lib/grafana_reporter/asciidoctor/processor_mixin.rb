@@ -42,9 +42,10 @@ module GrafanaReporter
       # @return [void]
       def assign_doc_and_item_variables(query, document_hash, item_hash)
         sel_doc_items = document_hash.select do |k, _v|
-          k =~ /^var-/ || k == 'localdatetime' || k =~ /grafana_default_(?:from|to)_timezone/
+          k =~ /^var-/ || k =~ /grafana_default_(?:from|to)_timezone/
         end
         sel_doc_items.each { |k, v| query.assign_variable(k, ::Grafana::Variable.new(v)) }
+        query.assign_variable('grafana_report_timestamp', ::Grafana::Variable.new(document_hash['localdatetime']))
 
         sel_items = item_hash.select do |k, _v|
           # TODO: specify accepted options in each class or check if simply all can be allowed with prefix +var-+

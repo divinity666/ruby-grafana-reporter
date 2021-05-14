@@ -5,9 +5,9 @@ module GrafanaReporter
   class PanelImageQuery < AbstractQuery
     # Sets the proper render variables.
     def pre_process
-      @from = translate_date(@from, @variables['localdatetime'], false, @variables['from_timezone'] ||
+      @from = translate_date(@from, @variables['grafana_report_timestamp'], false, @variables['from_timezone'] ||
                              @variables['grafana_default_from_timezone'])
-      @to = translate_date(@to, @variables['localdatetime'], true, @variables['to_timezone'] ||
+      @to = translate_date(@to, @variables['grafana_report_timestamp'], true, @variables['to_timezone'] ||
                            @variables['grafana_default_to_timezone'])
       # TODO: ensure that in case of timezones are specified, that they are also forwarded to the image renderer
       # rename "render-" variables
