@@ -9,6 +9,8 @@
 module Grafana
   # Main class for handling the interaction with one specific Grafana instance.
   class Grafana
+    attr_reader :logger
+
     # @param base_uri [String] full URI pointing to the specific grafana instance without
     #   trailing slash, e.g. +https://localhost:3000+.
     # @param key [String] API key for the grafana instance, if required
