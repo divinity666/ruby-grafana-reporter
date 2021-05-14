@@ -256,7 +256,8 @@ module GrafanaReporter
     # @param timezone [Grafana::Variable] timezone to use, if not system timezone
     # @return [String] translated date as timestamp string
     def translate_date(orig_date, report_time, is_to_time, timezone = nil)
-      report_time ||= Variable.new(Time.now.to_s)
+      # TODO: add test case for creation of variable, if not given, maybe also print a warning
+      report_time ||= ::Grafana::Variable.new(Time.now.to_s)
       return (DateTime.parse(report_time.raw_value).to_time.to_i * 1000).to_s unless orig_date
       return orig_date if orig_date =~ /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/
       return orig_date if orig_date =~ /^\d+$/
