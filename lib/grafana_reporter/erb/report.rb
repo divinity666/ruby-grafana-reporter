@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require 'erb'
 
 module GrafanaReporter
@@ -13,8 +14,6 @@ module GrafanaReporter
         super
         attrs = @config.default_document_attributes.merge(@custom_attributes)
         logger.debug("Document attributes: #{attrs}")
-
-        initialize_step_counter
 
         # TODO: if path is true, a default filename has to be generated. check if this should be a general function instead
         @report = self
@@ -38,13 +37,6 @@ module GrafanaReporter
       # @see AbstractReport#demo_report_classes
       def self.demo_report_classes
         []
-      end
-
-      private
-
-      def initialize_step_counter
-        @total_steps = 0
-        # TODO: implement initialize_step_counter
       end
     end
   end
