@@ -40,7 +40,6 @@ module GrafanaReporter
     def load_config_from_file(config_file = nil)
       config_file ||= DEFAULT_CONFIG_FILE_NAME
       self.config = YAML.load_file(config_file)
-
     rescue StandardError => e
       raise ConfigurationError, "Could not read config file '#{config_file}' (Error: #{e.message})"
     end

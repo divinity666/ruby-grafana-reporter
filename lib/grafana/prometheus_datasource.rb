@@ -5,8 +5,8 @@ module Grafana
   class PrometheusDatasource < AbstractDatasource
     # @see AbstractDatasource#handles?
     def self.handles?(model)
-      tmp = self.new(model)
-      return tmp.type == 'prometheus'
+      tmp = new(model)
+      tmp.type == 'prometheus'
     end
 
     # +:raw_query+ needs to contain a Prometheus query as String

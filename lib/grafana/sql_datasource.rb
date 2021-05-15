@@ -5,8 +5,8 @@ module Grafana
   class SqlDatasource < AbstractDatasource
     # @see AbstractDatasource#handles?
     def self.handles?(model)
-      tmp = self.new(model)
-      return tmp.category == 'sql'
+      tmp = new(model)
+      tmp.category == 'sql'
     end
 
     # +:raw_query+ needs to contain a SQL query as String in the respective database dialect

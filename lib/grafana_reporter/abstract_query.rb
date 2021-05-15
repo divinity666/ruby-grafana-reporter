@@ -32,8 +32,8 @@ module GrafanaReporter
       return @result unless @result.nil?
 
       pre_process
-
       raise DatasourceNotSupportedError.new(@datasource, self) if @datasource.is_a?(Grafana::UnsupportedDatasource)
+
       @result = @datasource.request(from: @from, to: @to, raw_query: raw_query, variables: grafana_variables,
                                     prepared_request: @grafana.prepare_request, timeout: timeout)
       post_process

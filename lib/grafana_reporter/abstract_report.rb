@@ -190,7 +190,7 @@ module GrafanaReporter
 
       @done = true
       @end_time = Time.new
-      @start_time = @end_time unless @start_time
+      @start_time ||= @end_time
       logger.info("Report creation ended after #{@end_time.to_i - @start_time.to_i} seconds with status '#{status}'")
       notify(:on_after_finish)
     end

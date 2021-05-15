@@ -7,7 +7,7 @@ module GrafanaReporter
     # in conjunction with the standard asciidoctor docker container.
     class Webservice
       # Array of possible webservice running states
-      STATUS = [:stopped, :running, :stopping]
+      STATUS = %I[stopped running stopping].freeze
 
       def initialize
         @reports = []
