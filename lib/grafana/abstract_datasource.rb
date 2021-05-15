@@ -20,7 +20,7 @@ module Grafana
     # can handle the given grafana model. By default this method returns false.
     # @param model [Hash] grafana specification of the datasource to check
     # @return [Boolean] True if fits, false otherwise
-    def self.handles?(model)
+    def self.handles?(_model)
       false
     end
 
@@ -29,6 +29,7 @@ module Grafana
     # @return [AbstractDatasource] instance of a fitting datasource implementation
     def self.build_instance(ds_model)
       raise InvalidDatasourceQueryProvidedError, ds_model unless ds_model.is_a?(Hash)
+
       raise InvalidDatasourceQueryProvidedError, ds_model unless ds_model['meta'].is_a?(Hash)
 
       @@subclasses.each do |datasource_class|
