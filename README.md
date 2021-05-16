@@ -24,38 +24,38 @@ home's energy usage. That's how it started.
 
 ## Features
 
-* Build PDF reports based on [grafana](https://github.com/grafana/grafana) dashboards
-(other formats supported)
-* Include dynamic content from grafana (see [function documentation](FUNCTION_CALLS.md)
-as a detailed reference):
+* Build reports based on [grafana](https://github.com/grafana/grafana) dashboards, PDF
+(default) and many other formats supported
+* Easy-to-use configuration wizard, including fully automated functionality to create a
+demo report
+* Include dynamic content from grafana (find here a reference for all
+[asciidcotor reporter calls](FUNCTION_CALLS.md)):
   * panels as images
   * tables based on grafana panel queries or custom database queries (no images!)
   * single values to be integrated in text, based on grafana panel queries or custom
 database queries
 * Multi purpose use of the reporter
   * webservice to be called directly from grafana
-  * standalone command line tool, e.g. to be automated with cron or bash scrips
+  * standalone command line tool, e.g. to be automated with `cron` or `bash` scrips
   * seemlessly runs from asciidocotor docker container without further dependencies
-* Comes with a complete configuration wizard, including functionality to build a
-demo report on top of the configured grafana host
-* Supports all SQL based datasources, as well as graphite and prometheus
+* Webhook callbacks before, on cancel and on finishing callbacks (see configuration file)
 * Solid as a rock, also in case of template errors and whatever else may happen
 * Full [API documentation](https://rubydoc.info/gems/ruby-grafana-reporter) available
 
 Functionalities are provided as shown here:
 
 Database | Image rendering | Panel-based rendering | Query-based rendering
------------------------- | :-------: | :-----------: | :------------:
-all SQL based datasource | supported | supported     | supported
-Graphite                 | supported | supported     | supported
-Prometheus               | supported | supported     | supported
-other datasources        | supported | not-supported | not-supported
+------------------------- | :-------: | :-----------: | :------------:
+all SQL based datasources | supported | supported     | supported
+Graphite                  | supported | supported     | supported
+Prometheus                | supported | supported     | supported
+other datasources         | supported | not-supported | not-supported
 
 ## Quick Start
 
 You don't have a grafana setup runnning already? No worries, just configure
 `https://play.grafana.org` in the configuration wizard and see the magic
-happen for that!
+happen!
 
 If your grafana setup requires a login, you'll have to setup an api key for
 the reporter. Please follow the steps
@@ -66,10 +66,6 @@ first.
 
 * [Download latest Windows executable](https://github.com/divinity666/ruby-grafana-reporter/releases/latest)
 * `ruby-grafana-reporter -w`
-
-Known issues:
-* images are currently not included in PDF conversions due to missing support in Prawn gem for windows;
-other target formats do work properly with images
 
 **Raspberry Pi:**
 
@@ -184,6 +180,6 @@ Inspired by [Izak Marai's grafana reporter](https://github.com/IzakMarais/report
 ## Donations
 
 If this project saves you as much time as I hope it does, and if you'd like to
-support my work, feel free donate, even a cup of coffee is appreciated :)
+support my work, feel free donate. :)
 
 [![paypal](https://www.paypalobjects.com/en_US/i/btn/btn_donateCC_LG.gif)](https://www.paypal.com/donate?hosted_button_id=35LH6JNLPHPHQ)
