@@ -102,6 +102,7 @@ module GrafanaReporter
       # @return [String] path to the temporary file.
       def save_image_file(img_data)
         file = Tempfile.new(['gf_image_', '.png'], @config.images_folder.to_s)
+        file.binmode
         file.write(img_data)
         path = file.path.gsub(/#{@config.images_folder}/, '')
 

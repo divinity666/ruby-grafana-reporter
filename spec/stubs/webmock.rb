@@ -117,7 +117,7 @@ RSpec.configure do |config|
         'Authorization' => "Bearer #{STUBS[:key_admin]}"
       })
     )
-    .to_return(status: 200, body: File.read('./spec/tests/sample_image.png'), headers: {})
+    .to_return(status: 200, body: File.read('./spec/tests/sample_image.png', File.size('./spec/tests/sample_image.png')), headers: {})
 
     stub_request(:post, 'http://localhost/api/tsdb/query').with(
       body: %r{.*SELECT   time as time_sec,   value / 10 as Ist FROM istwert_hk1 WHERE \$__unixEpochFilter\(time\) ORDER BY time DESC.*},
