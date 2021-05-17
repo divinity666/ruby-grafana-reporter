@@ -1,6 +1,6 @@
 language: ruby
 rvm:
 - 2.5.5
-- 3.0.0
+- 3.0.1
 before_install:
 - export TZ=Europe/Berlin
