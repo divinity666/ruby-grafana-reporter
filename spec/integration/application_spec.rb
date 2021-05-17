@@ -296,12 +296,24 @@ default-document-attributes:
       expect(res['content-disposition']).to include('.zip')
     end
 
-    it 'returns error on render without proper template' do
-      expect(@app.config.logger).to receive(:error).with(/is not a valid template\./)
-      res = Net::HTTP.get(URI('http://localhost:8033/render'))
+    it 'returns error on render without template' do
+      evt = ReportEventHandler.new
+      AbstractReport.add_event_listener(:on_after_finish, evt)
 
-      expect(@app.config.logger).to receive(:error).with(/is not a valid template\./)
+      expect_any_instance_of(GrafanaReporter::Logger::TwoWayDelegateLogger).to receive(:error).with(/is not a valid template\./)
+      res = Net::HTTP.get(URI('http://localhost:8033/render'))
+      cur_time = Time.new
+      sleep 0.1 while !evt.done? && Time.new - cur_time < 10
+    end
+
+    it 'returns error on render with non existing template' do
+      evt = ReportEventHandler.new
+      AbstractReport.add_event_listener(:on_after_finish, evt)
+
+      expect_any_instance_of(GrafanaReporter::Logger::TwoWayDelegateLogger).to receive(:error).with(/is not a valid template\./)
       res = Net::HTTP.get(URI('http://localhost:8033/render?var-template=does_not_exist'))
+      cur_time = Time.new
+      sleep 0.1 while !evt.done? && Time.new - cur_time < 10
     end
   end
 end
