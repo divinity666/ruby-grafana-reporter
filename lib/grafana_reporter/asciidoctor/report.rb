@@ -6,22 +6,18 @@ module GrafanaReporter
     # Implementation of a specific {AbstractReport}. It is used to
     # build reports specifically for asciidoctor results.
     class Report < ::GrafanaReporter::AbstractReport
-      # (see AbstractReport#initialize)
-      def initialize(config, template, destination_file_or_path = nil, custom_attributes = {})
+      # @see AbstractReport#initialize
+      def initialize(config)
         super
-        @current_pos = 0
         @image_files = []
-        @grafana_instances = {}
       end
 
-      # Starts to create an asciidoctor report. It utilizes all {Extensions} to
-      # realize the conversion.
+      # Starts to create an asciidoctor report. It utilizes all extensions in the {GrafanaReporter::Asciidoctor}
+      # namespace to realize the conversion.
       # @see AbstractReport#create_report
-      # @return [void]
-      def create_report
+      def create_report(template, destination_file_or_path = nil, custom_attributes = {})
         super
         attrs = { 'convert-backend' => 'pdf' }.merge(@config.default_document_attributes.merge(@custom_attributes))
-        attrs['grafana-report-timestamp'] = @start_time.to_s
         logger.debug("Document attributes: #{attrs}")
 
         initialize_step_counter
@@ -87,37 +83,17 @@ module GrafanaReporter
         end
 
         clean_image_files
+      rescue MissingTemplateError => e
+        @logger.error(e.message)
+        @error = [e.message]
         done!
+        raise e
       rescue StandardError => e
         # catch all errors during execution
         died_with_error(e)
         raise e
-      end
-
-      # @see AbstractReport#progress
-      # @return [Float] number between 0 and 1 reflecting the current progress.
-      def progress
-        return 0 if @total_steps.to_i.zero?
-
-        @current_pos.to_f / @total_steps
-      end
-
-      # @param instance [String] requested grafana instance
-      # @return [Grafana::Grafana] the requested grafana instance.
-      def grafana(instance)
-        unless @grafana_instances[instance]
-          @grafana_instances[instance] = ::Grafana::Grafana.new(@config.grafana_host(instance),
-                                                                @config.grafana_api_key(instance),
-                                                                logger: @logger)
-        end
-        @grafana_instances[instance]
-      end
-
-      # Increments the progress.
-      # @return [Integer] number of the current progress position.
-      def next_step
-        @current_pos += 1
-        @current_pos
+      ensure
+        done!
       end
 
       # Called to save a temporary image file. After the final generation of the
@@ -126,6 +102,7 @@ module GrafanaReporter
       # @return [String] path to the temporary file.
       def save_image_file(img_data)
         file = Tempfile.new(['gf_image_', '.png'], @config.images_folder.to_s)
+        file.binmode
         file.write(img_data)
         path = file.path.gsub(/#{@config.images_folder}/, '')
 
@@ -135,12 +112,11 @@ module GrafanaReporter
         path
       end
 
-      # Called, if the report generation has died with an error.
-      # @param error [StandardError] occured error
-      # @return [void]
-      def died_with_error(error)
-        @error = [error.message] << [error.backtrace]
-        done!
+      # @see AbstractReport#demo_report_classes
+      def self.demo_report_classes
+        [AlertsTableIncludeProcessor, AnnotationsTableIncludeProcessor, PanelImageBlockMacro, PanelImageInlineMacro,
+         PanelPropertyInlineMacro, PanelQueryTableIncludeProcessor, PanelQueryValueInlineMacro,
+         SqlTableIncludeProcessor, SqlValueInlineMacro, ShowHelpIncludeProcessor, ShowEnvironmentIncludeProcessor]
       end
 
       private

@@ -3,6 +3,12 @@
 module Grafana
   # Implements the interface to all SQL based datasources (tested with PostgreSQL and MariaDB/MySQL).
   class SqlDatasource < AbstractDatasource
+    # @see AbstractDatasource#handles?
+    def self.handles?(model)
+      tmp = new(model)
+      tmp.category == 'sql'
+    end
+
     # +:raw_query+ needs to contain a SQL query as String in the respective database dialect
     # @see AbstractDatasource#request
     def request(query_description)

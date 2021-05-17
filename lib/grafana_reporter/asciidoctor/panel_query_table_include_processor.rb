@@ -32,11 +32,11 @@ module GrafanaReporter
     #
     # +to+ - 'to' time for the sql query
     #
-    # +format+ - see {QueryMixin#format_columns}
+    # +format+ - see {AbstractQuery#format_columns}
     #
-    # +replace_values+ - see {QueryMixin#replace_values}
+    # +replace_values+ - see {AbstractQuery#replace_values}
     #
-    # +filter_columns+ - see {QueryMixin#filter_columns}
+    # +filter_columns+ - see {AbstractQuery#filter_columns}
     class PanelQueryTableIncludeProcessor < ::Asciidoctor::Extensions::IncludeProcessor
       include ProcessorMixin
 
@@ -60,8 +60,8 @@ module GrafanaReporter
         begin
           panel = @report.grafana(instance).dashboard(dashboard).panel(panel_id)
           query = QueryValueQuery.new(panel)
-          query.set_defaults_from_dashboard(panel.dashboard)
-          query.merge_hash_variables(doc.attributes, attrs)
+          assign_dashboard_defaults(query, panel.dashboard)
+          assign_doc_and_item_variables(query, doc.attributes, attrs)
           @report.logger.debug("from: #{query.from}, to: #{query.to}")
 
           reader.unshift_lines query.execute

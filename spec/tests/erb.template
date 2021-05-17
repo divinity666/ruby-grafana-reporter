@@ -1,0 +1,9 @@
+<%
+dashboard = 'IDBRfjSmz'
+instance = 'default'
+panel = @report.grafana(instance).dashboard(dashboard).panel(11)
+query = QueryValueQuery.new(panel)
+query.assign_variable('result_type', ::Grafana::Variable.new('panel_value'))
+query.assign_variable('query', ::Grafana::Variable.new('A'))
+%>
+This is a test <%= query.execute %>.

@@ -5,7 +5,7 @@ describe PanelQueryTableIncludeProcessor do
     config = Configuration.new
     config.logger.level = ::Logger::Severity::WARN
     config.config = { 'grafana' => { 'default' => { 'host' => STUBS[:url], 'api_key' => STUBS[:key_admin]} } }
-    report = Report.new(config, './spec/tests/demo_report.adoc')
+    report = Report.new(config)
     Asciidoctor::Extensions.unregister_all
     Asciidoctor::Extensions.register do
       include_processor PanelQueryTableIncludeProcessor.new.current_report(report)
@@ -71,6 +71,13 @@ describe PanelQueryTableIncludeProcessor do
       expect(Asciidoctor.convert("include::grafana_panel_query_table:#{STUBS[:panel_sql][:id]}[query=\"#{STUBS[:panel_sql][:letter]}\",dashboard=\"#{STUBS[:dashboard]}\",from=\"schwurbel\"]", to_file: false)).to include('|GrafanaReporterError: The specified time range \'schwurbel\' is unknown.')
     end
 
+  end
+
+  context 'unknown datasource' do
+    it 'returns error on unknown datasource requests' do
+      expect(@report.logger).to receive(:error)
+      expect(Asciidoctor.convert("include::grafana_panel_query_table:#{STUBS[:panel_ds_unknown][:id]}[query=\"A\",dashboard=\"#{STUBS[:dashboard]}\",from=\"0\",to=\"0\"]", to_file: false)).to include('Error')
+    end
   end
 
   context 'graphite' do

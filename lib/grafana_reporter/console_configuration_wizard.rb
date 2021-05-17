@@ -31,7 +31,7 @@ module GrafanaReporter
       demo_report = create_demo_report(config)
 
       demo_report ||= '<<your_report_name>>'
-      config_param = config_file == Application::Application::CONFIG_FILE ? '' : " -c #{config_file}"
+      config_param = config_file == Configuration::DEFAULT_CONFIG_FILE_NAME ? '' : " -c #{config_file}"
       program_call = "#{Gem.ruby} #{$PROGRAM_NAME}"
       program_call = ENV['OCRA_EXECUTABLE'].gsub("#{Dir.pwd}/".gsub('/', '\\'), '') if ENV['OCRA_EXECUTABLE']
 
@@ -137,16 +137,8 @@ default-document-attributes:
         end
       end
 
-      # TODO: move this to Asciidoctor::Report class
-      classes = [Asciidoctor::AlertsTableIncludeProcessor, Asciidoctor::AnnotationsTableIncludeProcessor,
-                 Asciidoctor::PanelImageBlockMacro, Asciidoctor::PanelImageInlineMacro,
-                 Asciidoctor::PanelPropertyInlineMacro, Asciidoctor::PanelQueryTableIncludeProcessor,
-                 Asciidoctor::PanelQueryValueInlineMacro, Asciidoctor::SqlTableIncludeProcessor,
-                 Asciidoctor::SqlValueInlineMacro, Asciidoctor::ShowHelpIncludeProcessor,
-                 Asciidoctor::ShowEnvironmentIncludeProcessor]
-
       grafana = ::Grafana::Grafana.new(config.grafana_host, config.grafana_api_key)
-      demo_report_content = DemoReportWizard.new(classes).build(grafana)
+      demo_report_content = DemoReportWizard.new(config.report_class.demo_report_classes).build(grafana)
 
       begin
         File.write(demo_report_file, demo_report_content, mode: 'w')

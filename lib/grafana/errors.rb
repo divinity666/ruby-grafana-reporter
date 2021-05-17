@@ -57,18 +57,10 @@ module Grafana
     end
   end
 
-  # Raised if no SQL query is specified in a {AbstractSqlQuery} object.
+  # Raised if no SQL query is specified.
   class MissingSqlQueryError < GrafanaError
     def initialize
       super('No SQL statement has been specified.')
-    end
-  end
-
-  # Raised if a datasource shall be queried, which is not (yet) supported by the reporter
-  class DatasourceTypeNotSupportedError < GrafanaError
-    def initialize(name, type)
-      super("The configured datasource with name '#{name}' is of type '#{type}', which is currently "\
-            'not supported by ruby-grafana-reporter. It will only be usable in panel image queries.')
     end
   end
 

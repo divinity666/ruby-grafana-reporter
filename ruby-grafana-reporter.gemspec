@@ -7,6 +7,7 @@ folders = [
   %w[grafana_reporter],
   %w[grafana_reporter asciidoctor extensions],
   %w[grafana_reporter asciidoctor],
+  %w[grafana_reporter erb],
   %w[grafana_reporter application]
 ]
 
@@ -34,16 +35,16 @@ Gem::Specification.new do |s|
   }
 
   # the required ruby version is determined from the base docker image, currently debian stretch
-  s.required_ruby_version = '>=2.3.3'
+  s.required_ruby_version = '>=2.5'
   s.extra_rdoc_files = ['README.md', 'LICENSE']
 
   s.bindir = 'bin'
 
   s.add_runtime_dependency 'asciidoctor', '~>2.0'
-  s.add_runtime_dependency 'asciidoctor-pdf', '~>1.5'
+  s.add_runtime_dependency 'asciidoctor-pdf', '~>1.6'
   # the following package includes an interface to zip, which is also needed here
   # make sure that supported zip versions match - look in sub-dependency 'gepub'
-  #  s.add_runtime_dependency 'asciidoctor-epub3', '~>1.5.0'
+  #  s.add_runtime_dependency 'asciidoctor-epub3', '~>1.5.1'
   s.add_runtime_dependency 'rubyzip', '>1.1.1', '<2.4'
 
   s.add_development_dependency 'rspec', '~>3.9'

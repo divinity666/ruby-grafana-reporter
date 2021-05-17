@@ -35,21 +35,13 @@ module GrafanaReporter
     attr_reader :done
 
     # @param config [Configuration] configuration object
-    # @param template [String] path to the template to be used
-    # @param destination_file_or_path [String or File] path to the destination report or file object to use
-    # @param custom_attributes [Hash] custom attributes, which shall be merged with priority over the configuration
-    def initialize(config, template, destination_file_or_path = nil, custom_attributes = {})
+    def initialize(config)
       @config = config
       @logger = Logger::TwoWayDelegateLogger.new
       @logger.additional_logger = @config.logger
-      @done = false
-      @template = template
-      @destination_file_or_path = destination_file_or_path
-      @custom_attributes = custom_attributes
-      @start_time = nil
-      @end_time = nil
-      @cancel = false
-      raise MissingTemplateError, @template.to_s unless File.exist?(@template.to_s)
+      @grafana_instances = {}
+
+      init_before_create
     end
 
     # Registers a new event listener object.
@@ -64,6 +56,17 @@ module GrafanaReporter
     def self.clear_event_listeners
       @@event_listeners = {}
       @@event_listeners.default = []
+    end
+
+    # @param instance [String] requested grafana instance
+    # @return [Grafana::Grafana] the requested grafana instance.
+    def grafana(instance)
+      unless @grafana_instances[instance]
+        @grafana_instances[instance] = ::Grafana::Grafana.new(@config.grafana_host(instance),
+                                                              @config.grafana_api_key(instance),
+                                                              logger: @logger)
+      end
+      @grafana_instances[instance]
     end
 
     # Call to request cancelling the report generation.
@@ -122,25 +125,73 @@ module GrafanaReporter
     end
 
     # Is being called to start the report generation.
+    # @param template [String] path to the template to be used, trailing +.adoc+ extension may be omitted
+    # @param destination_file_or_path [String or File] path to the destination report or file object to use
+    # @param custom_attributes [Hash] custom attributes, which shall be merged with priority over the configuration
     # @return [void]
-    def create_report
+    def create_report(template, destination_file_or_path = nil, custom_attributes = {})
+      init_before_create
+      @template = template
+      @destination_file_or_path = destination_file_or_path
+      @custom_attributes = custom_attributes
+
+      # automatically add extension, if a file with adoc extension exists
+      @template = "#{@template}.adoc" if File.file?("#{@template}.adoc") && !File.file?(@template.to_s)
+      raise MissingTemplateError, @template.to_s unless File.file?(@template.to_s)
+
       notify(:on_before_create)
       @start_time = Time.new
       logger.info("Report started at #{@start_time}")
     end
 
-    # @abstract
+    # Used to calculate the progress of a report. By default expects +@total_steps+ to contain the total
+    # number of steps, which will be processed with each call of {#next_step}.
     # @return [Integer] number between 0 and 100, representing the current progress of the report creation.
     def progress
+      return @current_pos.to_i if @total_steps.to_i.zero?
+
+      @current_pos.to_f / @total_steps
+    end
+
+    # Increments the progress.
+    # @return [Integer] number of the current progress position.
+    def next_step
+      @current_pos += 1
+      @current_pos
+    end
+
+    # @abstract
+    # Provided class objects need to implement a method +build_demo_entry(panel)+.
+    # @return [Array<Class>] array of class objects, which shall be included in a demo report
+    def self.demo_report_classes
       raise NotImplementedError
     end
 
     private
 
+    # Called, if the report generation has died with an error.
+    # @param error [StandardError] occured error
+    # @return [void]
+    def died_with_error(error)
+      @error = [error.message] << [error.backtrace]
+      done!
+    end
+
+    def init_before_create
+      @done = false
+      @start_time = nil
+      @end_time = nil
+      @cancel = false
+      @current_pos = 0
+    end
+
     def done!
+      return if @done
+
       @done = true
       @end_time = Time.new
-      logger.info("Report creation ended after #{@end_time - @start_time} seconds with status '#{status}'")
+      @start_time ||= @end_time
+      logger.info("Report creation ended after #{@end_time.to_i - @start_time.to_i} seconds with status '#{status}'")
       notify(:on_after_finish)
     end
 

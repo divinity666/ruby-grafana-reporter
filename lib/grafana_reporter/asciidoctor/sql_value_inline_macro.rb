@@ -26,11 +26,11 @@ module GrafanaReporter
     #
     # +to+ - 'to' time for the sql query
     #
-    # +format+ - see {QueryMixin#format_columns}
+    # +format+ - see {AbstractQuery#format_columns}
     #
-    # +replace_values+ - see {QueryMixin#replace_values}
+    # +replace_values+ - see {AbstractQuery#replace_values}
     #
-    # +filter_columns+ - see {QueryMixin#filter_columns}
+    # +filter_columns+ - see {AbstractQuery#filter_columns}
     class SqlValueInlineMacro < ::Asciidoctor::Extensions::InlineMacroProcessor
       include ProcessorMixin
       use_dsl
@@ -52,7 +52,7 @@ module GrafanaReporter
           query = QueryValueQuery.new(@report.grafana(instance))
           query.datasource = @report.grafana(instance).datasource_by_id(target)
           query.raw_query = attrs['sql']
-          query.merge_hash_variables(parent.document.attributes, attrs)
+          assign_doc_and_item_variables(query, parent.document.attributes, attrs)
           @report.logger.debug("from: #{query.from}, to: #{query.to}")
 
           create_inline(parent, :quoted, query.execute)

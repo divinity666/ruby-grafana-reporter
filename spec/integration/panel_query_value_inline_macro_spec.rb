@@ -5,7 +5,7 @@ describe PanelQueryValueInlineMacro do
     config = Configuration.new
     config.logger.level = ::Logger::Severity::WARN
     config.config = { 'grafana' => { 'default' => { 'host' => STUBS[:url], 'api_key' => STUBS[:key_admin] } } }
-    report = Report.new(config, './spec/tests/demo_report.adoc')
+    report = Report.new(config)
     Asciidoctor::Extensions.unregister_all
     Asciidoctor::Extensions.register do
       inline_macro PanelQueryValueInlineMacro.new.current_report(report)
@@ -58,6 +58,11 @@ describe PanelQueryValueInlineMacro do
   it 'can filter columns and format values' do
     expect(@report.logger).not_to receive(:error)
     expect(Asciidoctor.convert("grafana_panel_query_value:#{STUBS[:panel_sql][:id]}[query=\"#{STUBS[:panel_sql][:letter]}\",dashboard=\"#{STUBS[:dashboard]}\",format=\",%.2f\",filter_columns=\"time_sec\"]", to_file: false)).to include('<p>43.90')
+  end
+
+  it 'can filter columns and handle wront format definitions' do
+    expect(@report.logger).to receive(:error).with('invalid format character - %').at_least(:once)
+    expect(Asciidoctor.convert("grafana_panel_query_value:#{STUBS[:panel_sql][:id]}[query=\"#{STUBS[:panel_sql][:letter]}\",dashboard=\"#{STUBS[:dashboard]}\",format=\",%2%2f\",filter_columns=\"time_sec\"]", to_file: false)).to include('<p>invalid format character')
   end
 
   it 'shows fatal error if query is missing' do

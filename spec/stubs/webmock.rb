@@ -8,6 +8,7 @@ STUBS = {
   key_admin: 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx',
   key_viewer: 'viewerxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx',
   dashboard: 'IDBRfjSmz',
+  panel_ds_unknown: { id: '10' },
   panel_sql: { id: '11', letter: 'A', title: 'Temperaturen' },
   panel_graphite: { id: '12', letter: 'A' },
   panel_prometheus: { id: '13', letter: 'A' },
@@ -110,13 +111,13 @@ RSpec.configure do |config|
     )
     .to_return(status: 200, body: '{"results":{"A":{"refId":"A","meta":{"rowCount":0,"sql":"SELECT 1 as value WHERE value = 0"},"series":null,"tables":null,"dataframes":null}}}', headers: {})
 
-    stub_request(:get, %r{http://localhost/render/d-solo/IDBRfjSmz\?from=\d+&fullscreen=true&panelId=11&theme=light&timeout=60(?:&var-[^&]+)*}).with(
+    stub_request(:get, %r{http://localhost/render/d-solo/IDBRfjSmz\?from=\d+&fullscreen=true&panelId=(?:10|11)&theme=light&timeout=60(?:&var-[^&]+)*}).with(
       headers: default_header.merge({
         'Accept' => 'image/png',
         'Authorization' => "Bearer #{STUBS[:key_admin]}"
       })
     )
-    .to_return(status: 200, body: File.read('./spec/tests/sample_image.png'), headers: {})
+    .to_return(status: 200, body: File.read('./spec/tests/sample_image.png', File.size('./spec/tests/sample_image.png')), headers: {})
 
     stub_request(:post, 'http://localhost/api/tsdb/query').with(
       body: %r{.*SELECT   time as time_sec,   value / 10 as Ist FROM istwert_hk1 WHERE \$__unixEpochFilter\(time\) ORDER BY time DESC.*},

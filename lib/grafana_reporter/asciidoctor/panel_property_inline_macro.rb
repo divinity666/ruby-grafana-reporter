@@ -40,7 +40,8 @@ module GrafanaReporter
         begin
           query = PanelPropertyQuery.new(@report.grafana(instance).dashboard(dashboard).panel(target))
           query.raw_query = { property_name: attrs[:field] }
-          query.merge_hash_variables(parent.document.attributes, attrs)
+          assign_dashboard_defaults(query, @report.grafana(instance).dashboard(dashboard))
+          assign_doc_and_item_variables(query, parent.document.attributes, attrs)
           @report.logger.debug("from: #{query.from}, to: #{query.to}")
 
           description = query.execute

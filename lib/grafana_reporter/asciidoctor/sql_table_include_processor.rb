@@ -26,11 +26,11 @@ module GrafanaReporter
     #
     # +to+ - 'to' time for the sql query
     #
-    # +format+ - see {QueryMixin#format_columns}
+    # +format+ - see {AbstractQuery#format_columns}
     #
-    # +replace_values+ - see {QueryMixin#replace_values}
+    # +replace_values+ - see {AbstractQuery#replace_values}
     #
-    # +filter_columns+ - see {QueryMixin#filter_columns}
+    # +filter_columns+ - see {AbstractQuery#filter_columns}
     class SqlTableIncludeProcessor < ::Asciidoctor::Extensions::IncludeProcessor
       include ProcessorMixin
 
@@ -54,7 +54,7 @@ module GrafanaReporter
           query = QueryValueQuery.new(@report.grafana(instance))
           query.datasource = @report.grafana(instance).datasource_by_id(target.split(':')[1].to_i)
           query.raw_query = attrs['sql']
-          query.merge_hash_variables(doc.attributes, attrs)
+          assign_doc_and_item_variables(query, doc.attributes, attrs)
           @report.logger.debug("from: #{query.from}, to: #{query.to}")
 
           reader.unshift_lines query.execute

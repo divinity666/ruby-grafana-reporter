@@ -18,9 +18,9 @@ module GrafanaReporter
     def pre_process
       raise MissingMandatoryAttributeError, 'columns' unless @raw_query['columns']
 
-      @from = translate_date(@from, @variables['grafana-report-timestamp'], false, @variables['from_timezone'] ||
+      @from = translate_date(@from, @variables['grafana_report_timestamp'], false, @variables['from_timezone'] ||
                              @variables['grafana_default_from_timezone'])
-      @to = translate_date(@to, @variables['grafana-report-timestamp'], true, @variables['to_timezone'] ||
+      @to = translate_date(@to, @variables['grafana_report_timestamp'], true, @variables['to_timezone'] ||
                            @variables['grafana_default_to_timezone'])
       @datasource = Grafana::GrafanaAnnotationsDatasource.new(nil)
     end
@@ -28,8 +28,8 @@ module GrafanaReporter
     # Filters the query result for the given columns and sets the result
     # in the preformatted SQL result style.
     #
-    # Additionally it applies {QueryMixin#format_columns}, {QueryMixin#replace_values} and
-    # {QueryMixin#filter_columns}.
+    # Additionally it applies {AbstractQuery#format_columns}, {AbstractQuery#replace_values} and
+    # {AbstractQuery#filter_columns}.
     # @return [void]
     def post_process
       @result = format_columns(@result, @variables['format'])

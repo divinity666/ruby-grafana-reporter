@@ -32,11 +32,11 @@ module GrafanaReporter
     #
     # +to+ - 'to' time for the sql query
     #
-    # +format+ - see {QueryMixin#format_columns}
+    # +format+ - see {AbstractQuery#format_columns}
     #
-    # +replace_values+ - see {QueryMixin#replace_values}
+    # +replace_values+ - see {AbstractQuery#replace_values}
     #
-    # +filter_columns+ - see {QueryMixin#filter_columns}
+    # +filter_columns+ - see {AbstractQuery#filter_columns}
     class PanelQueryValueInlineMacro < ::Asciidoctor::Extensions::InlineMacroProcessor
       include ProcessorMixin
       use_dsl
@@ -57,8 +57,8 @@ module GrafanaReporter
         begin
           panel = @report.grafana(instance).dashboard(dashboard).panel(target)
           query = QueryValueQuery.new(panel)
-          query.set_defaults_from_dashboard(panel.dashboard)
-          query.merge_hash_variables(parent.document.attributes, attrs)
+          assign_dashboard_defaults(query, panel.dashboard)
+          assign_doc_and_item_variables(query, parent.document.attributes, attrs)
           @report.logger.debug("from: #{query.from}, to: #{query.to}")
 
           create_inline(parent, :quoted, query.execute)

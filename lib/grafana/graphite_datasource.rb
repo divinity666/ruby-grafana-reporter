@@ -3,6 +3,12 @@
 module Grafana
   # Implements the interface to graphite datasources.
   class GraphiteDatasource < AbstractDatasource
+    # @see AbstractDatasource#handles?
+    def self.handles?(model)
+      tmp = new(model)
+      tmp.type == 'graphite'
+    end
+
     # +:raw_query+ needs to contain a Graphite query as String
     # @see AbstractDatasource#request
     def request(query_description)

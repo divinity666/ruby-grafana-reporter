@@ -6,9 +6,12 @@ module GrafanaReporter
     # make use of `webrick` or similar, so that it can be used without futher dependencies
     # in conjunction with the standard asciidoctor docker container.
     class Webservice
+      # Array of possible webservice running states
+      STATUS = %I[stopped running stopping].freeze
+
       def initialize
         @reports = []
-        @running = false
+        @status = :stopped
       end
 
       # Runs the webservice with the given {Configuration} object.
@@ -19,17 +22,32 @@ module GrafanaReporter
         # start webserver
         @server = TCPServer.new(@config.webserver_port)
         @logger.info("Server listening on port #{@config.webserver_port}...")
-        @running = true
 
         @progress_reporter = Thread.new {}
 
+        @status = :running
         accept_requests_loop
-        @running = false
+        @status = :stopped
+      end
+
+      # @return True, if webservice is stopped, false otherwise
+      def stopped?
+        @status == :stopped
       end
 
       # @return True, if webservice is up and running, false otherwise
       def running?
-        @running
+        @status == :running
+      end
+
+      # Forces stopping the webservice.
+      def stop!
+        @status = :stopping
+
+        # invoke a new request, so that the webservice stops.
+        socket = TCPSocket.new('localhost', @config.webserver_port)
+        socket.send '', 0
+        socket.close
       end
 
       private
@@ -38,6 +56,14 @@ module GrafanaReporter
         loop do
           # step 1) accept incoming connection
           socket = @server.accept
+
+          # TODO: shutdown properly on SIGINT/SIGHUB
+
+          # stop webservice properly, if shall be shutdown
+          if @status == :stopping
+            socket.close
+            break
+          end
 
           # step 2) print the request headers (separated by a blank line e.g. \r\n)
           request = ''
@@ -57,9 +83,6 @@ module GrafanaReporter
           rescue WebserviceUnknownPathError => e
             @logger.debug(e.message)
             socket.write http_response(404, '', e.message)
-          rescue MissingTemplateError => e
-            @logger.error(e.message)
-            socket.write http_response(400, 'Bad Request', e.message)
           rescue WebserviceGeneralRenderingError => e
             @logger.fatal(e.message)
             socket.write http_response(400, 'Bad Request', e.message)
@@ -179,7 +202,7 @@ module GrafanaReporter
 
       def render_report(attrs)
         # build report
-        template_file = "#{@config.templates_folder}#{attrs['var-template']}.adoc"
+        template_file = "#{@config.templates_folder}#{attrs['var-template']}"
 
         file = Tempfile.new('gf_pdf_', @config.reports_folder)
         begin
@@ -188,9 +211,10 @@ module GrafanaReporter
           @logger.debug("File permissions could not be set for #{file.path}: #{e.message}")
         end
 
-        report = @config.report_class.new(@config, template_file, file, attrs)
+        report = @config.report_class.new(@config)
+        Thread.report_on_exception = false
         Thread.new do
-          report.create_report
+          report.create_report(template_file, file, attrs)
         end
         @reports << report
 

@@ -81,6 +81,12 @@ describe Application do
       File.delete('./result.pdf') if File.exist?('./result.pdf')
     end
 
+    it 'can single render a template with extension' do
+      expect(subject.config.logger).not_to receive(:error)
+      expect { subject.configure_and_run(['-c', './spec/tests/demo_config.txt', '-t', 'spec/tests/demo_report.adoc', '-o', './result.pdf', '-d', 'ERROR']) }.not_to output(/ERROR/).to_stderr
+      expect(File.exist?('./result.pdf')).to be true
+    end
+
     it 'can single render a template and output to custom folder' do
       expect(subject.config.logger).not_to receive(:error)
       expect { subject.configure_and_run(['-c', './spec/tests/demo_config.txt', '-t', 'spec/tests/demo_report', '-o', './result.pdf', '-d', 'ERROR']) }.not_to output(/ERROR/).to_stderr
@@ -98,7 +104,54 @@ describe Application do
     end
 
     it 'does not raise error on non existing template' do
+      expect(subject.config.logger).to receive(:error).with(/is not a valid template/)
       expect { subject.configure_and_run(['-c', './spec/tests/demo_config.txt', '-t', 'does_not_exist']) }.to output(/report template .* is not a valid template/).to_stdout
+    end
+  end
+
+  context 'custom plugins' do
+    subject { GrafanaReporter::Application::Application.new }
+
+    before do
+      File.delete('./result.pdf') if File.exist?('./result.pdf')
+    end
+
+    after do
+      # remove temporary added plugin from respective places, so that other test cases run
+      # as if that would have never happened
+      expect(Object.constants.include?(:MyUnknownDatasource)).to be true
+      AbstractDatasource.class_eval('@@subclasses -= [MyUnknownDatasource]')
+      Object.send(:remove_const, :MyUnknownDatasource)
+      Object.send(:const_set, :MyUnknownDatasource, Class.new)
+    end
+
+    it 'can register and apply custom plugins' do
+      expect { subject.configure_and_run(['-c', './spec/tests/demo_config.txt', '-t', 'spec/tests/custom_demo_report', '-o', './result.pdf']) }.to output(/ERROR/).to_stderr
+      expect(subject.config.logger).not_to receive(:error)
+      expect { subject.configure_and_run(['-c', './spec/tests/demo_config.txt', '-t', 'spec/tests/custom_demo_report', '-o', './result.pdf', '-r', './spec/tests/custom_plugin']) }.not_to output(/ERROR/).to_stderr
+      expect(Object.constants.include?(:MyUnknownDatasource)).to be true
+    end
+  end
+
+  context 'ERB templating' do
+    subject { GrafanaReporter::Application::Application.new }
+
+    before do
+      File.delete('./result.txt') if File.exist?('./result.txt')
+      allow(subject.config.logger).to receive(:debug)
+      allow(subject.config.logger).to receive(:info)
+      allow(subject.config.logger).to receive(:warn)
+    end
+
+    after do
+      File.delete('./result.txt') if File.exist?('./result.txt')
+    end
+
+    it 'can single render a template with extension' do
+      expect(subject.config.logger).not_to receive(:error)
+      expect { subject.configure_and_run(['-c', './spec/tests/erb.config', '-t', 'spec/tests/erb.template', '-o', './result.txt', '-d', 'ERROR']) }.not_to output(/ERROR/).to_stderr
+      expect(File.exist?('./result.txt')).to be true
+      expect(File.read('./result.txt')).to include('This is a test 1594308060000.')
     end
   end
 
@@ -136,8 +189,9 @@ default-document-attributes:
     after(:context) do
       WebMock.enable!
       AbstractReport.clear_event_listeners
-      @webserver.kill
-      # TODO: kill webservice properly and release port again
+      # kill webservice properly and release port again
+      @app.webservice.stop!
+      sleep 0.1 until @app.webservice.stopped?
     end
 
     it 'responds to overview' do
@@ -242,14 +296,24 @@ default-document-attributes:
       expect(res['content-disposition']).to include('.zip')
     end
 
-    it 'returns error on render without proper template' do
-      expect(@app.config.logger).to receive(:error).with(/is not a valid template\./)
-      res = Net::HTTP.get(URI('http://localhost:8033/render'))
-      expect(res).to include("is not a valid template.")
+    it 'returns error on render without template' do
+      evt = ReportEventHandler.new
+      AbstractReport.add_event_listener(:on_after_finish, evt)
 
-      expect(@app.config.logger).to receive(:error).with(/is not a valid template\./)
+      expect_any_instance_of(GrafanaReporter::Logger::TwoWayDelegateLogger).to receive(:error).with(/is not a valid template\./)
+      res = Net::HTTP.get(URI('http://localhost:8033/render'))
+      cur_time = Time.new
+      sleep 0.1 while !evt.done? && Time.new - cur_time < 10
+    end
+
+    it 'returns error on render with non existing template' do
+      evt = ReportEventHandler.new
+      AbstractReport.add_event_listener(:on_after_finish, evt)
+
+      expect_any_instance_of(GrafanaReporter::Logger::TwoWayDelegateLogger).to receive(:error).with(/is not a valid template\./)
       res = Net::HTTP.get(URI('http://localhost:8033/render?var-template=does_not_exist'))
-      expect(res).to include("is not a valid template.")
+      cur_time = Time.new
+      sleep 0.1 while !evt.done? && Time.new - cur_time < 10
     end
   end
 end

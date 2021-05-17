@@ -6,31 +6,51 @@ module Grafana
   class AbstractDatasource
     attr_reader :model
 
+    @@subclasses = []
+
+    # Registers the subclass as datasource, which is asked by {#accepts?}, if it can handle a datasource
+    # model.
+    # @param subclass [Class] class inheriting from this abstract class
+    def self.inherited(subclass)
+      @@subclasses << subclass
+    end
+
+    # Overwrite this method, to specify if the current datasource implementation handles the given model.
+    # This method is called by {#build_instance} to determine, if the current datasource implementation
+    # can handle the given grafana model. By default this method returns false.
+    # @param model [Hash] grafana specification of the datasource to check
+    # @return [Boolean] True if fits, false otherwise
+    def self.handles?(_model)
+      false
+    end
+
     # Factory method to build a datasource from a given datasource Hash description.
     # @param ds_model [Hash] grafana specification of a single datasource
     # @return [AbstractDatasource] instance of a fitting datasource implementation
     def self.build_instance(ds_model)
       raise InvalidDatasourceQueryProvidedError, ds_model unless ds_model.is_a?(Hash)
-      raise InvalidDatasourceQueryProvidedError, ds_model unless ds_model['meta']
-      raise InvalidDatasourceQueryProvidedError, ds_model unless ds_model['meta']['id']
-      raise InvalidDatasourceQueryProvidedError, ds_model unless ds_model['meta']['category']
 
-      return SqlDatasource.new(ds_model) if ds_model['meta']['category'] == 'sql'
+      raise InvalidDatasourceQueryProvidedError, ds_model unless ds_model['meta'].is_a?(Hash)
 
-      case ds_model['meta']['id']
-      when 'graphite'
-        return GraphiteDatasource.new(ds_model)
-
-      when 'prometheus'
-        return PrometheusDatasource.new(ds_model)
-
+      @@subclasses.each do |datasource_class|
+        return datasource_class.new(ds_model) if datasource_class.handles?(ds_model)
       end
 
-      raise DatasourceTypeNotSupportedError.new(ds_model['name'], ds_model['meta']['id'])
+      UnsupportedDatasource.new(ds_model)
     end
 
     def initialize(model)
       @model = model
+    end
+
+    # @return [String] category of the datasource, e.g. `tsdb` or `sql`
+    def category
+      @model['meta']['category']
+    end
+
+    # @return [String] type of the datasource, e.g. `mysql`
+    def type
+      @model['type'] || @model['meta']['id']
     end
 
     # @return [String] name of the datasource

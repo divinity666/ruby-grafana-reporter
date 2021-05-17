@@ -8,15 +8,15 @@ module GrafanaReporter
     def pre_process
       @datasource = @panel.datasource if @panel
 
-      @from = translate_date(@from, @variables['grafana-report-timestamp'], false, @variables['from_timezone'] ||
+      @from = translate_date(@from, @variables['grafana_report_timestamp'], false, @variables['from_timezone'] ||
                              @variables['grafana_default_from_timezone'])
-      @to = translate_date(@to, @variables['grafana-report-timestamp'], true, @variables['to_timezone'] ||
+      @to = translate_date(@to, @variables['grafana_report_timestamp'], true, @variables['to_timezone'] ||
                            @variables['grafana_default_to_timezone'])
       @variables['result_type'] ||= Variable.new('')
     end
 
-    # Executes {QueryMixin#format_columns}, {QueryMixin#replace_values} and
-    # {QueryMixin#filter_columns} on the query results.
+    # Executes {AbstractQuery#format_columns}, {AbstractQuery#replace_values} and
+    # {AbstractQuery#filter_columns} on the query results.
     #
     # Finally the results are formatted as a asciidoctor table.
     # @see Grafana::AbstractQuery#post_process
