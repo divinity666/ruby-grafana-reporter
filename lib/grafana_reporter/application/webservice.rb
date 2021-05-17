@@ -212,6 +212,7 @@ module GrafanaReporter
         end
 
         report = @config.report_class.new(@config)
+        Thread.report_on_exception = false
         Thread.new do
           report.create_report(template_file, file, attrs)
         end
