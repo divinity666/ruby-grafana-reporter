@@ -49,8 +49,8 @@ module Grafana
   #
   # Most likely this happens, because the image renderer is not configures properly in grafana,
   # or the panel rendering ran into a timeout.
+  # @param panel [Panel] panel object, which could not be rendered
   class ImageCouldNotBeRenderedError < GrafanaError
-    # @param panel [Panel] panel object, which could not be rendered
     def initialize(panel)
       super("The specified panel '#{panel.id}' from dashboard '#{panel.dashboard.id} could not be "\
         'rendered to an image.')

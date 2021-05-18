@@ -18,7 +18,7 @@ module GrafanaReporter
     # Returns the body of the http query, which contains the raw image.
     def post_process
       @result = @result[:content].first
-      raise ImageCouldNotBeRenderedError, @panel if @result.include?('<html')
+      raise ::Grafana::ImageCouldNotBeRenderedError, @panel if @result.include?('<html')
     end
 
     # @see AbstractQuery#raw_query

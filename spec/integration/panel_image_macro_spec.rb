@@ -28,6 +28,16 @@ describe PanelImageBlockMacro do
     expect(@report.logger).to receive(:fatal)
     expect(Asciidoctor.convert("grafana_panel_image::999[dashboard=\"#{STUBS[:dashboard]}\"]", to_file: false)).to include('Error')
   end
+
+  it 'shows error if a reporter error occurs' do
+    expect(@report.logger).to receive(:error).with('GrafanaReporterError: The specified time range \'schwurbel\' is unknown.')
+    expect(Asciidoctor.convert("grafana_panel_image::#{STUBS[:panel_sql][:id]}[dashboard=\"#{STUBS[:dashboard]}\",from=\"schwurbel\"]", to_file: false)).to include('GrafanaReporterError: The specified time range \'schwurbel\' is unknown.')
+  end
+
+  it 'shows error if image rendering failed' do
+    expect(@report.logger).to receive(:fatal).with(/(Grafana::ImageCouldNotBeRenderedError)/)
+    expect(Asciidoctor.convert("grafana_panel_image::#{STUBS[:panel_broken_image][:id]}[dashboard=\"#{STUBS[:dashboard]}\"]", to_file: false)).to include('(Grafana::ImageCouldNotBeRenderedError)')
+  end
 end
 
 describe PanelImageInlineMacro do
@@ -61,4 +71,8 @@ describe PanelImageInlineMacro do
     expect(Asciidoctor.convert("grafana_panel_image:#{STUBS[:panel_sql][:id]}[dashboard=\"#{STUBS[:dashboard]}\",from=\"schwurbel\"]", to_file: false)).to include('GrafanaReporterError: The specified time range \'schwurbel\' is unknown.')
   end
 
+  it 'shows error if image rendering failed' do
+    expect(@report.logger).to receive(:fatal).with(/(Grafana::ImageCouldNotBeRenderedError)/)
+    expect(Asciidoctor.convert("grafana_panel_image:#{STUBS[:panel_broken_image][:id]}[dashboard=\"#{STUBS[:dashboard]}\"]", to_file: false)).to include('(Grafana::ImageCouldNotBeRenderedError)')
+  end
 end
