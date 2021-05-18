@@ -296,6 +296,11 @@ default-document-attributes:
       expect(res['content-disposition']).to include('.zip')
     end
 
+    it 'returns grafana reporter error on view_log without report' do
+      expect(@app.config.logger).to receive(:error).with(/has been called without valid id/)
+      expect(Net::HTTP.get(URI('http://localhost:8033/view_log'))).to include('has been called without valid id')
+    end
+
     it 'returns error on render without template' do
       evt = ReportEventHandler.new
       AbstractReport.add_event_listener(:on_after_finish, evt)
