@@ -200,6 +200,7 @@ module GrafanaReporter
                   begin
                     row[i] = row[i].to_s.gsub(/#{k}/, v) if row[i].to_s =~ /#{k}/
                   rescue StandardError => e
+                    @grafana.logger.error(e.message)
                     row[i] = e.message
                   end
 
