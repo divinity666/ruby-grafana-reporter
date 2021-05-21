@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module GrafanaReporter
-  # @abstract Override {#create_report} and {#progress}.
+  # @abstract Override {#build} and {#progress}.
   #
   # This class is used to build a report on basis of a given configuration and
   # template.
@@ -124,7 +124,8 @@ module GrafanaReporter
       logger.internal_messages
     end
 
-    # Is being called to start the report generation.
+    # Is being called to start the report generation. To execute the specific report generation, this function
+    # calls the abstract {#build} method with the given parameters.
     # @param template [String] path to the template to be used, trailing +.adoc+ extension may be omitted
     # @param destination_file_or_path [String or File] path to the destination report or file object to use
     # @param custom_attributes [Hash] custom attributes, which shall be merged with priority over the configuration
@@ -142,6 +143,24 @@ module GrafanaReporter
       notify(:on_before_create)
       @start_time = Time.new
       logger.info("Report started at #{@start_time}")
+      build(template, destination_file_or_path, custom_attributes)
+    rescue MissingTemplateError => e
+      @logger.error(e.message)
+      @error = [e.message]
+      done!
+      raise e
+    rescue StandardError => e
+      # catch all errors during execution
+      died_with_error(e)
+      raise e
+    ensure
+      done!
+    end
+
+    # @abstract
+    # Needs to be overridden by the report implementation.
+    def build(template, destination_file_or_path, custom_attributes)
+      raise NotImplementedError
     end
 
     # Used to calculate the progress of a report. By default expects +@total_steps+ to contain the total
