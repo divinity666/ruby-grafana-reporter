@@ -52,7 +52,7 @@ module Grafana
   # @param panel [Panel] panel object, which could not be rendered
   class ImageCouldNotBeRenderedError < GrafanaError
     def initialize(panel)
-      super("The specified panel '#{panel.id}' from dashboard '#{panel.dashboard.id} could not be "\
+      super("The specified panel '#{panel.id}' from dashboard '#{panel.dashboard.id}' could not be "\
         'rendered to an image.')
     end
   end
