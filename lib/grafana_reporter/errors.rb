@@ -16,6 +16,20 @@ module GrafanaReporter
     end
   end
 
+  # Raised if some unhandled exception is raised during a datasource request execution.
+  class DatasourceRequestInternalError < GrafanaReporterError
+    def initialize(ds, message)
+      super("The datasource request to '#{ds.name}' (#{ds.class}) failed with an internal error: #{message}")
+    end
+  end
+
+  # Raised if the return value of a datasource request does not match the expected return hash.
+  class DatasourceRequestInvalidReturnValueError < GrafanaReporterError
+    def initialize(ds, message)
+      super("The datasource request to '#{ds.name}' (#{ds.class}) returned an invalid value: '#{message}'")
+    end
+  end
+
   # Thrown, if the requested grafana instance does not have the mandatory 'host'
   # setting configured.
   class GrafanaInstanceWithoutHostError < GrafanaReporterError

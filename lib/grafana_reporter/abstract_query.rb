@@ -10,6 +10,7 @@ module GrafanaReporter
     attr_reader :variables, :result, :panel
 
     # @param grafana_or_panel [Object] {Grafana::Grafana} or {Grafana::Panel} object for which the query is executed
+    # TODO allow query initialization with variables
     def initialize(grafana_or_panel)
       if grafana_or_panel.is_a?(Grafana::Panel)
         @panel = grafana_or_panel
@@ -34,8 +35,20 @@ module GrafanaReporter
       pre_process
       raise DatasourceNotSupportedError.new(@datasource, self) if @datasource.is_a?(Grafana::UnsupportedDatasource)
 
-      @result = @datasource.request(from: @from, to: @to, raw_query: raw_query, variables: grafana_variables,
-                                    prepared_request: @grafana.prepare_request, timeout: timeout)
+      begin
+        @result = @datasource.request(from: @from, to: @to, raw_query: raw_query, variables: grafana_variables,
+                                      prepared_request: @grafana.prepare_request, timeout: timeout)
+      rescue ::Grafana::GrafanaError
+        # grafana errors will be directly passed through
+        raise
+      rescue GrafanaReporterError
+        # grafana errors will be directly passed through
+        raise
+      rescue StandardError => e
+        raise DatasourceRequestInternalError.new(@datasource, e.message)
+      end
+
+      raise DatasourceRequestInvalidReturnValueError.new(@datasource, @result) unless datasource_response_valid?
       post_process
       @result
     end
@@ -70,6 +83,7 @@ module GrafanaReporter
     # {Grafana::Variable} stored in the +variables+ Array are overwritten.
     # @param name [String] name of the variable to set
     # @param variable [Grafana::Variable] variable from which the {Grafana::Variable#raw_value} will be assigned to the query variables
+    # TODO: make assign_variable a private method
     def assign_variable(name, variable)
       raise GrafanaReporterError, "Provided variable is not of type Grafana::Variable (name: '#{name}', value: '#{value}')" unless variable.is_a?(Grafana::Variable)
 
@@ -296,6 +310,19 @@ module GrafanaReporter
     end
 
     private
+
+    def datasource_response_valid?
+      return false if @result.nil?
+      return false unless @result.is_a?(Hash)
+      # TODO: check if it should be ok if a datasource request returns an empty hash only
+      return true if @result.empty?
+      return false unless @result.has_key?(:header)
+      return false unless @result.has_key?(:content)
+      return false unless @result[:header].is_a?(Array)
+      return false unless @result[:content].is_a?(Array)
+
+      true
+    end
 
     # @return [Hash<String, Variable>] all grafana variables stored in this query, i.e. the variable name
     #  is prefixed with +var-+
