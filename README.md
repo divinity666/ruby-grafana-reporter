@@ -10,6 +10,7 @@ Reporting Service for Grafana
 
 * [About the project](#about-the-project)
 * [Features](#features)
+* [Supported datasources](#supported-datasources)
 * [Quick Start](#quick-start)
 * [Grafana integration](#grafana-integration)
 * [Webservice overview](#webservice-overview)
@@ -42,14 +43,24 @@ database queries
 * Solid as a rock, also in case of template errors and whatever else may happen
 * Full [API documentation](https://rubydoc.info/gems/ruby-grafana-reporter) available
 
+## Supported datasources
+
 Functionalities are provided as shown here:
 
-Database | Image rendering | Panel-based rendering | Query-based rendering
-------------------------- | :-------: | :-----------: | :------------:
-all SQL based datasources | supported | supported     | supported
-Graphite                  | supported | supported     | supported
-Prometheus                | supported | supported     | supported
-other datasources         | supported | not-supported | not-supported
+Database                  | Image rendering | Raw queries   | Composed queries
+------------------------- | :-------------: | :-----------: | :------------:
+all SQL based datasources | supported       | supported     | supported
+Graphite                  | supported       | supported     | supported
+InfluxDB                  | supported       | supported     | not supported
+Prometheus                | supported       | supported     | n/a in grafana
+other datasources         | supported       | not supported | not supported
+
+The characteristics of a raw query are, that the query is either specified manually as
+e.g. a SQL statement as string or entered as a panel query as a string.
+
+Composed queries are all kinds of query, where the grafana UI feature (aka visual editor
+mode) for query specifications are used. In this case grafana is translating the UI query
+specification to a raw query, which then in fact is sent to the database.
 
 ## Quick Start
 
