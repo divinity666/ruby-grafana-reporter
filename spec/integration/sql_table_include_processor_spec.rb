@@ -13,6 +13,7 @@ describe SqlTableIncludeProcessor do
     @report = report
   end
 
+  context 'sql' do
   it 'can be processed' do
     expect(@report.logger).not_to receive(:error)
     expect(Asciidoctor.convert("include::grafana_sql_table:#{STUBS[:datasource_sql]}[sql=\"SELECT 1\"]", to_file: false)).not_to include('GrafanaReporterError')
@@ -34,6 +35,14 @@ describe SqlTableIncludeProcessor do
   it 'shows error if a reporter error occurs' do
     expect(@report.logger).to receive(:error).with('GrafanaReporterError: The specified time range \'schwurbel\' is unknown.')
     expect(Asciidoctor.convert("include::grafana_sql_table:#{STUBS[:datasource_sql]}[sql=\"SELECT 1\",from=\"schwurbel\",to=\"now/y\"]", to_file: false)).to include('|GrafanaReporterError: The specified time range \'schwurbel\' is unknown.')
+  end
+  end
+
+  context 'influx' do
+    it 'can handle influx requests' do
+      expect(@report.logger).not_to receive(:error)
+      expect(Asciidoctor.convert("include::grafana_sql_table:#{STUBS[:datasource_influx]}[sql=\"SELECT non_negative_derivative(mean(\\\"value\\\"), 10s) *1000000000 FROM \\\"logins.count\\\" WHERE time >= now() - 1h GROUP BY time(10s), \\\"hostname\\\" fill(null)\"]", to_file: false)).to include("<p>\| 1621781110000 \| 4410823132.66179\n\|")
+    end
   end
 
 end

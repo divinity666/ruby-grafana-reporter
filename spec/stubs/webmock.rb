@@ -12,10 +12,12 @@ STUBS = {
   panel_sql: { id: '11', letter: 'A', title: 'Temperaturen' },
   panel_graphite: { id: '12', letter: 'A' },
   panel_prometheus: { id: '13', letter: 'A' },
+  panel_influx: { id: '14', letter: 'A' },
   panel_broken_image: { id: '13' },
   datasource_sql: '1',
   datasource_graphite: '3',
-  datasource_prometheus: '4'
+  datasource_prometheus: '4',
+  datasource_influx: '6'
 }
 
 default_header = {
@@ -169,5 +171,12 @@ RSpec.configure do |config|
     )
     .to_return(status: 200, body: File.read('./spec/tests/sample_prometheus_response.json'), headers: {})
 
+    # Influx
+    stub_request(:get, 'http://localhost/api/datasources/proxy/6/query?db=site&q=SELECT%20non_negative_derivative(mean(%22value%22)%2C%2010s)%20*1000000000%20FROM%20%22logins.count%22%20WHERE%20time%20%3E%3D%20now()%20-%201h%20GROUP%20BY%20time(10s)%2C%20%22hostname%22%20fill(null)&epoch=ms').with(
+      headers: default_header.merge({
+        'Authorization' => "Bearer #{STUBS[:key_admin]}"
+      })
+    )
+    .to_return(status: 200, body: File.read('./spec/tests/sample_influx_response.json'), headers: {})
   end
 end
