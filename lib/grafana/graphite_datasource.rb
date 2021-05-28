@@ -45,6 +45,11 @@ module Grafana
       header = ['time']
       content = {}
 
+      # keep sorting, if json has only one target item, otherwise merge results and return
+      # as a time sorted array
+      return { header: header << json.first['target'], content: json.first['datapoints'].map! { |item| [item[1], item[0]] } } if json.length == 1
+
+      # TODO: show warning if results may be sorted different
       json.each_index do |i|
         header << json[i]['target']
         tmp = json[i]['datapoints'].map! { |item| [item[1], item[0]] }.to_h
@@ -56,7 +61,6 @@ module Grafana
         end
       end
 
-      # TODO: ensure that sorting is identical to source sorting
       { header: header, content: content.to_a.map(&:flatten).sort { |a, b| a[0] <=> b[0] } }
     end
   end
