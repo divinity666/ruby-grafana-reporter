@@ -119,10 +119,10 @@ module GrafanaReporter
 
       filter_columns = filter_columns_variable.raw_value
       filter_columns.split(',').each do |filter_column|
-        pos = result[:header][0].index(filter_column)
+        pos = result[:header].index(filter_column)
 
         unless pos.nil?
-          result[:header][0].delete_at(pos)
+          result[:header].delete_at(pos)
           result[:content].each { |row| row.delete_at(pos) }
         end
       end
