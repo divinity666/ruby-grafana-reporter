@@ -95,14 +95,14 @@ describe PanelQueryTableIncludeProcessor do
   context 'prometheus' do
     it 'can handle prometheus requests' do
       expect(@report.logger).not_to receive(:error)
-      expect(Asciidoctor.convert("include::grafana_panel_query_table:#{STUBS[:panel_prometheus][:id]}[query=\"#{STUBS[:panel_prometheus][:letter]}\",dashboard=\"#{STUBS[:dashboard]}\",from=\"0\",to=\"0\"]", to_file: false)).to match(/<p>\| 1617729810 \| 0.0010000000000218278\n\|/)
+      expect(Asciidoctor.convert("include::grafana_panel_query_table:#{STUBS[:panel_prometheus][:id]}[query=\"#{STUBS[:panel_prometheus][:letter]}\",dashboard=\"#{STUBS[:dashboard]}\",from=\"0\",to=\"0\"]", to_file: false)).to match(/<p>\| 1617728730 \|  \|  \|  \| 0.011986814503580401 \| 0.6412945761450544\n\|/)
     end
   end
 
   context 'influx' do
     xit 'can handle influx requests' do
       expect(@report.logger).not_to receive(:error)
-      expect(Asciidoctor.convert("include::grafana_panel_query_table:#{STUBS[:panel_influx][:id]}[query=\"#{STUBS[:panel_influx][:letter]}\",dashboard=\"#{STUBS[:dashboard]}\",from=\"0\",to=\"0\"]", to_file: false)).to include(/<p>\| 1621781110000 \| 4410823132.66179\n\|/)
+      expect(Asciidoctor.convert("include::grafana_panel_query_table:#{STUBS[:panel_influx][:id]}[query=\"#{STUBS[:panel_influx][:letter]}\",dashboard=\"#{STUBS[:dashboard]}\",from=\"0\",to=\"0\"]", to_file: false)).to include(/<p>\| 1621781110000 \| 4410823132.66179 \| 3918217168.1713953 \| 696149370.0246137 \| 308698357.77230036 \|  \| 2069259154.5448523 \| 1037231406.781757 \| 2008807302.9000952 \| 454762299.1667595 \| 1096524688.048703\n\|/)
     end
   end
 end

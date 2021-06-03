@@ -35,11 +35,28 @@ module Grafana
 
     # @see AbstractDatasource#preformat_response
     def preformat_response(response_body)
-      # TODO: support multiple metrics as return types
-      {
-        header: %w[time value],
-        content: JSON.parse(response_body)['data']['result'].first['values']
-      }
+      json = JSON.parse(response_body)['data']['result']
+
+      headers = ['time']
+      content = {}
+
+      # keep sorting, if json has only one target item, otherwise merge results and return
+      # as a time sorted array
+      return { header: headers << json.first['metric']['mode'], content: json.first['values'] } if json.length == 1
+
+      # TODO: show warning if results may be sorted different
+      json.each_index do |i|
+        headers += [json[i]['metric']['mode']]
+        tmp = json[i]['values'].to_h
+        tmp.each_key { |key| content[key] = Array.new(json.length) unless content[key] }
+
+        content.merge!(tmp) do |_key, old, new|
+          old[i] = new
+          old
+        end
+      end
+
+      { header: headers, content: content.to_a.map(&:flatten).sort { |a, b| a[0] <=> b[0] } }
     end
   end
 end

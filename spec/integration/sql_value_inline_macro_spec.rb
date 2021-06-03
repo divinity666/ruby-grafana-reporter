@@ -60,4 +60,15 @@ describe SqlValueInlineMacro do
       expect(Asciidoctor.convert("grafana_sql_value:#{STUBS[:datasource_graphite]}[sql=\"alias(movingAverage(scaleToSeconds(apps.fakesite.backend_01.counters.request_status.code_302.count, 10), 20), 'cpu')\",from=\"0\",to=\"0\"]", to_file: false)).to include('1621794840000')
     end
   end
+
+  # TODO: due to wrong handling of inline macro attributes of asciidoctor, the following tests cannot succeed, refer to https://github.com/asciidoctor/asciidoctor/issues/4072
+  xcontext 'prometheus' do
+    it 'sorts multiple query results by time' do
+      expect(Asciidoctor.convert("grafana_sql_value:#{STUBS[:datasource_prometheus]}[sql=\"sum by(mode)(irate(node_cpu_seconds_total{job=\\\"node\\\", instance=~\\\"$node:.*\\\", mode!=\\\"idle\\\"}[5m])) > 0\",from=\"0\",to=\"0\"]", to_file: false)).to include('1617728730')
+    end
+
+    it 'leaves sorting as is for single query results' do
+      expect(Asciidoctor.convert("grafana_sql_value:#{STUBS[:datasource_prometheus]}[sql=\"sum by(mode)(irate(node_cpu_seconds_total{job=\\\"node\\\", instance=~\\\"$node:.*\\\", mode=\\\"iowait\\\"}[5m])) > 0\",from=\"0\",to=\"0\"]", to_file: false)).to include('1617728760')
+    end
+  end
 end

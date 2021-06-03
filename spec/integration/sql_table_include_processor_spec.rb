@@ -41,8 +41,17 @@ describe SqlTableIncludeProcessor do
   context 'influx' do
     it 'can handle influx requests' do
       expect(@report.logger).not_to receive(:error)
-      expect(Asciidoctor.convert("include::grafana_sql_table:#{STUBS[:datasource_influx]}[sql=\"SELECT non_negative_derivative(mean(\\\"value\\\"), 10s) *1000000000 FROM \\\"logins.count\\\" WHERE time >= now() - 1h GROUP BY time(10s), \\\"hostname\\\" fill(null)\"]", to_file: false)).to include("<p>\| 1621781110000 \| 4410823132.66179\n\|")
+      expect(Asciidoctor.convert("include::grafana_sql_table:#{STUBS[:datasource_influx]}[sql=\"SELECT non_negative_derivative(mean(\\\"value\\\"), 10s) *1000000000 FROM \\\"logins.count\\\" WHERE time >= now() - 1h GROUP BY time(10s), \\\"hostname\\\" fill(null)\"]", to_file: false)).to include("<p>\| 1621781110000 \| 4410823132.66179 \| 3918217168.1713953 \| 696149370.0246137 \| 308698357.77230036 \|  \| 2069259154.5448523 \| 1037231406.781757 \| 2008807302.9000952 \| 454762299.1667595 \| 1096524688.048703\n\|")
     end
   end
 
+  context 'prometheus' do
+    it 'sorts multiple query results by time' do
+      expect(Asciidoctor.convert("include::grafana_sql_table:#{STUBS[:datasource_prometheus]}[sql=\"sum by(mode)(irate(node_cpu_seconds_total{job=\\\"node\\\", instance=~\\\"$node:.*\\\", mode!=\\\"idle\\\"}[5m])) > 0\",from=\"0\",to=\"0\"]", to_file: false)).to include('<p>| 1617728730')
+    end
+
+    it 'leaves sorting as is for single query results' do
+      expect(Asciidoctor.convert("include::grafana_sql_table:#{STUBS[:datasource_prometheus]}[sql=\"sum by(mode)(irate(node_cpu_seconds_total{job=\\\"node\\\", instance=~\\\"$node:.*\\\", mode=\\\"iowait\\\"}[5m])) > 0\",from=\"0\",to=\"0\"]", to_file: false)).to include('<p>| 1617728760')
+    end
+  end
 end

@@ -162,6 +162,15 @@ RSpec.configure do |config|
     )
     .to_return(status: 200, body: File.read('./spec/tests/sample_graphite_response.json'), headers: {})
 
+    stub_request(:post, 'http://localhost/api/datasources/proxy/3/render').with(
+      body: {"format"=>"json", "from"=>"00:00_19700101", "target"=>"alias(movingAverage(scaleToSeconds(apps.fakesite.backend_01.counters.request_status.code_302.count, 10), 20), 'cpu')", "until"=>"00:00_19700101"},
+      headers: default_header.merge({
+        'Authorization' => "Bearer #{STUBS[:key_admin]}",
+        'Content-Type' => 'application/x-www-form-urlencoded'
+      })
+    )
+    .to_return(status: 200, body: File.read('./spec/tests/sample_graphite_single_response.json'), headers: {})
+
     # Prometheus
     stub_request(:get, 'http://localhost/api/datasources/proxy/4/api/v1/query_range').with(
       query: {"query": "sum by(mode)(irate(node_cpu_seconds_total{job=\"node\", instance=~\"$node:.*\", mode!=\"idle\"}[5m])) > 0", 'start': 0, 'end': 0},
@@ -170,6 +179,14 @@ RSpec.configure do |config|
       })
     )
     .to_return(status: 200, body: File.read('./spec/tests/sample_prometheus_response.json'), headers: {})
+
+    stub_request(:get, 'http://localhost/api/datasources/proxy/4/api/v1/query_range').with(
+      query: {"query": "sum by(mode)(irate(node_cpu_seconds_total{job=\"node\", instance=~\"$node:.*\", mode=\"iowait\"}[5m])) > 0", 'start': 0, 'end': 0},
+      headers: default_header.merge({
+        'Authorization' => "Bearer #{STUBS[:key_admin]}"
+      })
+    )
+    .to_return(status: 200, body: File.read('./spec/tests/sample_prometheus_single_response.json'), headers: {})
 
     # Influx
     stub_request(:get, 'http://localhost/api/datasources/proxy/6/query?db=site&q=SELECT%20non_negative_derivative(mean(%22value%22)%2C%2010s)%20*1000000000%20FROM%20%22logins.count%22%20WHERE%20time%20%3E%3D%20now()%20-%201h%20GROUP%20BY%20time(10s)%2C%20%22hostname%22%20fill(null)&epoch=ms').with(
