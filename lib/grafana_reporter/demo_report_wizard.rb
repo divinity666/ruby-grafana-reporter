@@ -26,8 +26,15 @@ module GrafanaReporter
         puts "done - #{(@query_classes - results.keys).length} examples to go"
         break if (@query_classes - results.keys).empty?
       end
-      puts 'Aborting evaluating further dashboards after 15 samples.' if grafana.dashboard_ids.length > 15 and !(@query_classes - results.keys).empty?
-      puts "For #{(@query_classes - results.keys).length} reporter functionalities no appropriate examples could be found in the configured grafana instance." unless (@query_classes - results.keys).empty?
+
+      if grafana.dashboard_ids.length > 15 && !(@query_classes - results.keys).empty?
+        puts 'Aborting evaluating further dashboards after 15 samples.'
+      end
+
+      unless (@query_classes - results.keys).empty?
+        puts "For #{(@query_classes - results.keys).length} reporter functionalities no appropriate "\
+             'examples could be found in the configured grafana instance.'
+      end
 
       format_results(default_result(@query_classes - results.keys).merge(results))
     end
@@ -48,7 +55,11 @@ module GrafanaReporter
       results = {}
 
       dashboard.panels.shuffle.each do |panel|
-        next if panel.datasource.is_a?(Grafana::UnsupportedDatasource)
+        begin
+          next if panel.datasource.is_a?(Grafana::UnsupportedDatasource)
+        rescue Grafana::DatasourceDoesNotExistError
+          next
+        end
 
         query_classes.each do |query_class|
           unless query_class.public_instance_methods.include?(:build_demo_entry)
