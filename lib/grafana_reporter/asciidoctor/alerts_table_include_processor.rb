@@ -55,8 +55,11 @@ module GrafanaReporter
         @report.logger.debug("Processing AlertsTableIncludeProcessor (instance: #{instance},"\
                              " dashboard: #{dashboard_id}, panel: #{panel_id})")
 
-        query = AlertsTableQuery.new(@report.grafana(instance))
-        assign_dashboard_defaults(query, @report.grafana(instance).dashboard(dashboard_id)) if dashboard_id
+        grafana_obj = @report.grafana(instance)
+        grafana_obj = @report.grafana(instance).dashboard(dashboard_id) if dashboard_id
+        grafana_obj = grafana_obj.panel(panel_id) if panel_id
+
+        query = AlertsTableQuery.new(grafana_obj)
         defaults = {}
         defaults['dashboardId'] = dashboard_id if dashboard_id
         defaults['panelId'] = panel_id if panel_id

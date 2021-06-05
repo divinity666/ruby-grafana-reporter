@@ -19,21 +19,6 @@ module GrafanaReporter
         raise NotImplementedError
       end
 
-      # Sets default configurations from the given {Grafana::Dashboard} and store them as settings in the
-      # {AbstractQuery}.
-      #
-      # Following data is extracted:
-      # - +from+, by {Grafana::Dashboard#from_time}
-      # - +to+, by {Grafana::Dashboard#to_time}
-      # - and all variables as {Grafana::Variable}, prefixed with +var-+, as grafana also does it
-      # @param query [AbstractQuery] query object, for which the defaults are set
-      # @param dashboard [Grafana::Dashboard] dashboard from which the defaults are captured
-      def assign_dashboard_defaults(query, dashboard)
-        query.from = dashboard.from_time
-        query.to = dashboard.to_time
-        dashboard.variables.each { |item| query.assign_variable("var-#{item.name}", item) }
-      end
-
       # Merges the given hashes to the given query object. It respects the priorities of the hashes and the
       # object and allows only valid variables to be passed.
       # @param query [AbstractQuery] query object, for which the defaults are set

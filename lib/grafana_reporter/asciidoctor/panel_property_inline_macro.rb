@@ -40,7 +40,6 @@ module GrafanaReporter
         begin
           query = PanelPropertyQuery.new(@report.grafana(instance).dashboard(dashboard).panel(target))
           query.raw_query = { property_name: attrs[:field] }
-          assign_dashboard_defaults(query, @report.grafana(instance).dashboard(dashboard))
           assign_doc_and_item_variables(query, parent.document.attributes, attrs)
           @report.logger.debug("from: #{query.from}, to: #{query.to}")
 
@@ -60,6 +59,7 @@ module GrafanaReporter
 
       # @see ProcessorMixin#build_demo_entry
       def build_demo_entry(panel)
+        # TODO: add check if underlying datasource is capable of creating demo reports
         return nil unless panel
         return nil unless panel.model['title']
         return nil if panel.model['title'].strip == ''

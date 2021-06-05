@@ -7,18 +7,32 @@ module GrafanaReporter
   class AbstractQuery
     attr_accessor :datasource, :timeout, :from, :to
     attr_writer :raw_query
-    attr_reader :variables, :result, :panel
+    attr_reader :variables, :result, :panel, :dashboard
 
-    # @param grafana_or_panel [Object] {Grafana::Grafana} or {Grafana::Panel} object for which the query is executed
+    # @param grafana_obj [Object] {Grafana::Grafana}, {Grafana::Dashboard} or {Grafana::Panel} object for which the query is executed
     # TODO allow query initialization with variables
-    def initialize(grafana_or_panel)
-      if grafana_or_panel.is_a?(Grafana::Panel)
-        @panel = grafana_or_panel
-        @grafana = @panel.dashboard.grafana
+    def initialize(grafana_obj, opts = {})
+      if grafana_obj.is_a?(Grafana::Panel)
+        @panel = grafana_obj
+        @dashboard = @panel.dashboard
+        @grafana = @dashboard.grafana
+
+      elsif grafana_obj.is_a?(Grafana::Dashboard)
+        @dashboard = grafana_obj
+        @grafana = @dashboard.grafana
+
+      elsif grafana_obj.is_a?(Grafana::Grafana)
+        @grafana = grafana_obj
+
+      elsif !grafana_obj
+        # nil given
+
       else
-        @grafana = grafana_or_panel
+        raise GrafanaReporterError, "Internal error in AbstractQuery: given object is of type #{grafana_obj.class.name}, which is not supported"
       end
       @variables = {}
+
+      assign_dashboard_defaults unless opts[:ignore_dashboard_defaults]
     end
 
     # @abstract
@@ -310,6 +324,21 @@ module GrafanaReporter
     end
 
     private
+
+    # Sets default configurations from the given {Grafana::Dashboard} and store them as settings in the
+    # {AbstractQuery}.
+    #
+    # Following data is extracted:
+    # - +from+, by {Grafana::Dashboard#from_time}
+    # - +to+, by {Grafana::Dashboard#to_time}
+    # - and all variables as {Grafana::Variable}, prefixed with +var-+, as grafana also does it
+    def assign_dashboard_defaults
+      return unless @dashboard
+
+      @from = @dashboard.from_time
+      @to = @dashboard.to_time
+      @dashboard.variables.each { |item| assign_variable("var-#{item.name}", item) }
+    end
 
     def datasource_response_valid?
       return false if @result.nil?

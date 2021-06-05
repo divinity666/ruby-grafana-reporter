@@ -47,7 +47,6 @@ module GrafanaReporter
 
         begin
           query = PanelImageQuery.new(@report.grafana(instance).dashboard(dashboard).panel(target))
-          assign_dashboard_defaults(query, @report.grafana(instance).dashboard(dashboard))
           assign_doc_and_item_variables(query, parent.document.attributes, attrs)
           @report.logger.debug("from: #{query.from}, to: #{query.to}")
 

@@ -60,7 +60,6 @@ module GrafanaReporter
         begin
           panel = @report.grafana(instance).dashboard(dashboard).panel(panel_id)
           query = QueryValueQuery.new(panel)
-          assign_dashboard_defaults(query, panel.dashboard)
           assign_doc_and_item_variables(query, doc.attributes, attrs)
           @report.logger.debug("from: #{query.from}, to: #{query.to}")
 
