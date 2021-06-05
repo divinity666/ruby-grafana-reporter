@@ -21,7 +21,7 @@ describe SqlTableIncludeProcessor do
 
   it 'can translate times' do
     @report.logger.level = ::Logger::Severity::DEBUG
-    expect(@report.logger).to receive(:debug).exactly(4).times.with(any_args)
+    expect(@report.logger).to receive(:debug).exactly(3).times.with(any_args)
     expect(@report.logger).to receive(:debug).with(/"from":"#{Time.utc(Time.new.year,1,1).to_i * 1000}".*"to":"#{(Time.utc(Time.new.year + 1,1,1) - 1).to_i * 1000}"/)
     expect(@report.logger).to receive(:debug).with(/Received response/)
     expect(Asciidoctor.convert("include::grafana_sql_table:#{STUBS[:datasource_sql]}[sql=\"SELECT 1\",from_timezone=\"UTC\",to_timezone=\"UTC\",from=\"now/y\",to=\"now/y\"]", to_file: false)).not_to include('GrafanaReporterError')

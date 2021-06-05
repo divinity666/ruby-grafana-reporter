@@ -5,12 +5,19 @@ module GrafanaReporter
   #
   # Superclass containing everything for all queries towards grafana.
   class AbstractQuery
-    attr_accessor :datasource, :timeout, :from, :to
+    attr_accessor :datasource
     attr_writer :raw_query
     attr_reader :variables, :result, :panel, :dashboard
 
+    def timeout
+      return @variables['timeout'].raw_value if @variables['timeout']
+      return @variables['grafana_default_timeout'].raw_value if @variables['grafana_default_timeout']
+      # TODO: add default value for timeout
+      # TODO: check if this method makes sense
+    end
+
     # @param grafana_obj [Object] {Grafana::Grafana}, {Grafana::Dashboard} or {Grafana::Panel} object for which the query is executed
-    # TODO allow query initialization with variables
+    # TODO: add documentation for opts parameter
     def initialize(grafana_obj, opts = {})
       if grafana_obj.is_a?(Grafana::Panel)
         @panel = grafana_obj
@@ -31,8 +38,14 @@ module GrafanaReporter
         raise GrafanaReporterError, "Internal error in AbstractQuery: given object is of type #{grafana_obj.class.name}, which is not supported"
       end
       @variables = {}
+      @variables['from'] = Grafana::Variable.new(nil)
+      @variables['to'] = Grafana::Variable.new(nil)
 
       assign_dashboard_defaults unless opts[:ignore_dashboard_defaults]
+      opts[:variables].each { |k, v| assign_variable(k, v) } if opts[:variables].is_a?(Hash)
+
+      @translate_times = true
+      @translate_times = false if opts[:do_not_use_translated_times]
     end
 
     # @abstract
@@ -46,11 +59,20 @@ module GrafanaReporter
     def execute
       return @result unless @result.nil?
 
+      from = @variables['from'].raw_value
+      to = @variables['to'].raw_value
+      if @translate_times
+        from = translate_date(@variables['from'], @variables['grafana_report_timestamp'], false, @variables['from_timezone'] ||
+                              @variables['grafana_default_from_timezone'])
+        to = translate_date(@variables['to'], @variables['grafana_report_timestamp'], true, @variables['to_timezone'] ||
+                            @variables['grafana_default_to_timezone'])
+      end
+
       pre_process
       raise DatasourceNotSupportedError.new(@datasource, self) if @datasource.is_a?(Grafana::UnsupportedDatasource)
 
       begin
-        @result = @datasource.request(from: @from, to: @to, raw_query: raw_query, variables: grafana_variables,
+        @result = @datasource.request(from: from, to: to, raw_query: raw_query, variables: grafana_variables,
                                       prepared_request: @grafana.prepare_request, timeout: timeout)
       rescue ::Grafana::GrafanaError
         # grafana errors will be directly passed through
@@ -91,18 +113,6 @@ module GrafanaReporter
     # Use this function to format the raw result of the @result variable to conform to the expected return value.
     def post_process
       raise NotImplementedError
-    end
-
-    # Used to specify variables to be used for this query. This method ensures, that only the values of the
-    # {Grafana::Variable} stored in the +variables+ Array are overwritten.
-    # @param name [String] name of the variable to set
-    # @param variable [Grafana::Variable] variable from which the {Grafana::Variable#raw_value} will be assigned to the query variables
-    # TODO: make assign_variable a private method
-    def assign_variable(name, variable)
-      raise GrafanaReporterError, "Provided variable is not of type Grafana::Variable (name: '#{name}', value: '#{value}')" unless variable.is_a?(Grafana::Variable)
-
-      @variables[name] ||= variable
-      @variables[name].raw_value = variable.raw_value
     end
 
     # Transposes the given result.
@@ -287,6 +297,7 @@ module GrafanaReporter
     def translate_date(orig_date, report_time, is_to_time, timezone = nil)
       # TODO: add test case for creation of variable, if not given, maybe also print a warning
       report_time ||= ::Grafana::Variable.new(Time.now.to_s)
+      orig_date = orig_date.raw_value if orig_date.is_a?(Grafana::Variable)
       return (DateTime.parse(report_time.raw_value).to_time.to_i * 1000).to_s unless orig_date
       return orig_date if orig_date =~ /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/
       return orig_date if orig_date =~ /^\d+$/
@@ -325,6 +336,17 @@ module GrafanaReporter
 
     private
 
+    # Used to specify variables to be used for this query. This method ensures, that only the values of the
+    # {Grafana::Variable} stored in the +variables+ Array are overwritten.
+    # @param name [String] name of the variable to set
+    # @param variable [Grafana::Variable] variable from which the {Grafana::Variable#raw_value} will be assigned to the query variables
+    def assign_variable(name, variable)
+      variable = Grafana::Variable.new(variable) unless variable.is_a?(Grafana::Variable)
+
+      @variables[name] ||= variable
+      @variables[name].raw_value = variable.raw_value
+    end
+
     # Sets default configurations from the given {Grafana::Dashboard} and store them as settings in the
     # {AbstractQuery}.
     #
@@ -335,8 +357,8 @@ module GrafanaReporter
     def assign_dashboard_defaults
       return unless @dashboard
 
-      @from = @dashboard.from_time
-      @to = @dashboard.to_time
+      assign_variable('from', @dashboard.from_time)
+      assign_variable('to', @dashboard.to_time)
       @dashboard.variables.each { |item| assign_variable("var-#{item.name}", item) }
     end
 

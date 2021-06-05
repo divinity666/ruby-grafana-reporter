@@ -3,15 +3,10 @@
 module GrafanaReporter
   # This class provides a general query implementation for any kind of single value and table queries.
   class QueryValueQuery < AbstractQuery
-    # Translates the from and to times.
     # @see Grafana::AbstractQuery#pre_process
     def pre_process
       @datasource = @panel.datasource if @panel
 
-      @from = translate_date(@from, @variables['grafana_report_timestamp'], false, @variables['from_timezone'] ||
-                             @variables['grafana_default_from_timezone'])
-      @to = translate_date(@to, @variables['grafana_report_timestamp'], true, @variables['to_timezone'] ||
-                           @variables['grafana_default_to_timezone'])
       @variables['result_type'] ||= Variable.new('')
     end
 

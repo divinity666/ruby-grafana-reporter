@@ -19,29 +19,30 @@ module GrafanaReporter
         raise NotImplementedError
       end
 
-      # Merges the given hashes to the given query object. It respects the priorities of the hashes and the
-      # object and allows only valid variables to be passed.
-      # @param query [AbstractQuery] query object, for which the defaults are set
+      # Merges the given hashes to a common attribute Hash. It respects the priorities of the hashes and the
+      # object and allows only valid variables to be used.
       # @param document_hash [Hash] variables from report template level
       # @param item_hash [Hash] variables from item configuration level, i.e. specific call, which may override document
-      # @return [void]
-      def assign_doc_and_item_variables(query, document_hash, item_hash)
-        sel_doc_items = document_hash.select do |k, _v|
-          k =~ /^var-/ || k =~ /grafana_default_(?:from|to)_timezone/
-        end
-        sel_doc_items.each { |k, v| query.assign_variable(k, ::Grafana::Variable.new(v)) }
-        query.assign_variable('grafana_report_timestamp', ::Grafana::Variable.new(document_hash['localdatetime']))
+      # @return [Hash] containing accepted variable names including values
+      def build_attribute_hash(document_hash, item_hash)
+        result = {}
 
-        sel_items = item_hash.select do |k, _v|
+        result['grafana_report_timestamp'] = document_hash['localdatetime']
+        result.merge!(document_hash.select do |k, _v|
+          k =~ /^var-/ ||
+          k =~ /^(?:from|to)$/ ||
+          k =~ /^grafana_default_(?:from_timezone|to_timezone|timeout)$/
+        end)
+
+        result.merge!(item_hash.select do |k, _v|
           # TODO: specify accepted options for each processor class individually
-          k =~ /^var-/ || k =~ /^render-/ || k =~ /filter_columns|format|replace_values_.*|transpose|column_divider|
-                                                   row_divider|from_timezone|to_timezone|result_type|query/x
-        end
-        sel_items.each { |k, v| query.assign_variable(k, ::Grafana::Variable.new(v)) }
+          k =~ /^(?:var-|render-)/ ||
+          k =~ /^(?:timeout|from|to)$/ ||
+          k =~ /filter_columns|format|replace_values_.*|transpose|column_divider|
+               row_divider|from_timezone|to_timezone|result_type|query/x
+        end)
 
-        query.timeout = item_hash['timeout'] || document_hash['grafana_default_timeout'] || query.timeout
-        query.from = item_hash['from'] || document_hash['from'] || query.from
-        query.to = item_hash['to'] || document_hash['to'] || query.to
+        result
       end
     end
   end

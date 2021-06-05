@@ -51,11 +51,9 @@ module GrafanaReporter
 
         begin
           # catch properly if datasource could not be identified
-          query = QueryValueQuery.new(@report.grafana(instance))
+          query = QueryValueQuery.new(@report.grafana(instance), variables: build_attribute_hash(doc.attributes, attrs))
           query.datasource = @report.grafana(instance).datasource_by_id(target.split(':')[1].to_i)
           query.raw_query = attrs['sql']
-          assign_doc_and_item_variables(query, doc.attributes, attrs)
-          @report.logger.debug("from: #{query.from}, to: #{query.to}")
 
           reader.unshift_lines query.execute
         rescue GrafanaReporterError => e
