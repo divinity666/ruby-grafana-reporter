@@ -33,13 +33,13 @@ module GrafanaReporter
         query.assign_variable('grafana_report_timestamp', ::Grafana::Variable.new(document_hash['localdatetime']))
 
         sel_items = item_hash.select do |k, _v|
-          # TODO: specify accepted options in each class or check if simply all can be allowed with prefix +var-+
+          # TODO: specify accepted options for each processor class individually
           k =~ /^var-/ || k =~ /^render-/ || k =~ /filter_columns|format|replace_values_.*|transpose|column_divider|
                                                    row_divider|from_timezone|to_timezone|result_type|query/x
         end
         sel_items.each { |k, v| query.assign_variable(k, ::Grafana::Variable.new(v)) }
 
-        query.timeout = item_hash['timeout'] || document_hash['grafana-default-timeout'] || query.timeout
+        query.timeout = item_hash['timeout'] || document_hash['grafana_default_timeout'] || query.timeout
         query.from = item_hash['from'] || document_hash['from'] || query.from
         query.to = item_hash['to'] || document_hash['to'] || query.to
       end

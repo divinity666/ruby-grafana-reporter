@@ -5,6 +5,7 @@ require 'yaml'
 module GrafanaReporter
   # This class generates the functional help documentation for the reporter.
   # It can create the documentation for github markdown, as well as in asciidoctor.
+  # TODO: this help is limited to Asciidoctor - move it to that namespace
   class Help
     # @param headline_level [Integer] top level of headline
     # @return [String] asciidoctor compatible documentation
@@ -235,7 +236,7 @@ end}
           timeout:
             call: timeout="<timeout_in_seconds>"
             description: >-
-              Set a timeout for the current query. If not overridden with `grafana-default-timeout` in the report template,
+              Set a timeout for the current query. If not overridden with `grafana_default_timeout` in the report template,
               this defaults to 60 seconds.
 
         # ----------------------------------
