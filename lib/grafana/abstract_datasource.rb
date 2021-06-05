@@ -8,19 +8,18 @@ module Grafana
 
     @@subclasses = []
 
-    # Registers the subclass as datasource, which is asked by {#accepts?}, if it can handle a datasource
-    # model.
+    # Registers the subclass as datasource.
     # @param subclass [Class] class inheriting from this abstract class
     def self.inherited(subclass)
       @@subclasses << subclass
     end
 
     # Overwrite this method, to specify if the current datasource implementation handles the given model.
-    # This method is called by {#build_instance} to determine, if the current datasource implementation
+    # This method is called by {build_instance} to determine, if the current datasource implementation
     # can handle the given grafana model. By default this method returns false.
     # @param model [Hash] grafana specification of the datasource to check
     # @return [Boolean] True if fits, false otherwise
-    def self.handles?(_model)
+    def self.handles?(model)
       false
     end
 
@@ -78,12 +77,12 @@ module Grafana
     #   }
     #
     # @param query_description [Hash] query description, which will requested:
-    # @option [String] :from +from+ timestamp
-    # @option [String] :to +to+ timestamp
-    # @option [Integer] :timeout expected timeout for the request
-    # @option [WebRequest] :prepared_request prepared web request for relevant {Grafana} instance, if this is needed by datasource
-    # @option [String] :raw_query raw query, which shall be executed. May include variables, which will be replaced before execution
-    # @option [Hash<Variable>] :variables hash of variables, which can potentially be replaced in the given +:raw_query+
+    # @option query_description [String] :from +from+ timestamp
+    # @option query_description [String] :to +to+ timestamp
+    # @option query_description [Integer] :timeout expected timeout for the request
+    # @option query_description [WebRequest] :prepared_request prepared web request for relevant {Grafana} instance, if this is needed by datasource
+    # @option query_description [String] :raw_query raw query, which shall be executed. May include variables, which will be replaced before execution
+    # @option query_description [Hash<Variable>] :variables hash of variables, which can potentially be replaced in the given +:raw_query+
     # @return [Hash] sql result formatted as stated above
     def request(query_description)
       raise NotImplementedError
@@ -132,5 +131,7 @@ module Grafana
 
       res
     end
+
+    # TODO: implement a common method for merging multiple results on a specified column (time by default)
   end
 end
