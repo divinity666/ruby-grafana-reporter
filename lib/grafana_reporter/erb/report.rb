@@ -15,7 +15,7 @@ module GrafanaReporter
         logger.debug("Document attributes: #{attrs}")
 
         # TODO: if path is true, a default filename has to be generated. check if this should be a general function instead
-        File.write(path, ::ERB.new(File.read(template)).result(ReportJail.new(self).bind))
+        File.write(path, ::ERB.new(File.read(template)).result(ReportJail.new(self, attrs).bind))
 
         # TODO: check if closing output file is correct here, or maybe can be moved to AbstractReport.done!
         @destination_file_or_path.close if @destination_file_or_path.is_a?(File)

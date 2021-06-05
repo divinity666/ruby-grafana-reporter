@@ -5,12 +5,12 @@ module GrafanaReporter
     # An instance of this class is used as binding for the ERB execution, i.e.
     # this class contains everything known within the ERB template
     class ReportJail
-      attr_reader :report
+      attr_reader :report, :attributes
 
-      # TODO: make all variables including URL parameters available to ERB jail
-      def initialize(report)
+      # TODO: check if attributes need to become GrafanaVariable objects
+      def initialize(report, attributes)
         @report = report
-        binding
+        @attributes = attributes
       end
 
       # @return binding to this object
