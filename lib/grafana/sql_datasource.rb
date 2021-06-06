@@ -39,6 +39,11 @@ module Grafana
       panel_query_target['rawSql']
     end
 
+    # @see AbstractDatasource#default_variable_format
+    def default_variable_format
+        'glob'
+    end
+
     private
 
     def preformat_response(response_body)

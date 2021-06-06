@@ -36,6 +36,11 @@ module Grafana
       panel_query_target['target']
     end
 
+    # @see AbstractDatasource#default_variable_format
+    def default_variable_format
+        'glob'
+    end
+
     private
 
     # @see AbstractDatasource#preformat_response

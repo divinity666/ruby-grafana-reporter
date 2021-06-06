@@ -31,6 +31,11 @@ module Grafana
       panel_query_target['expr']
     end
 
+    # @see AbstractDatasource#default_variable_format
+    def default_variable_format
+        'regex'
+    end
+
     private
 
     # @see AbstractDatasource#preformat_response

@@ -33,23 +33,35 @@ module Grafana
       raise ComposedQueryNotSupportedError, self
     end
 
+    # @see AbstractDatasource#default_variable_format
+    def default_variable_format
+      # TODO: specify default_variable_format for influx
+      super
+    end
+
     private
 
     # @see AbstractDatasource#preformat_response
     def preformat_response(response_body)
-      results = {}
-      results.default = []
+      json = JSON.parse(response_body)['results'].first['series']
 
-      # TODO: support multiple responses as influx query result
-      json = JSON.parse(response_body)
-      query_result = json['results'].first['series'].first
+      header = ['time']
+      content = {}
 
-      query_result['columns'].each do |header|
-        results[:header] = results[:header] << header
+      json.each_index do |i|
+        # TODO support multiple columns
+        header << "#{json[i]['name']} #{json[i]['columns'][1]} (#{json[i]['tags']})"
+        tmp = json[i]['values'].to_h
+        tmp.each_key { |key| content[key] = Array.new(json.length) unless content[key] }
+
+        content.merge!(tmp) do |_key, old, new|
+          old[i] = new
+          old
+        end
       end
-      results[:content] = query_result['values']
 
-      results
+      # TODO: ensure that sorting is identical to source sorting
+      { header: header, content: content.to_a.map(&:flatten).sort { |a, b| a[0] <=> b[0] } }
     end
   end
 end

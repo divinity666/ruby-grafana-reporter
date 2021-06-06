@@ -100,6 +100,14 @@ module Grafana
       raise NotImplementedError
     end
 
+    # @abstract
+    #
+    # Overwrite in subclass, to specify the default variable format during replacement of variables.
+    # @return [String] default {Variable#value_formatted} format
+    def default_variable_format
+      raise NotImplementedError
+    end
+
     private
 
     # Replaces the grafana variables in the given string with their replacement value.
@@ -118,12 +126,15 @@ module Grafana
       while repeat && (repeat_count < 3)
         repeat = false
         repeat_count += 1
-        variables.each do |var_name, obj|
+        variables.each do |name, variable|
           # only set ticks if value is string
-          variable = var_name.gsub(/^var-/, '')
-          res = res.gsub(/(?:\$\{#{variable}(?::(?<format>\w+))?\}|\$#{variable})/) do
-            # TODO: respect datasource requirements for formatting here
-            obj.value_formatted($LAST_MATCH_INFO ? $LAST_MATCH_INFO[:format] : nil)
+          var_name = name.gsub(/^var-/, '')
+          res = res.gsub(/(?:\$\{#{var_name}(?::(?<format>\w+))?\}|\$#{var_name})/) do
+            format = default_variable_format
+            if $LAST_MATCH_INFO
+              format = $LAST_MATCH_INFO[:format] if $LAST_MATCH_INFO[:format]
+            end
+            variable.value_formatted(format)
           end
         end
         repeat = true if res.include?('$')

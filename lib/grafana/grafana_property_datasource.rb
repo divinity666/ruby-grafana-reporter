@@ -21,5 +21,10 @@ module Grafana
         content: [replace_variables(panel.field(property_name), query_description[:variables])]
       }
     end
+
+    # @see AbstractDatasource#default_variable_format
+    def default_variable_format
+        'glob'
+    end
   end
 end
