@@ -10,10 +10,11 @@ module GrafanaReporter
     attr_reader :variables, :result, :panel, :dashboard
 
     def timeout
+      # TODO: check where value priorities should be evaluated
       return @variables['timeout'].raw_value if @variables['timeout']
       return @variables['grafana_default_timeout'].raw_value if @variables['grafana_default_timeout']
-      # TODO: add default value for timeout
-      # TODO: check if this method makes sense
+
+      nil
     end
 
     # @param grafana_obj [Object] {Grafana::Grafana}, {Grafana::Dashboard} or {Grafana::Panel} object for which the query is executed
