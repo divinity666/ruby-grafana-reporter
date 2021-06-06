@@ -283,20 +283,19 @@ module GrafanaReporter
 
     # Used to build a output format matching the requested report format.
     # @param result [Hash] preformatted sql hash, (see {Grafana::AbstractDatasource#request})
-    # @param row_divider [Grafana::Variable] requested row divider for the result table
-    # @param column_divider [Grafana::Variable] requested column divider for the result table
-    # @return [Hash] formatted table result
-    def format_table_output(result, row_divider, column_divider)
-      row_div = '| '
-      row_div = row_divider.raw_value if row_divider.is_a?(Grafana::Variable)
-      col_div = ' | '
-      col_div = column_divider.raw_value if column_divider.is_a?(Grafana::Variable)
+    # @param opts [Hash] options for the formatting:
+    # @option opts [Grafana::Variable] :row_divider requested row divider for the result table
+    # @option opts [Grafana::Variable] :column_divider requested row divider for the result table
+    # @option opts [Regex or String] :escape_regex regular expression which specifies a part of a cell content, which has to be escaped
+    # @option opts [String] :escape_replacement specifies how the found :escape_regex shall be replaced
+    # @return [String] formatted table result in requested output format
+    def format_table_output(result, opts)
+      opts = { escape_regex: '|', escape_replacement: '\\|', row_divider: Grafana::Variable.new('| '), column_divider: Grafana::Variable.new(' | ') }.merge(opts.delete_if {|_k, v| v.nil? })
 
       result[:content].map do |row|
-        row_div + row.map do |item|
-          # TODO: define a possibility, so that values can be escaped with a parameter
-          col_div == ' | ' ? item.to_s.gsub('|', '\\|') : item.to_s
-        end.join(col_div)
+        opts[:row_divider].raw_value + row.map do |item|
+          item.to_s.gsub(opts[:escape_regex], opts[:escape_replacement])
+        end.join(opts[:column_divider].raw_value)
       end
     end
 
