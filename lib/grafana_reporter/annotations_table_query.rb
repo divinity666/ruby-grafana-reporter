@@ -32,8 +32,7 @@ module GrafanaReporter
       @result = replace_values(@result, @variables.select { |k, _v| k =~ /^replace_values_\d+/ })
       @result = filter_columns(@result, @variables['filter_columns'])
 
-      # TODO: move formatting to Asciidoctor namespace
-      @result = result[:content].map { |row| "| #{row.map { |item| item.to_s.gsub('|', '\\|') }.join(' | ')}" }
+      @result = format_table_output(@result, @variables['row_divider'], @variables['column_divider'])
     end
   end
 end

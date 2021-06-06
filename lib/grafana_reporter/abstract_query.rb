@@ -281,6 +281,25 @@ module GrafanaReporter
       result
     end
 
+    # Used to build a output format matching the requested report format.
+    # @param result [Hash] preformatted sql hash, (see {Grafana::AbstractDatasource#request})
+    # @param row_divider [Grafana::Variable] requested row divider for the result table
+    # @param column_divider [Grafana::Variable] requested column divider for the result table
+    # @return [Hash] formatted table result
+    def format_table_output(result, row_divider, column_divider)
+      row_div = '| '
+      row_div = row_divider.raw_value if row_divider.is_a?(Grafana::Variable)
+      col_div = ' | '
+      col_div = column_divider.raw_value if column_divider.is_a?(Grafana::Variable)
+
+      result[:content].map do |row|
+        row_div + row.map do |item|
+          # TODO: define a possibility, so that values can be escaped with a parameter
+          col_div == ' | ' ? item.to_s.gsub('|', '\\|') : item.to_s
+        end.join(col_div)
+      end
+    end
+
     # Used to translate the relative date strings used by grafana, e.g. +now-5d/w+ to the
     # correct timestamp. Reason is that grafana does this in the frontend, which we have
     # to emulate here for the reporter.
