@@ -35,21 +35,25 @@ module Grafana
 
     # @see AbstractDatasource#default_variable_format
     def default_variable_format
-      # TODO: specify default_variable_format for influx
-      super
+      'regex'
     end
 
     private
 
     # @see AbstractDatasource#preformat_response
     def preformat_response(response_body)
+      # TODO: how to handle multiple query results?
       json = JSON.parse(response_body)['results'].first['series']
 
       header = ['time']
       content = {}
 
+      # keep sorting, if json has only one target item, otherwise merge results and return
+      # as a time sorted array
+      return { header: header << "#{json.first['name']} #{json.first['columns'][1]} (#{json.first['tags']})", content: json.first['values'] } if json.length == 1
+
+      # TODO: show warning here, as results may be sorted different
       json.each_index do |i|
-        # TODO support multiple columns
         header << "#{json[i]['name']} #{json[i]['columns'][1]} (#{json[i]['tags']})"
         tmp = json[i]['values'].to_h
         tmp.each_key { |key| content[key] = Array.new(json.length) unless content[key] }
@@ -60,7 +64,6 @@ module Grafana
         end
       end
 
-      # TODO: ensure that sorting is identical to source sorting
       { header: header, content: content.to_a.map(&:flatten).sort { |a, b| a[0] <=> b[0] } }
     end
   end

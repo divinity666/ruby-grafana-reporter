@@ -65,7 +65,7 @@ RSpec.configure do |config|
     )
     .to_return(status: 403, body: '{"message":"Permission denied"}', headers: {})
 
-    stub_request(:get, %r{(?:http|https)://localhost/api/datasources}).with(
+    stub_request(:get, %r{(?:http|https)://localhost/api/datasources$}).with(
       headers: default_header.merge({
         'Authorization' => "Bearer #{STUBS[:key_admin]}"
       })
@@ -195,5 +195,12 @@ RSpec.configure do |config|
       })
     )
     .to_return(status: 200, body: File.read('./spec/tests/sample_influx_response.json'), headers: {})
+
+    stub_request(:get, 'http://localhost/api/datasources/proxy/6/query?db=site&q=SELECT%20non_negative_derivative(mean(%22value%22),%2010s)%20*1000000000%20FROM%20%22logins.count%22%20WHERE%20time%20%3E=%20now()%20-%201h%20AND%20%22hostname%22%20=%20%2210.1.0.100.1%22%20GROUP%20BY%20time(10s)%20fill(null)&epoch=ms').with(
+      headers: default_header.merge({
+        'Authorization' => "Bearer #{STUBS[:key_admin]}"
+      })
+    )
+    .to_return(status: 200, body: File.read('./spec/tests/sample_influx_single_response.json'), headers: {})
   end
 end
