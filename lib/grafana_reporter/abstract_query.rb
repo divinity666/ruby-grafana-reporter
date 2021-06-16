@@ -18,7 +18,10 @@ module GrafanaReporter
     end
 
     # @param grafana_obj [Object] {Grafana::Grafana}, {Grafana::Dashboard} or {Grafana::Panel} object for which the query is executed
-    # TODO: add documentation for opts parameter
+    # @param opts [Hash] hash options, which may consist of:
+    # @option opts [Hash] :variables hash of variables, which shall be used to replace variable references in the query
+    # @option opts [Boolean] :ignore_dashboard_defaults True if {#assign_dashboard_defaults} should not be called
+    # @option opts [Boolean] :do_not_use_translated_times True if given from and to times should used as is, without being resolved to reporter times - using this parameter can lead to inconsistent report contents
     def initialize(grafana_obj, opts = {})
       if grafana_obj.is_a?(Grafana::Panel)
         @panel = grafana_obj
