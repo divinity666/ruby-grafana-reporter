@@ -32,21 +32,23 @@ By default (an extended version of) Asciidoctor is enabled as template language.
 
 ## Features
 
-* Build reports based on [grafana](https://github.com/grafana/grafana) dashboards, PDF
-(default) and many other formats supported
+* Supports creation of reports for multiple [grafana](https://github.com/grafana/grafana)
+dashboards (and also multiple grafana installations!) in one resulting report
+* PDF (default), HTML and many other report formats are supported
 * Easy-to-use configuration wizard, including fully automated functionality to create a
-demo report
+demo report for your dashboard
 * Include dynamic content from grafana (find here a reference for all
 [asciidcotor reporter calls](FUNCTION_CALLS.md)):
   * panels as images
   * tables based on grafana panel queries or custom database queries (no images!)
   * single values to be integrated in text, based on grafana panel queries or custom
 database queries
-* Multi purpose use of the reporter
+* Runs as
   * webservice to be called directly from grafana
   * standalone command line tool, e.g. to be automated with `cron` or `bash` scrips
-  * seemlessly runs from asciidocotor docker container without further dependencies
-* Webhook callbacks before, on cancel and on finishing callbacks (see configuration file)
+  * microservice from standard asciidoctor docker container without any dependencies
+* Supports webhook callbacks on before, on cancel and on finishing a report (see
+configuration file)
 * Solid as a rock, also in case of template errors and whatever else may happen
 * Full [API documentation](https://rubydoc.info/gems/ruby-grafana-reporter) available
 
