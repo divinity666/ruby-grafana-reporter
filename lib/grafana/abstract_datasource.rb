@@ -142,7 +142,5 @@ module Grafana
 
       res
     end
-
-    # TODO: implement a common method for merging multiple results on a specified column (time by default)
   end
 end

@@ -57,7 +57,6 @@ module GrafanaReporter
 
       # @see ProcessorMixin#build_demo_entry
       def build_demo_entry(panel)
-        # TODO: add check if necessary datasource exists for demo report
         return nil unless panel
         return nil unless panel.model['title']
         return nil if panel.model['title'].strip == ''
