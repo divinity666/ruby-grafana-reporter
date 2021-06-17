@@ -70,7 +70,7 @@ See also: https://grafana.com/docs/grafana/latest/http_api/alerting/#get-alerts
 | `instance="<instance_name>"` | can be used to override global grafana instance, set in the report with `grafana_default_instance`. If nothing is set, the configured grafana instance with name `default` will be used.
 | `replace_values="<replace_1>:<with_1>,<replace_2>:<with_2>,..."` | Specify result values which shall be replaced, e.g. `2:OK` will replace query values `2` with value `OK`. Replacing several values is possible by separating by `,`. Matches with regular expressions are also supported, but must be full matches, i.e. have to start with `^` and end with `$`, e.g. `^[012]$:OK`. Number replacements can also be performed, e.g. `<8.2` or `<>3`. Execution is applied in the following order `format`, `replace_values`, `filter_columns`, `transpose`.
 | `row_divider="<divider>"` | Replace the default row divider with another one. Defaults to `\| ` for being interpreted as a asciidoctor row.
-| `timeout="<timeout_in_seconds>"` | Set a timeout for the current query. If not overridden with `grafana-default-timeout` in the report template, this defaults to 60 seconds.
+| `timeout="<timeout_in_seconds>"` | Set a timeout for the current query. If not overridden with `grafana_default_timeout` in the report template, this defaults to 60 seconds.
 | `to="<timestamp>"` | can be used to override default `to` time
 | `to_timezone="<timezone>"` | can be used to override system timezone for `to` time and will also override `grafana_default_to_timezone` option
 | `transpose="true"` | Transposes the query result, i.e. columns become rows and rows become columnns. Execution is applied in the following order `format`, `replace_values`, `filter_columns`, `transpose`.
@@ -93,7 +93,7 @@ See also: https://grafana.com/docs/grafana/latest/http_api/annotations/#find_ann
 | `instance="<instance_name>"` | can be used to override global grafana instance, set in the report with `grafana_default_instance`. If nothing is set, the configured grafana instance with name `default` will be used.
 | `replace_values="<replace_1>:<with_1>,<replace_2>:<with_2>,..."` | Specify result values which shall be replaced, e.g. `2:OK` will replace query values `2` with value `OK`. Replacing several values is possible by separating by `,`. Matches with regular expressions are also supported, but must be full matches, i.e. have to start with `^` and end with `$`, e.g. `^[012]$:OK`. Number replacements can also be performed, e.g. `<8.2` or `<>3`. Execution is applied in the following order `format`, `replace_values`, `filter_columns`, `transpose`.
 | `row_divider="<divider>"` | Replace the default row divider with another one. Defaults to `\| ` for being interpreted as a asciidoctor row.
-| `timeout="<timeout_in_seconds>"` | Set a timeout for the current query. If not overridden with `grafana-default-timeout` in the report template, this defaults to 60 seconds.
+| `timeout="<timeout_in_seconds>"` | Set a timeout for the current query. If not overridden with `grafana_default_timeout` in the report template, this defaults to 60 seconds.
 | `to="<timestamp>"` | can be used to override default `to` time
 | `to_timezone="<timezone>"` | can be used to override system timezone for `to` time and will also override `grafana_default_to_timezone` option
 | `transpose="true"` | Transposes the query result, i.e. columns become rows and rows become columnns. Execution is applied in the following order `format`, `replace_values`, `filter_columns`, `transpose`.
@@ -119,7 +119,7 @@ Includes a panel image as an image in the document. Can be called for inline-ima
 | `from="<timestamp>"` | can be used to override default `from` time
 | `from_timezone="<timezone>"` | can be used to override system timezone for `from` time and will also override `grafana_default_from_timezone` option
 | `instance="<instance_name>"` | can be used to override global grafana instance, set in the report with `grafana_default_instance`. If nothing is set, the configured grafana instance with name `default` will be used.
-| `timeout="<timeout_in_seconds>"` | Set a timeout for the current query. If not overridden with `grafana-default-timeout` in the report template, this defaults to 60 seconds.
+| `timeout="<timeout_in_seconds>"` | Set a timeout for the current query. If not overridden with `grafana_default_timeout` in the report template, this defaults to 60 seconds.
 | `to="<timestamp>"` | can be used to override default `to` time
 | `to_timezone="<timezone>"` | can be used to override system timezone for `to` time and will also override `grafana_default_to_timezone` option
 
@@ -153,7 +153,7 @@ See also: https://grafana.com/docs/grafana/latest/variables/templates-and-variab
 | `instance="<instance_name>"` | can be used to override global grafana instance, set in the report with `grafana_default_instance`. If nothing is set, the configured grafana instance with name `default` will be used.
 | `replace_values="<replace_1>:<with_1>,<replace_2>:<with_2>,..."` | Specify result values which shall be replaced, e.g. `2:OK` will replace query values `2` with value `OK`. Replacing several values is possible by separating by `,`. Matches with regular expressions are also supported, but must be full matches, i.e. have to start with `^` and end with `$`, e.g. `^[012]$:OK`. Number replacements can also be performed, e.g. `<8.2` or `<>3`. Execution is applied in the following order `format`, `replace_values`, `filter_columns`, `transpose`.
 | `row_divider="<divider>"` | Replace the default row divider with another one. Defaults to `\| ` for being interpreted as a asciidoctor row.
-| `timeout="<timeout_in_seconds>"` | Set a timeout for the current query. If not overridden with `grafana-default-timeout` in the report template, this defaults to 60 seconds.
+| `timeout="<timeout_in_seconds>"` | Set a timeout for the current query. If not overridden with `grafana_default_timeout` in the report template, this defaults to 60 seconds.
 | `to="<timestamp>"` | can be used to override default `to` time
 | `to_timezone="<timezone>"` | can be used to override system timezone for `to` time and will also override `grafana_default_to_timezone` option
 | `transpose="true"` | Transposes the query result, i.e. columns become rows and rows become columnns. Execution is applied in the following order `format`, `replace_values`, `filter_columns`, `transpose`.
@@ -174,7 +174,7 @@ See also: https://grafana.com/docs/grafana/latest/variables/templates-and-variab
 | `from_timezone="<timezone>"` | can be used to override system timezone for `from` time and will also override `grafana_default_from_timezone` option
 | `instance="<instance_name>"` | can be used to override global grafana instance, set in the report with `grafana_default_instance`. If nothing is set, the configured grafana instance with name `default` will be used.
 | `replace_values="<replace_1>:<with_1>,<replace_2>:<with_2>,..."` | Specify result values which shall be replaced, e.g. `2:OK` will replace query values `2` with value `OK`. Replacing several values is possible by separating by `,`. Matches with regular expressions are also supported, but must be full matches, i.e. have to start with `^` and end with `$`, e.g. `^[012]$:OK`. Number replacements can also be performed, e.g. `<8.2` or `<>3`. Execution is applied in the following order `format`, `replace_values`, `filter_columns`, `transpose`.
-| `timeout="<timeout_in_seconds>"` | Set a timeout for the current query. If not overridden with `grafana-default-timeout` in the report template, this defaults to 60 seconds.
+| `timeout="<timeout_in_seconds>"` | Set a timeout for the current query. If not overridden with `grafana_default_timeout` in the report template, this defaults to 60 seconds.
 | `to="<timestamp>"` | can be used to override default `to` time
 | `to_timezone="<timezone>"` | can be used to override system timezone for `to` time and will also override `grafana_default_to_timezone` option
 
@@ -195,7 +195,7 @@ See also: https://grafana.com/docs/grafana/latest/variables/templates-and-variab
 | `instance="<instance_name>"` | can be used to override global grafana instance, set in the report with `grafana_default_instance`. If nothing is set, the configured grafana instance with name `default` will be used.
 | `replace_values="<replace_1>:<with_1>,<replace_2>:<with_2>,..."` | Specify result values which shall be replaced, e.g. `2:OK` will replace query values `2` with value `OK`. Replacing several values is possible by separating by `,`. Matches with regular expressions are also supported, but must be full matches, i.e. have to start with `^` and end with `$`, e.g. `^[012]$:OK`. Number replacements can also be performed, e.g. `<8.2` or `<>3`. Execution is applied in the following order `format`, `replace_values`, `filter_columns`, `transpose`.
 | `row_divider="<divider>"` | Replace the default row divider with another one. Defaults to `\| ` for being interpreted as a asciidoctor row.
-| `timeout="<timeout_in_seconds>"` | Set a timeout for the current query. If not overridden with `grafana-default-timeout` in the report template, this defaults to 60 seconds.
+| `timeout="<timeout_in_seconds>"` | Set a timeout for the current query. If not overridden with `grafana_default_timeout` in the report template, this defaults to 60 seconds.
 | `to="<timestamp>"` | can be used to override default `to` time
 | `to_timezone="<timezone>"` | can be used to override system timezone for `to` time and will also override `grafana_default_to_timezone` option
 | `transpose="true"` | Transposes the query result, i.e. columns become rows and rows become columnns. Execution is applied in the following order `format`, `replace_values`, `filter_columns`, `transpose`.
@@ -215,6 +215,6 @@ See also: https://grafana.com/docs/grafana/latest/variables/templates-and-variab
 | `from_timezone="<timezone>"` | can be used to override system timezone for `from` time and will also override `grafana_default_from_timezone` option
 | `instance="<instance_name>"` | can be used to override global grafana instance, set in the report with `grafana_default_instance`. If nothing is set, the configured grafana instance with name `default` will be used.
 | `replace_values="<replace_1>:<with_1>,<replace_2>:<with_2>,..."` | Specify result values which shall be replaced, e.g. `2:OK` will replace query values `2` with value `OK`. Replacing several values is possible by separating by `,`. Matches with regular expressions are also supported, but must be full matches, i.e. have to start with `^` and end with `$`, e.g. `^[012]$:OK`. Number replacements can also be performed, e.g. `<8.2` or `<>3`. Execution is applied in the following order `format`, `replace_values`, `filter_columns`, `transpose`.
-| `timeout="<timeout_in_seconds>"` | Set a timeout for the current query. If not overridden with `grafana-default-timeout` in the report template, this defaults to 60 seconds.
+| `timeout="<timeout_in_seconds>"` | Set a timeout for the current query. If not overridden with `grafana_default_timeout` in the report template, this defaults to 60 seconds.
 | `to="<timestamp>"` | can be used to override default `to` time
 | `to_timezone="<timezone>"` | can be used to override system timezone for `to` time and will also override `grafana_default_to_timezone` option
