@@ -5,19 +5,51 @@ module GrafanaReporter
   #
   # Superclass containing everything for all queries towards grafana.
   class AbstractQuery
-    attr_accessor :datasource, :timeout, :from, :to
+    attr_accessor :datasource
     attr_writer :raw_query
-    attr_reader :variables, :result, :panel
+    attr_reader :variables, :result, :panel, :dashboard
 
-    # @param grafana_or_panel [Object] {Grafana::Grafana} or {Grafana::Panel} object for which the query is executed
-    def initialize(grafana_or_panel)
-      if grafana_or_panel.is_a?(Grafana::Panel)
-        @panel = grafana_or_panel
-        @grafana = @panel.dashboard.grafana
+    def timeout
+      # TODO: check where value priorities should be evaluated
+      return @variables['timeout'].raw_value if @variables['timeout']
+      return @variables['grafana_default_timeout'].raw_value if @variables['grafana_default_timeout']
+
+      nil
+    end
+
+    # @param grafana_obj [Object] {Grafana::Grafana}, {Grafana::Dashboard} or {Grafana::Panel} object for which the query is executed
+    # @param opts [Hash] hash options, which may consist of:
+    # @option opts [Hash] :variables hash of variables, which shall be used to replace variable references in the query
+    # @option opts [Boolean] :ignore_dashboard_defaults True if {#assign_dashboard_defaults} should not be called
+    # @option opts [Boolean] :do_not_use_translated_times True if given from and to times should used as is, without being resolved to reporter times - using this parameter can lead to inconsistent report contents
+    def initialize(grafana_obj, opts = {})
+      if grafana_obj.is_a?(Grafana::Panel)
+        @panel = grafana_obj
+        @dashboard = @panel.dashboard
+        @grafana = @dashboard.grafana
+
+      elsif grafana_obj.is_a?(Grafana::Dashboard)
+        @dashboard = grafana_obj
+        @grafana = @dashboard.grafana
+
+      elsif grafana_obj.is_a?(Grafana::Grafana)
+        @grafana = grafana_obj
+
+      elsif !grafana_obj
+        # nil given
+
       else
-        @grafana = grafana_or_panel
+        raise GrafanaReporterError, "Internal error in AbstractQuery: given object is of type #{grafana_obj.class.name}, which is not supported"
       end
       @variables = {}
+      @variables['from'] = Grafana::Variable.new(nil)
+      @variables['to'] = Grafana::Variable.new(nil)
+
+      assign_dashboard_defaults unless opts[:ignore_dashboard_defaults]
+      opts[:variables].each { |k, v| assign_variable(k, v) } if opts[:variables].is_a?(Hash)
+
+      @translate_times = true
+      @translate_times = false if opts[:do_not_use_translated_times]
     end
 
     # @abstract
@@ -31,11 +63,32 @@ module GrafanaReporter
     def execute
       return @result unless @result.nil?
 
+      from = @variables['from'].raw_value
+      to = @variables['to'].raw_value
+      if @translate_times
+        from = translate_date(@variables['from'], @variables['grafana_report_timestamp'], false, @variables['from_timezone'] ||
+                              @variables['grafana_default_from_timezone'])
+        to = translate_date(@variables['to'], @variables['grafana_report_timestamp'], true, @variables['to_timezone'] ||
+                            @variables['grafana_default_to_timezone'])
+      end
+
       pre_process
       raise DatasourceNotSupportedError.new(@datasource, self) if @datasource.is_a?(Grafana::UnsupportedDatasource)
 
-      @result = @datasource.request(from: @from, to: @to, raw_query: raw_query, variables: grafana_variables,
-                                    prepared_request: @grafana.prepare_request, timeout: timeout)
+      begin
+        @result = @datasource.request(from: from, to: to, raw_query: raw_query, variables: grafana_variables,
+                                      prepared_request: @grafana.prepare_request, timeout: timeout)
+      rescue ::Grafana::GrafanaError
+        # grafana errors will be directly passed through
+        raise
+      rescue GrafanaReporterError
+        # grafana errors will be directly passed through
+        raise
+      rescue StandardError => e
+        raise DatasourceRequestInternalError.new(@datasource, e.message)
+      end
+
+      raise DatasourceRequestInvalidReturnValueError.new(@datasource, @result) unless datasource_response_valid?
       post_process
       @result
     end
@@ -66,17 +119,6 @@ module GrafanaReporter
       raise NotImplementedError
     end
 
-    # Used to specify variables to be used for this query. This method ensures, that only the values of the
-    # {Grafana::Variable} stored in the +variables+ Array are overwritten.
-    # @param name [String] name of the variable to set
-    # @param variable [Grafana::Variable] variable from which the {Grafana::Variable#raw_value} will be assigned to the query variables
-    def assign_variable(name, variable)
-      raise GrafanaReporterError, "Provided variable is not of type Grafana::Variable (name: '#{name}', value: '#{value}')" unless variable.is_a?(Grafana::Variable)
-
-      @variables[name] ||= variable
-      @variables[name].raw_value = variable.raw_value
-    end
-
     # Transposes the given result.
     #
     # NOTE: Only the +:content+ of the given result hash is transposed. The +:header+ is ignored.
@@ -105,10 +147,10 @@ module GrafanaReporter
 
       filter_columns = filter_columns_variable.raw_value
       filter_columns.split(',').each do |filter_column|
-        pos = result[:header][0].index(filter_column)
+        pos = result[:header].index(filter_column)
 
         unless pos.nil?
-          result[:header][0].delete_at(pos)
+          result[:header].delete_at(pos)
           result[:content].each { |row| row.delete_at(pos) }
         end
       end
@@ -200,6 +242,7 @@ module GrafanaReporter
                   begin
                     row[i] = row[i].to_s.gsub(/#{k}/, v) if row[i].to_s =~ /#{k}/
                   rescue StandardError => e
+                    @grafana.logger.error(e.message)
                     row[i] = e.message
                   end
 
@@ -241,6 +284,24 @@ module GrafanaReporter
       result
     end
 
+    # Used to build a output format matching the requested report format.
+    # @param result [Hash] preformatted sql hash, (see {Grafana::AbstractDatasource#request})
+    # @param opts [Hash] options for the formatting:
+    # @option opts [Grafana::Variable] :row_divider requested row divider for the result table
+    # @option opts [Grafana::Variable] :column_divider requested row divider for the result table
+    # @option opts [Regex or String] :escape_regex regular expression which specifies a part of a cell content, which has to be escaped
+    # @option opts [String] :escape_replacement specifies how the found :escape_regex shall be replaced
+    # @return [String] formatted table result in requested output format
+    def format_table_output(result, opts)
+      opts = { escape_regex: '|', escape_replacement: '\\|', row_divider: Grafana::Variable.new('| '), column_divider: Grafana::Variable.new(' | ') }.merge(opts.delete_if {|_k, v| v.nil? })
+
+      result[:content].map do |row|
+        opts[:row_divider].raw_value + row.map do |item|
+          item.to_s.gsub(opts[:escape_regex], opts[:escape_replacement])
+        end.join(opts[:column_divider].raw_value)
+      end
+    end
+
     # Used to translate the relative date strings used by grafana, e.g. +now-5d/w+ to the
     # correct timestamp. Reason is that grafana does this in the frontend, which we have
     # to emulate here for the reporter.
@@ -258,6 +319,7 @@ module GrafanaReporter
     def translate_date(orig_date, report_time, is_to_time, timezone = nil)
       # TODO: add test case for creation of variable, if not given, maybe also print a warning
       report_time ||= ::Grafana::Variable.new(Time.now.to_s)
+      orig_date = orig_date.raw_value if orig_date.is_a?(Grafana::Variable)
       return (DateTime.parse(report_time.raw_value).to_time.to_i * 1000).to_s unless orig_date
       return orig_date if orig_date =~ /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/
       return orig_date if orig_date =~ /^\d+$/
@@ -265,7 +327,7 @@ module GrafanaReporter
       # check if a relative date is mentioned
       date_spec = orig_date.clone
 
-      date_spec.slice!(/^now/)
+      date_spec = date_spec.slice(/^now/)
       raise TimeRangeUnknownError, orig_date unless date_spec
 
       date = DateTime.parse(report_time.raw_value)
@@ -295,6 +357,45 @@ module GrafanaReporter
     end
 
     private
+
+    # Used to specify variables to be used for this query. This method ensures, that only the values of the
+    # {Grafana::Variable} stored in the +variables+ Array are overwritten.
+    # @param name [String] name of the variable to set
+    # @param variable [Grafana::Variable] variable from which the {Grafana::Variable#raw_value} will be assigned to the query variables
+    def assign_variable(name, variable)
+      variable = Grafana::Variable.new(variable) unless variable.is_a?(Grafana::Variable)
+
+      @variables[name] ||= variable
+      @variables[name].raw_value = variable.raw_value
+    end
+
+    # Sets default configurations from the given {Grafana::Dashboard} and store them as settings in the
+    # {AbstractQuery}.
+    #
+    # Following data is extracted:
+    # - +from+, by {Grafana::Dashboard#from_time}
+    # - +to+, by {Grafana::Dashboard#to_time}
+    # - and all variables as {Grafana::Variable}, prefixed with +var-+, as grafana also does it
+    def assign_dashboard_defaults
+      return unless @dashboard
+
+      assign_variable('from', @dashboard.from_time)
+      assign_variable('to', @dashboard.to_time)
+      @dashboard.variables.each { |item| assign_variable("var-#{item.name}", item) }
+    end
+
+    def datasource_response_valid?
+      return false if @result.nil?
+      return false unless @result.is_a?(Hash)
+      # TODO: check if it should be ok if a datasource request returns an empty hash only
+      return true if @result.empty?
+      return false unless @result.has_key?(:header)
+      return false unless @result.has_key?(:content)
+      return false unless @result[:header].is_a?(Array)
+      return false unless @result[:content].is_a?(Array)
+
+      true
+    end
 
     # @return [Hash<String, Variable>] all grafana variables stored in this query, i.e. the variable name
     #  is prefixed with +var-+

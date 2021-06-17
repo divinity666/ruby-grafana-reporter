@@ -36,15 +36,37 @@ module Grafana
       panel_query_target['target']
     end
 
+    # @see AbstractDatasource#default_variable_format
+    def default_variable_format
+        'glob'
+    end
+
     private
 
     # @see AbstractDatasource#preformat_response
     def preformat_response(response_body)
-      # TODO: support multiple metrics as return types
-      {
-        header: %w[value time],
-        content: JSON.parse(response_body).first['datapoints']
-      }
+      json = JSON.parse(response_body)
+
+      header = ['time']
+      content = {}
+
+      # keep sorting, if json has only one target item, otherwise merge results and return
+      # as a time sorted array
+      return { header: header << json.first['target'], content: json.first['datapoints'].map! { |item| [item[1], item[0]] } } if json.length == 1
+
+      # TODO: show warning if results may be sorted different
+      json.each_index do |i|
+        header << json[i]['target']
+        tmp = json[i]['datapoints'].map! { |item| [item[1], item[0]] }.to_h
+        tmp.each_key { |key| content[key] = Array.new(json.length) unless content[key] }
+
+        content.merge!(tmp) do |_key, old, new|
+          old[i] = new
+          old
+        end
+      end
+
+      { header: header, content: content.to_a.map(&:flatten).sort { |a, b| a[0] <=> b[0] } }
     end
   end
 end

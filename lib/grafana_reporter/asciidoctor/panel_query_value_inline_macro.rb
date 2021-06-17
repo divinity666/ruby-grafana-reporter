@@ -56,10 +56,7 @@ module GrafanaReporter
 
         begin
           panel = @report.grafana(instance).dashboard(dashboard).panel(target)
-          query = QueryValueQuery.new(panel)
-          assign_dashboard_defaults(query, panel.dashboard)
-          assign_doc_and_item_variables(query, parent.document.attributes, attrs)
-          @report.logger.debug("from: #{query.from}, to: #{query.to}")
+          query = QueryValueQuery.new(panel, variables: build_attribute_hash(parent.document.attributes, attrs))
 
           create_inline(parent, :quoted, query.execute)
         rescue GrafanaReporterError => e

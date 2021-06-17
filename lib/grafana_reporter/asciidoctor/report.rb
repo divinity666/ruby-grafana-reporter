@@ -14,9 +14,8 @@ module GrafanaReporter
 
       # Starts to create an asciidoctor report. It utilizes all extensions in the {GrafanaReporter::Asciidoctor}
       # namespace to realize the conversion.
-      # @see AbstractReport#create_report
-      def create_report(template, destination_file_or_path = nil, custom_attributes = {})
-        super
+      # @see AbstractReport#build
+      def build(template, destination_file_or_path, custom_attributes)
         attrs = { 'convert-backend' => 'pdf' }.merge(@config.default_document_attributes.merge(@custom_attributes))
         logger.debug("Document attributes: #{attrs}")
 
@@ -83,17 +82,6 @@ module GrafanaReporter
         end
 
         clean_image_files
-      rescue MissingTemplateError => e
-        @logger.error(e.message)
-        @error = [e.message]
-        done!
-        raise e
-      rescue StandardError => e
-        # catch all errors during execution
-        died_with_error(e)
-        raise e
-      ensure
-        done!
       end
 
       # Called to save a temporary image file. After the final generation of the

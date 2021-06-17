@@ -22,7 +22,7 @@ describe PanelQueryTableIncludeProcessor do
 
     it 'can translate times' do
       @report.logger.level = ::Logger::Severity::DEBUG
-      expect(@report.logger).to receive(:debug).exactly(6).times.with(any_args)
+      expect(@report.logger).to receive(:debug).exactly(5).times.with(any_args)
       expect(@report.logger).to receive(:debug).with(/"from":"#{Time.utc(Time.new.year,1,1).to_i * 1000}".*"to":"#{(Time.utc(Time.new.year + 1,1,1) - 1).to_i * 1000}"/)
       expect(@report.logger).to receive(:debug).with(/Received response/)
       expect(Asciidoctor.convert("include::grafana_panel_query_table:#{STUBS[:panel_sql][:id]}[query=\"#{STUBS[:panel_sql][:letter]}\",from_timezone=\"UTC\",to_timezone=\"UTC\",dashboard=\"#{STUBS[:dashboard]}\",from=\"now/y\",to=\"now/y\"]", to_file: false)).not_to include('GrafanaReporterError')
@@ -37,6 +37,11 @@ describe PanelQueryTableIncludeProcessor do
     it 'can replace regex values' do
       expect(@report.logger).not_to receive(:error)
       expect(Asciidoctor.convert("include::grafana_panel_query_table:#{STUBS[:panel_sql][:id]}[query=\"#{STUBS[:panel_sql][:letter]}\",dashboard=\"#{STUBS[:dashboard]}\",format=\",%.2f\",filter_columns=\"time_sec\",replace_values_2=\"^(43)\..*$:geht - \\1\"]", to_file: false)).to include('| geht - 43').and include('| 44.00')
+    end
+
+    it 'can handle malformed regex values' do
+      expect(@report.logger).to receive(:error).at_least(:once)
+      expect(Asciidoctor.convert("include::grafana_panel_query_table:#{STUBS[:panel_sql][:id]}[query=\"#{STUBS[:panel_sql][:letter]}\",dashboard=\"#{STUBS[:dashboard]}\",replace_values_2=\"^(43\..*$:geht - \\1\"]", to_file: false)).to include('| end pattern with unmatched parenthesis')
     end
 
     it 'can replace values with value comparison' do
@@ -83,14 +88,21 @@ describe PanelQueryTableIncludeProcessor do
   context 'graphite' do
     it 'can handle graphite requests' do
       expect(@report.logger).not_to receive(:error)
-      expect(Asciidoctor.convert("include::grafana_panel_query_table:#{STUBS[:panel_graphite][:id]}[query=\"#{STUBS[:panel_graphite][:letter]}\",dashboard=\"#{STUBS[:dashboard]}\",from=\"0\",to=\"0\"]", to_file: false)).to match(/<p>\| 27.700000000000003 \| 1617388470\n\|/)
+      expect(Asciidoctor.convert("include::grafana_panel_query_table:#{STUBS[:panel_graphite][:id]}[query=\"#{STUBS[:panel_graphite][:letter]}\",dashboard=\"#{STUBS[:dashboard]}\",from=\"0\",to=\"0\"]", to_file: false)).to match(/<p>| 1621773300000 | 265 | 274 | 265 | 255\n\|/)
     end
   end
 
   context 'prometheus' do
     it 'can handle prometheus requests' do
       expect(@report.logger).not_to receive(:error)
-      expect(Asciidoctor.convert("include::grafana_panel_query_table:#{STUBS[:panel_prometheus][:id]}[query=\"#{STUBS[:panel_prometheus][:letter]}\",dashboard=\"#{STUBS[:dashboard]}\",from=\"0\",to=\"0\"]", to_file: false)).to match(/<p>\| 1617729810 \| 0.0010000000000218278\n\|/)
+      expect(Asciidoctor.convert("include::grafana_panel_query_table:#{STUBS[:panel_prometheus][:id]}[query=\"#{STUBS[:panel_prometheus][:letter]}\",dashboard=\"#{STUBS[:dashboard]}\",from=\"0\",to=\"0\"]", to_file: false)).to match(/<p>\| 1617728730 \|  \|  \|  \| 0.011986814503580401 \| 0.6412945761450544\n\|/)
+    end
+  end
+
+  context 'influx' do
+    xit 'can handle influx requests' do
+      expect(@report.logger).not_to receive(:error)
+      expect(Asciidoctor.convert("include::grafana_panel_query_table:#{STUBS[:panel_influx][:id]}[query=\"#{STUBS[:panel_influx][:letter]}\",dashboard=\"#{STUBS[:dashboard]}\",from=\"0\",to=\"0\"]", to_file: false)).to include(/<p>\| 1621781110000 \| 4410823132.66179 \| 3918217168.1713953 \| 696149370.0246137 \| 308698357.77230036 \|  \| 2069259154.5448523 \| 1037231406.781757 \| 2008807302.9000952 \| 454762299.1667595 \| 1096524688.048703\n\|/)
     end
   end
 end

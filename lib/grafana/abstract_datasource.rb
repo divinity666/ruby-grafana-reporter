@@ -8,19 +8,18 @@ module Grafana
 
     @@subclasses = []
 
-    # Registers the subclass as datasource, which is asked by {#accepts?}, if it can handle a datasource
-    # model.
+    # Registers the subclass as datasource.
     # @param subclass [Class] class inheriting from this abstract class
     def self.inherited(subclass)
       @@subclasses << subclass
     end
 
     # Overwrite this method, to specify if the current datasource implementation handles the given model.
-    # This method is called by {#build_instance} to determine, if the current datasource implementation
+    # This method is called by {build_instance} to determine, if the current datasource implementation
     # can handle the given grafana model. By default this method returns false.
     # @param model [Hash] grafana specification of the datasource to check
     # @return [Boolean] True if fits, false otherwise
-    def self.handles?(_model)
+    def self.handles?(model)
       false
     end
 
@@ -78,12 +77,12 @@ module Grafana
     #   }
     #
     # @param query_description [Hash] query description, which will requested:
-    # @option [String] :from +from+ timestamp
-    # @option [String] :to +to+ timestamp
-    # @option [Integer] :timeout expected timeout for the request
-    # @option [WebRequest] :prepared_request prepared web request for relevant {Grafana} instance, if this is needed by datasource
-    # @option [String] :raw_query raw query, which shall be executed. May include variables, which will be replaced before execution
-    # @option [Hash<Variable>] :variables hash of variables, which can potentially be replaced in the given +:raw_query+
+    # @option query_description [String] :from +from+ timestamp
+    # @option query_description [String] :to +to+ timestamp
+    # @option query_description [Integer] :timeout expected timeout for the request
+    # @option query_description [WebRequest] :prepared_request prepared web request for relevant {Grafana} instance, if this is needed by datasource
+    # @option query_description [String] :raw_query raw query, which shall be executed. May include variables, which will be replaced before execution
+    # @option query_description [Hash<Variable>] :variables hash of variables, which can potentially be replaced in the given +:raw_query+
     # @return [Hash] sql result formatted as stated above
     def request(query_description)
       raise NotImplementedError
@@ -98,6 +97,14 @@ module Grafana
     # @param panel_query_target [Hash] grafana panel target, which contains the query description
     # @return [String] query string, which can be used as +raw_query+ in a {#request}
     def raw_query_from_panel_model(panel_query_target)
+      raise NotImplementedError
+    end
+
+    # @abstract
+    #
+    # Overwrite in subclass, to specify the default variable format during replacement of variables.
+    # @return [String] default {Variable#value_formatted} format
+    def default_variable_format
       raise NotImplementedError
     end
 
@@ -119,12 +126,15 @@ module Grafana
       while repeat && (repeat_count < 3)
         repeat = false
         repeat_count += 1
-        variables.each do |var_name, obj|
+        variables.each do |name, variable|
           # only set ticks if value is string
-          variable = var_name.gsub(/^var-/, '')
-          res = res.gsub(/(?:\$\{#{variable}(?::(?<format>\w+))?\}|\$#{variable})/) do
-            # TODO: respect datasource requirements for formatting here
-            obj.value_formatted($LAST_MATCH_INFO ? $LAST_MATCH_INFO[:format] : nil)
+          var_name = name.gsub(/^var-/, '')
+          res = res.gsub(/(?:\$\{#{var_name}(?::(?<format>\w+))?\}|\$#{var_name})/) do
+            format = default_variable_format
+            if $LAST_MATCH_INFO
+              format = $LAST_MATCH_INFO[:format] if $LAST_MATCH_INFO[:format]
+            end
+            variable.value_formatted(format)
           end
         end
         repeat = true if res.include?('$')

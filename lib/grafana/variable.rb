@@ -156,7 +156,6 @@ module Grafana
 
       else
         # glob and all unknown
-        # TODO add check for array value properly for all cases
         return "{#{value.join(',')}}" if multi? && value.is_a?(Array)
 
         value

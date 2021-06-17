@@ -32,9 +32,16 @@ module Grafana
       preformat_response(result.body)
     end
 
+    # Currently all composed SQL queries are saved in the dashboard as rawSql, so no conversion
+    # necessary here.
     # @see AbstractDatasource#raw_query_from_panel_model
     def raw_query_from_panel_model(panel_query_target)
       panel_query_target['rawSql']
+    end
+
+    # @see AbstractDatasource#default_variable_format
+    def default_variable_format
+        'glob'
     end
 
     private
@@ -45,12 +52,12 @@ module Grafana
 
       JSON.parse(response_body)['results'].each_value do |query_result|
         if query_result.key?('error')
-          results[:header] = results[:header] << ['SQL Error']
+          results[:header] = results[:header] + ['SQL Error']
           results[:content] = [[query_result['error']]]
 
         elsif query_result['tables']
           query_result['tables'].each do |table|
-            results[:header] = results[:header] << table['columns'].map { |header| header['text'] }
+            results[:header] = results[:header] + table['columns'].map { |header| header['text'] }
             results[:content] = table['rows']
           end
 

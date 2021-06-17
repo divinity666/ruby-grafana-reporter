@@ -1,5 +1,5 @@
 [![MIT License](https://img.shields.io/github/license/divinity666/ruby-grafana-reporter.svg?style=flat-square)](https://github.com/divinity666/ruby-grafana-reporter/blob/master/LICENSE)
-[![Build Status](https://travis-ci.org/divinity666/ruby-grafana-reporter.svg?branch=master)](https://travis-ci.org/github/divinity666/ruby-grafana-reporter?branch=master)
+[![Build Status](https://travis-ci.com/divinity666/ruby-grafana-reporter.svg?branch=master)](https://travis-ci.com/github/divinity666/ruby-grafana-reporter?branch=master)
 [![Coverage Status](https://coveralls.io/repos/github/divinity666/ruby-grafana-reporter/badge.svg?branch=master)](https://coveralls.io/github/divinity666/ruby-grafana-reporter?branch=master)
 [![Gem Version](https://badge.fury.io/rb/ruby-grafana-reporter.svg)](https://badge.fury.io/rb/ruby-grafana-reporter)
 
@@ -10,6 +10,7 @@ Reporting Service for Grafana
 
 * [About the project](#about-the-project)
 * [Features](#features)
+* [Supported datasources](#supported-datasources)
 * [Quick Start](#quick-start)
 * [Grafana integration](#grafana-integration)
 * [Webservice overview](#webservice-overview)
@@ -18,38 +19,57 @@ Reporting Service for Grafana
 
 ## About the project
 
-Did you ever want to create (professional) reports based on Grafana dashboards?
-I did so in order to being able to automatically get monthly reports of my
-home's energy usage. That's how it started.
+[Grafana](https://github.com/grafana/grafana) is a great tool for monitoring and
+visualizing data from different sources. Anyway the free version is lacking a
+professional reporting functionality. And this is, where the ruby grafana reporter
+steps in.
+
+The key functionality of the reporter is to capture data and images from grafana
+dashboards and to use it in your custom reports to finally create reports in PDF,
+HTML, or any other format.
+
+By default (an extended version of) Asciidoctor is enabled as template language.
 
 ## Features
 
-* Build reports based on [grafana](https://github.com/grafana/grafana) dashboards, PDF
-(default) and many other formats supported
+* Supports creation of reports for multiple [grafana](https://github.com/grafana/grafana)
+dashboards (and also multiple grafana installations!) in one resulting report
+* PDF (default), HTML and many other report formats are supported
 * Easy-to-use configuration wizard, including fully automated functionality to create a
-demo report
+demo report for your dashboard
 * Include dynamic content from grafana (find here a reference for all
 [asciidcotor reporter calls](FUNCTION_CALLS.md)):
   * panels as images
   * tables based on grafana panel queries or custom database queries (no images!)
   * single values to be integrated in text, based on grafana panel queries or custom
 database queries
-* Multi purpose use of the reporter
+* Runs as
   * webservice to be called directly from grafana
   * standalone command line tool, e.g. to be automated with `cron` or `bash` scrips
-  * seemlessly runs from asciidocotor docker container without further dependencies
-* Webhook callbacks before, on cancel and on finishing callbacks (see configuration file)
+  * microservice from standard asciidoctor docker container without any dependencies
+* Supports webhook callbacks on before, on cancel and on finishing a report (see
+configuration file)
 * Solid as a rock, also in case of template errors and whatever else may happen
 * Full [API documentation](https://rubydoc.info/gems/ruby-grafana-reporter) available
 
+## Supported datasources
+
 Functionalities are provided as shown here:
 
-Database | Image rendering | Panel-based rendering | Query-based rendering
-------------------------- | :-------: | :-----------: | :------------:
-all SQL based datasources | supported | supported     | supported
-Graphite                  | supported | supported     | supported
-Prometheus                | supported | supported     | supported
-other datasources         | supported | not-supported | not-supported
+Database                  | Image rendering | Raw queries   | Composed queries
+------------------------- | :-------------: | :-----------: | :------------:
+all SQL based datasources | supported       | supported     | supported
+Graphite                  | supported       | supported     | supported
+InfluxDB                  | supported       | supported     | not (yet) supported
+Prometheus                | supported       | supported     | n/a in grafana
+other datasources         | supported       | not supported | not supported
+
+The characteristics of a raw query are, that the query is either specified manually in
+the panel specification or in the calling template.
+
+Composed queries are all kinds of query, where the grafana UI feature (aka visual editor
+mode) for query specifications are used. In this case grafana is translating the UI query
+specification to a raw query, which then in fact is sent to the database.
 
 ## Quick Start
 
@@ -91,7 +111,7 @@ content:
 cd /documents
 ruby bin/ruby-grafana-reporter
 ```
-* add asciidoctor your compose yaml:
+* add the startup script to your asciidoctor section in your docker-compose.yaml:
 
 ```
 asciidoctor:
@@ -108,9 +128,7 @@ asciidoctor:
 
 ## Grafana integration
 
-The key feature of the report is, that it can easily be integrated with grafana.
-
-For accessing the reporter from grafana, you need to simply add a link to your
+For using the reporter directly from grafana, you need to simply add a link to your
 grafana dashboard:
 
 * Open the dashboard configuration

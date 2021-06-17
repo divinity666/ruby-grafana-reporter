@@ -50,6 +50,8 @@ module Grafana
     # @return [Datasource] Datasource for the specified datasource name
     def datasource_by_name(datasource_name)
       datasource_name = 'default' if datasource_name.to_s.empty?
+      # TODO: add support for grafana builtin datasource types
+      return UnsupportedDatasource.new(nil) if datasource_name.to_s =~ /-- (?:Mixed|Dashboard|Grafana) --/
       raise DatasourceDoesNotExistError.new('name', datasource_name) unless @datasources[datasource_name]
 
       @datasources[datasource_name]

@@ -19,10 +19,6 @@ module GrafanaReporter
     def pre_process
       raise MissingMandatoryAttributeError, 'columns' unless @raw_query['columns']
 
-      @from = translate_date(@from, @variables['grafana_report_timestamp'], false, @variables['from_timezone'] ||
-                             @variables['grafana_default_from_timezone'])
-      @to = translate_date(@to, @variables['grafana_report_timestamp'], true, @variables['to_timezone'] ||
-                           @variables['grafana_default_to_timezone'])
       @datasource = Grafana::GrafanaAlertsDatasource.new(nil)
     end
 
@@ -37,8 +33,7 @@ module GrafanaReporter
       @result = replace_values(@result, @variables.select { |k, _v| k =~ /^replace_values_\d+/ })
       @result = filter_columns(@result, @variables['filter_columns'])
 
-      # TODO: move formatting to Asciidoctor namespace
-      @result = @result[:content].map { |row| "| #{row.map { |item| item.to_s.gsub('|', '\\|') }.join(' | ')}" }
+      @result = format_table_output(@result, row_divider: @variables['row_divider'], column_divider: @variables['column_divider'])
     end
   end
 end

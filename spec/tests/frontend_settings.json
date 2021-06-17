@@ -232,6 +232,64 @@
       "type": "prometheus",
       "url":"/api/datasources/proxy/4"
     },
+    "InfluxDB":{
+       "database":"site",
+       "id": 6,
+       "isDefault":false,
+       "jsonData":{
+          "httpMode":"GET",
+          "keepCookies":[],
+          "timeInterval":"10s"
+       },
+       "meta":{
+          "type":"datasource",
+          "name":"InfluxDB",
+          "id":"influxdb",
+          "info":{
+             "author":{
+                "name":"Grafana Labs",
+                "url":"https://grafana.com"
+             },
+             "description":"Open source time series database",
+             "links":null,
+             "logos":{
+                "small":"public/app/plugins/datasource/influxdb/img/influxdb_logo.svg",
+                "large":"public/app/plugins/datasource/influxdb/img/influxdb_logo.svg"
+             },
+             "build":{ },
+             "screenshots":null,
+             "version":"",
+             "updated":""
+          },
+          "dependencies":{
+             "grafanaVersion":"*",
+             "plugins":[ ]
+          },
+          "includes":null,
+          "module":"app/plugins/datasource/influxdb/module",
+          "baseUrl":"public/app/plugins/datasource/influxdb",
+          "category":"tsdb",
+          "preload":false,
+          "signature":"internal",
+          "Root":null,
+          "annotations":true,
+          "metrics":true,
+          "alerting":true,
+          "explore":false,
+          "tables":false,
+          "logs":true,
+          "tracing":false,
+          "queryOptions":{
+             "minInterval":true
+          },
+          "routes":null,
+          "streaming":false
+       },
+       "name":"InfluxDB",
+       "type":"influxdb",
+       "uid":"000000002",
+       "url":"/api/datasources/proxy/6"
+    },
     "UnknownDatasource": {
       "id": 5,
       "meta": {

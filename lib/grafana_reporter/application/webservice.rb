@@ -84,7 +84,7 @@ module GrafanaReporter
             @logger.debug(e.message)
             socket.write http_response(404, '', e.message)
           rescue WebserviceGeneralRenderingError => e
-            @logger.fatal(e.message)
+            @logger.error(e.message)
             socket.write http_response(400, 'Bad Request', e.message)
           rescue StandardError => e
             @logger.fatal(e.message)

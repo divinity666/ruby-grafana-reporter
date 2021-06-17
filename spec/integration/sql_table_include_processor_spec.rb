@@ -13,6 +13,7 @@ describe SqlTableIncludeProcessor do
     @report = report
   end
 
+  context 'sql' do
   it 'can be processed' do
     expect(@report.logger).not_to receive(:error)
     expect(Asciidoctor.convert("include::grafana_sql_table:#{STUBS[:datasource_sql]}[sql=\"SELECT 1\"]", to_file: false)).not_to include('GrafanaReporterError')
@@ -20,7 +21,7 @@ describe SqlTableIncludeProcessor do
 
   it 'can translate times' do
     @report.logger.level = ::Logger::Severity::DEBUG
-    expect(@report.logger).to receive(:debug).exactly(4).times.with(any_args)
+    expect(@report.logger).to receive(:debug).exactly(3).times.with(any_args)
     expect(@report.logger).to receive(:debug).with(/"from":"#{Time.utc(Time.new.year,1,1).to_i * 1000}".*"to":"#{(Time.utc(Time.new.year + 1,1,1) - 1).to_i * 1000}"/)
     expect(@report.logger).to receive(:debug).with(/Received response/)
     expect(Asciidoctor.convert("include::grafana_sql_table:#{STUBS[:datasource_sql]}[sql=\"SELECT 1\",from_timezone=\"UTC\",to_timezone=\"UTC\",from=\"now/y\",to=\"now/y\"]", to_file: false)).not_to include('GrafanaReporterError')
@@ -35,5 +36,25 @@ describe SqlTableIncludeProcessor do
     expect(@report.logger).to receive(:error).with('GrafanaReporterError: The specified time range \'schwurbel\' is unknown.')
     expect(Asciidoctor.convert("include::grafana_sql_table:#{STUBS[:datasource_sql]}[sql=\"SELECT 1\",from=\"schwurbel\",to=\"now/y\"]", to_file: false)).to include('|GrafanaReporterError: The specified time range \'schwurbel\' is unknown.')
   end
+  end
 
+  context 'influx' do
+    it 'sorts multiple query results by time' do
+      expect(Asciidoctor.convert("include::grafana_sql_table:#{STUBS[:datasource_influx]}[sql=\"SELECT non_negative_derivative(mean(\\\"value\\\"), 10s) *1000000000 FROM \\\"logins.count\\\" WHERE time >= now() - 1h GROUP BY time(10s), \\\"hostname\\\" fill(null)\"]", to_file: false)).to include("<p>\| 1621781110000 \| 4410823132.66179 \| 3918217168.1713953 \| 696149370.0246137 \| 308698357.77230036 \|  \| 2069259154.5448523 \| 1037231406.781757 \| 2008807302.9000952 \| 454762299.1667595 \| 1096524688.048703\n\|")
+    end
+
+    it 'leaves sorting as is for single query results' do
+      expect(Asciidoctor.convert("include::grafana_sql_table:#{STUBS[:datasource_influx]}[sql=\"SELECT non_negative_derivative(mean(\\\"value\\\"), 10s) *1000000000 FROM \\\"logins.count\\\" WHERE time >= now() - 1h AND \\\"hostname\\\" = \\\"10.1.0.100.1\\\" GROUP BY time(10s) fill(null)\"]", to_file: false)).to include("<p>\| 1621781130000 \| 2834482201.7361364\n\|")
+    end
+  end
+
+  context 'prometheus' do
+    it 'sorts multiple query results by time' do
+      expect(Asciidoctor.convert("include::grafana_sql_table:#{STUBS[:datasource_prometheus]}[sql=\"sum by(mode)(irate(node_cpu_seconds_total{job=\\\"node\\\", instance=~\\\"$node:.*\\\", mode!=\\\"idle\\\"}[5m])) > 0\",from=\"0\",to=\"0\"]", to_file: false)).to include('<p>| 1617728730')
+    end
+
+    it 'leaves sorting as is for single query results' do
+      expect(Asciidoctor.convert("include::grafana_sql_table:#{STUBS[:datasource_prometheus]}[sql=\"sum by(mode)(irate(node_cpu_seconds_total{job=\\\"node\\\", instance=~\\\"$node:.*\\\", mode=\\\"iowait\\\"}[5m])) > 0\",from=\"0\",to=\"0\"]", to_file: false)).to include('<p>| 1617728760')
+    end
+  end
 end
