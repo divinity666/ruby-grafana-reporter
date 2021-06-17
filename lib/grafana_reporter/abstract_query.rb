@@ -327,7 +327,7 @@ module GrafanaReporter
       # check if a relative date is mentioned
       date_spec = orig_date.clone
 
-      date_spec.slice!(/^now/)
+      date_spec = date_spec.slice(/^now/)
       raise TimeRangeUnknownError, orig_date unless date_spec
 
       date = DateTime.parse(report_time.raw_value)
