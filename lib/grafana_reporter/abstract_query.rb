@@ -327,7 +327,7 @@ module GrafanaReporter
       # check if a relative date is mentioned
       date_spec = orig_date.clone
 
-      date_spec.slice!(/^now/)
+      date_spec = date_spec.gsub(/^now/, '')
       raise TimeRangeUnknownError, orig_date unless date_spec
 
       date = DateTime.parse(report_time.raw_value)
@@ -338,13 +338,13 @@ module GrafanaReporter
         fit_match = date_spec.match(%r{^/(?<fit>[smhdwMy])})
         if fit_match
           date = fit_date(date, fit_match[:fit], is_to_time)
-          date_spec.slice!(%r{^/#{fit_match[:fit]}})
+          date_spec = date_spec.gsub(%r{^/#{fit_match[:fit]}}, '')
         end
 
         delta_match = date_spec.match(/^(?<op>(?:-|\+))(?<count>\d+)?(?<unit>[smhdwMy])/)
         if delta_match
           date = delta_date(date, "#{delta_match[:op]}#{delta_match[:count] || 1}".to_i, delta_match[:unit])
-          date_spec.slice!(/^#{delta_match[:op]}#{delta_match[:count]}#{delta_match[:unit]}/)
+          date_spec = date_spec.gsub(/^#{delta_match[:op]}#{delta_match[:count]}#{delta_match[:unit]}/, '')
         end
 
         raise TimeRangeUnknownError, orig_date unless fit_match || delta_match

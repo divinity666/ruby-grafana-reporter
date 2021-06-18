@@ -15,7 +15,7 @@ module Grafana
     def request(query_description)
       raise MissingSqlQueryError if query_description[:raw_query].nil?
 
-      url = "/api/datasources/proxy/#{id}/query?db=#{@model['database']}&q=#{URI.encode(query_description[:raw_query])}&epoch=ms"
+      url = "/api/datasources/proxy/#{id}/query?db=#{@model['database']}&q=#{ERB::Util.url_encode(query_description[:raw_query])}&epoch=ms"
 
       webrequest = query_description[:prepared_request]
       webrequest.relative_url = url
