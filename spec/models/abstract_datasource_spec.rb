@@ -6,6 +6,7 @@ describe AbstractDatasource do
   it 'has abstract methods' do
     expect { subject.request(nil) }.to raise_error(NotImplementedError)
     expect { subject.raw_query_from_panel_model(nil) }.to raise_error(NotImplementedError)
+    expect { subject.default_variable_format }.to raise_error(NotImplementedError)
   end
 
   it 'raises error if invalid datasource query is provided' do
