@@ -12,14 +12,18 @@ module GrafanaReporter
     # Implements the call of the configured webhook.
     # Provides the following report information in JSON format:
     #
-    # +object_id+ - id of the current report
-    # +path+ - file path to the report
-    # +status+ - report status as string, e.g. +cancelled+, +finished+ or +in progress+
-    # +execution_time+ - execution time of the report
-    # +template+ - name of the used template
-    # +start_time+ - time when the report creation started
-    # +end_time+ - time when the report creation ended
-    # +event+ - event, which has happened
+    #   :object_id      - id of the current report
+    #   :path           - file path to the report
+    #   :status         - report status as string, e.g. `cancelled`, `finished` or `in progress`
+    #   :execution_time - execution time in seconds of the report
+    #   :template       - name of the used template
+    #   :start_time     - time when the report creation started
+    #   :end_time       - time when the report creation ended
+    #   :event          - event, which has happened, e.g. `on-before-create`
+    #
+    # Please note that this callback is a non-blocking event, i.e. the report
+    # generation is proceeding, no matter if the callback is successfull and
+    # no matter how long the execution of the callback does take.
     def callback(event, report)
       # build report information as JSON
       data = { object_id: report.object_id, path: report.path, status: report.status,

@@ -42,12 +42,12 @@ module Grafana
       @model = model
     end
 
-    # @return [String] category of the datasource, e.g. `tsdb` or `sql`
+    # @return [String] category of the datasource, e.g. +tsdb+ or +sql+
     def category
       @model['meta']['category']
     end
 
-    # @return [String] type of the datasource, e.g. `mysql`
+    # @return [String] type of the datasource, e.g. +mysql+
     def type
       @model['type'] || @model['meta']['id']
     end
