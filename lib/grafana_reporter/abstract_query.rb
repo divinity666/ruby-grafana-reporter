@@ -216,7 +216,6 @@ module GrafanaReporter
     # @param result [Hash] preformatted query result (see {Grafana::AbstractDatasource#request}.
     # @param configs [Array<Grafana::Variable>] one variable for replacing values in one column
     # @return [Hash] query result with replaced values
-    # TODO: make sure that caught errors are also visible in logger
     def replace_values(result, configs)
       return result if configs.empty?
 
@@ -231,8 +230,11 @@ module GrafanaReporter
 
           k = arr[0]
           v = arr[1]
-          k.gsub!(/\\([:,])/, '\1')
-          v.gsub!(/\\([:,])/, '\1')
+
+          # allow keys and values to contain escaped colons or commas
+          k = k.gsub(/\\([:,])/, '\1')
+          v = v.gsub(/\\([:,])/, '\1')
+
           result[:content].map do |row|
             (row.length - 1).downto 0 do |i|
               if cols.include?(i + 1) || cols.empty?
@@ -267,6 +269,7 @@ module GrafanaReporter
                                  end
                       end
                     rescue StandardError => e
+                      @grafana.logger.error(e.message)
                       row[i] = e.message
                     end
                   end
@@ -317,9 +320,10 @@ module GrafanaReporter
     # @param timezone [Grafana::Variable] timezone to use, if not system timezone
     # @return [String] translated date as timestamp string
     def translate_date(orig_date, report_time, is_to_time, timezone = nil)
-      # TODO: add test case for creation of variable, if not given, maybe also print a warning
+      @grafana.logger.warn("#translate_date has been called without 'report_time' - using current time as fallback.") unless report_time
       report_time ||= ::Grafana::Variable.new(Time.now.to_s)
       orig_date = orig_date.raw_value if orig_date.is_a?(Grafana::Variable)
+
       return (DateTime.parse(report_time.raw_value).to_time.to_i * 1000).to_s unless orig_date
       return orig_date if orig_date =~ /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/
       return orig_date if orig_date =~ /^\d+$/
