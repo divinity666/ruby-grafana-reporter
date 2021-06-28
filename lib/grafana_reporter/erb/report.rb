@@ -23,7 +23,7 @@ module GrafanaReporter
 
       # @see AbstractReport#demo_report_classes
       def self.demo_report_classes
-        []
+        [ DemoReportBuilder ]
       end
     end
   end

@@ -145,6 +145,7 @@ describe Application do
 
     after do
       File.delete('./result.txt') if File.exist?('./result.txt')
+      #File.delete('./spec/tests/tmp_demo_report.adoc') if File.exist?('./spec/tests/tmp_demo_report.adoc')
     end
 
     it 'can single render a template with extension' do
@@ -152,6 +153,26 @@ describe Application do
       expect { subject.configure_and_run(['-c', './spec/tests/erb.config', '-t', 'spec/tests/erb.template', '-o', './result.txt', '-d', 'ERROR']) }.not_to output(/ERROR/).to_stderr
       expect(File.exist?('./result.txt')).to be true
       expect(File.read('./result.txt')).to include('This is a test 1594308060000.')
+    end
+
+    it 'can build and render a demo report' do
+      @config = ["d\n", "y\n", "y\n"]
+      config_wizard = GrafanaReporter::ConsoleConfigurationWizard.new
+      allow(config_wizard).to receive(:puts)
+      allow(config_wizard).to receive(:print)
+      allow_any_instance_of(DemoReportWizard).to receive(:puts)
+      allow_any_instance_of(DemoReportWizard).to receive(:print)
+      allow(config_wizard).to receive(:gets).and_return(*@config)
+
+      # build demo report
+      # TODO: build demo report in custom place
+      config_wizard.start_wizard('./spec/tests/erb.config', Configuration.new)
+
+      # render report
+      expect(subject.config.logger).not_to receive(:error)
+      expect { subject.configure_and_run(['-c', './spec/tests/erb.config', '-t', 'demo_report.adoc', '-o', './result.txt']) }.not_to output(/ERROR/).to_stderr
+      expect(File.exist?('./result.txt')).to be true
+      expect(File.read('./result.txt')).to include('This is a test table for panel ')
     end
   end
 
