@@ -29,6 +29,10 @@ module GrafanaReporter
         This is a test table for panel <%= panel.id %>:
 
         <%= query.execute.join("\\n") %>
+
+        For detailed API documentation you may start with:
+          1) the AbstractReport (https://rubydoc.info/gems/ruby-grafana-reporter/GrafanaReporter/AbstractReport), or
+          2) subclasses of the AbstractQuery (https://rubydoc.info/gems/ruby-grafana-reporter/GrafanaReporter/AbstractQuery)
         EOS
       end
     end
