@@ -523,7 +523,7 @@
         "timeRegions": [],
         "timeShift": null,
         "title": "Temperaturen",
-        "description": "ich baue hier eine $my-var Variable ein",
+        "description": "ich baue hier eine $my_var Variable ein",
         "tooltip": {
           "shared": false,
           "sort": 0,

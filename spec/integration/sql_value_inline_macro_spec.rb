@@ -42,7 +42,7 @@ describe SqlValueInlineMacro do
 
     it 'replaces grafana variables in sql query' do
       expect(@report.logger).not_to receive(:error)
-      expect(Asciidoctor.convert("grafana_sql_value:#{STUBS[:datasource_sql]}[sql=\"SELECT $my-var\"]", to_file: false, attributes: { 'var-my-var' => 1 })).to include('1')
+      expect(Asciidoctor.convert("grafana_sql_value:#{STUBS[:datasource_sql]}[sql=\"SELECT $my_var\"]", to_file: false, attributes: { 'var-my_var' => 1 })).to include('1')
     end
 
     it 'shows error if a reporter error occurs' do
