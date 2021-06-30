@@ -199,7 +199,7 @@ end}
               Specify format in which the results shall be returned, e.g. `%.2f` for only two digit decimals of a
               float. Several columns are separated by `,`. Execution is applied in the following order `format`,
               `replace_values`, `filter_columns`, `transpose`.
-            see: 'https://ruby-doc.org/core-2.4.0/Kernel.html#method-i-sprintf'
+            see: 'https://ruby-doc.org/core/Kernel.html#method-i-sprintf'
 
           replace_values:
             call: replace_values="<replace_1>:<with_1>,<replace_2>:<with_2>,..."
@@ -209,7 +209,7 @@ end}
               supported, but must be full matches, i.e. have to start with `^` and end with `$`, e.g. `^[012]$:OK`.
               Number replacements can also be performed, e.g. `<8.2` or `<>3`. Execution is applied in the following order `format`,
               `replace_values`, `filter_columns`, `transpose`.
-            see: https://ruby-doc.org/core-2.7.1/Regexp.html#class-Regexp-label-Character+Classes
+            see: https://ruby-doc.org/core/Regexp.html#class-Regexp-label-Character+Classes
 
           filter_columns:
             call: filter_columns="<column_name_1>,<column_name_2>,..."
@@ -290,7 +290,7 @@ end}
             Returns a table of all annotations, matching the specified filter criteria and the specified columns. Supports all
             query parameters from the Grafana Alerting API, such as `limit`, `alertId`, `panelId` and others.
           call: 'include::grafana_annotations[columns="<column_name_1>,<column_name_2>,...",options]'
-          see: https://grafana.com/docs/grafana/latest/http_api/annotations/#find_annotations
+          see: https://grafana.com/docs/grafana/latest/http_api/annotations/#find-annotations
           options:
             columns:
               description: >-
@@ -324,7 +324,7 @@ end}
             Returns a property field for the specified panel. `<type>` can either be `title` or `description`.
             Grafana variables will be replaced in the returned value.
           call: 'grafana_panel_property:<panel_id>["<type>",options]'
-          see: https://grafana.com/docs/grafana/latest/variables/templates-and-variables/#variable-syntax
+          see: https://grafana.com/docs/grafana/latest/variables/syntax/
           standard_options:
             dashboard:
             instance:
@@ -359,7 +359,7 @@ end}
             Returns the results of a query, which is configured in a grafana panel, as a table in asciidoctor.
             Grafana variables will be replaced in the panel's SQL statement.
           call: 'include::grafana_panel_query_table:<panel_id>[query="<query_letter>",options]'
-          see: https://grafana.com/docs/grafana/latest/variables/templates-and-variables/#variable-syntax
+          see: https://grafana.com/docs/grafana/latest/variables/syntax/
           options:
             query:
               call: query="<query_letter>"
@@ -384,7 +384,7 @@ end}
           description: >-
             Returns the value in the first column and the first row of a query, which is configured in a grafana panel.
             Grafana variables will be replaced in the panel's SQL statement.
-          see: https://grafana.com/docs/grafana/latest/variables/templates-and-variables/#variable-syntax
+          see: https://grafana.com/docs/grafana/latest/variables/syntax/
           options:
             query:
               call: query="<query_letter>"
@@ -406,7 +406,7 @@ end}
           description: >-
             Returns a table with all results of the given query.
             Grafana variables will be replaced in the SQL statement.
-          see: https://grafana.com/docs/grafana/latest/variables/templates-and-variables/#variable-syntax
+          see: https://grafana.com/docs/grafana/latest/variables/syntax/
           standard_options:
             column_divider:
             filter_columns:
@@ -426,7 +426,7 @@ end}
           description: >-
             Returns the value in the first column and the first row of the given query.
             Grafana variables will be replaced in the SQL statement.
-          see: https://grafana.com/docs/grafana/latest/variables/templates-and-variables/#variable-syntax
+          see: https://grafana.com/docs/grafana/latest/variables/syntax/
           standard_options:
             filter_columns:
             format:
