@@ -21,6 +21,16 @@ module GrafanaReporter
         @destination_file_or_path.close if @destination_file_or_path.is_a?(File)
       end
 
+      # @see AbstractReport#default_template_extension
+      def self.default_template_extension
+        'erb'
+      end
+
+      # @see AbstractReport#default_result_extension
+      def self.default_result_extension
+        'txt'
+      end
+
       # @see AbstractReport#demo_report_classes
       def self.demo_report_classes
         [ DemoReportBuilder ]

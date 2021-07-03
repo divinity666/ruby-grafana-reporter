@@ -126,7 +126,7 @@ module GrafanaReporter
 
     # Is being called to start the report generation. To execute the specific report generation, this function
     # calls the abstract {#build} method with the given parameters.
-    # @param template [String] path to the template to be used, trailing +.adoc+ extension may be omitted
+    # @param template [String] path to the template to be used, trailing extension may be omitted, whereas {#default_template_extension} will be appended
     # @param destination_file_or_path [String or File] path to the destination report or file object to use
     # @param custom_attributes [Hash] custom attributes, which shall be merged with priority over the configuration
     # @return [void]
@@ -136,14 +136,14 @@ module GrafanaReporter
       @destination_file_or_path = destination_file_or_path
       @custom_attributes = custom_attributes
 
-      # automatically add extension, if a file with adoc extension exists
-      @template = "#{@template}.adoc" if File.file?("#{@template}.adoc") && !File.file?(@template.to_s)
+      # automatically add extension, if a file with default template extension exists
+      @template = "#{@template}.#{self.class.default_template_extension}" if File.file?("#{@template}.#{self.class.default_template_extension}") && !File.file?(@template.to_s)
       raise MissingTemplateError, @template.to_s unless File.file?(@template.to_s)
 
       notify(:on_before_create)
       @start_time = Time.new
       logger.info("Report started at #{@start_time}")
-      build(template, destination_file_or_path, custom_attributes)
+      build(@template, @destination_file_or_path, @custom_attributes)
     rescue MissingTemplateError => e
       @logger.error(e.message)
       @error = [e.message]
@@ -183,6 +183,18 @@ module GrafanaReporter
     # Provided class objects need to implement a method +build_demo_entry(panel)+.
     # @return [Array<Class>] array of class objects, which shall be included in a demo report
     def self.demo_report_classes
+      raise NotImplementedError
+    end
+
+    # @abstract
+    # @return [String] specifying the default extension of a template file
+    def self.default_template_extension
+      raise NotImplementedError
+    end
+
+    # @abstract
+    # @return [String] specifying the default extension of a rendered result file
+    def self.default_result_extension
       raise NotImplementedError
     end
 

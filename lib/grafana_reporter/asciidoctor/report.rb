@@ -100,6 +100,16 @@ module GrafanaReporter
         path
       end
 
+      # @see AbstractReport#default_template_extension
+      def self.default_template_extension
+        'adoc'
+      end
+
+      # @see AbstractReport#default_result_extension
+      def self.default_result_extension
+        'pdf'
+      end
+
       # @see AbstractReport#demo_report_classes
       def self.demo_report_classes
         [AlertsTableIncludeProcessor, AnnotationsTableIncludeProcessor, PanelImageBlockMacro, PanelImageInlineMacro,

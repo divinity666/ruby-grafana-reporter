@@ -39,7 +39,7 @@ module GrafanaReporter
       puts 'Now everything is setup properly. Create your reports as required in the templates '\
            'folder and run the reporter either standalone with e.g. the following command:'
       puts
-      puts "   #{program_call}#{config_param} -t #{demo_report} -o demo_report_with_help.pdf"
+      puts "   #{program_call}#{config_param} -t #{demo_report} -o demo_report.#{config.report_class.default_result_extension}"
       puts
       puts 'or run it as a service using the following command:'
       puts
@@ -120,7 +120,7 @@ default-document-attributes:
       return nil unless create =~ /^(?:y|Y)$/
 
       demo_report = 'demo_report'
-      demo_report_file = "#{config.templates_folder}#{demo_report}.adoc"
+      demo_report_file = "#{config.templates_folder}#{demo_report}.#{config.report_class.default_template_extension}"
 
       # ask to overwrite file
       if File.exist?(demo_report_file)
