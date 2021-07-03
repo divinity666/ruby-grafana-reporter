@@ -23,7 +23,7 @@ module GrafanaReporter
         dashboard = '#{panel.dashboard.id}'
         instance = 'default'
         panel = @report.grafana(instance).dashboard(dashboard).panel(#{panel.id})
-        query = QueryValueQuery.new(panel, variables: { 'result_type' => 'panel_table', 'query' => '#{ref_id}', 'column_divider' => ', ' })
+        query = QueryValueQuery.new(panel, variables: { 'result_type' => 'panel_table', 'query' => '#{ref_id}', 'column_divider' => ', ', 'row_divider' => '' })
         %>
 
         This is a test table for panel <%= panel.id %>:
