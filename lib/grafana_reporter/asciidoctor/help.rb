@@ -226,12 +226,22 @@ end}
             column_divider:
               call: column_divider="<divider>"
               description: >-
-                Replace the default column divider with another one. Defaults to ` | ` for being interpreted as a asciidoctor column.
+                Replace the default column divider with another one, when used in conjunction with `table_formatter` set to
+                `adoc_deprecated`. Defaults to ` | ` for being interpreted as a asciidoctor column. DEPRECATED: switch to
+                `table_formatter` named `adoc_plain`, or implement a custom table formatter.
 
             row_divider:
               call: row_divider="<divider>"
               description: >-
-                Replace the default row divider with another one. Defaults to `| ` for being interpreted as a asciidoctor row.
+                Replace the default row divider with another one, when used in conjunction with `table_formatter` set to
+                `adoc_deprecated`. . Defaults to `| ` for being interpreted as a asciidoctor row. DEPRECATED: switch to
+                `table_formatter` named `adoc_plain`, or implement a custom table formatter.
+
+            table_formatter:
+              call: table_formatter="<formatter>"
+              description: >-
+                Specify a table formatter fitting for your expected target format. It defaults to `adoc_plain` for asciidoctor
+                templates and to `csv` for all other templates, e.g. ERB.
 
             timeout:
               call: timeout="<timeout_in_seconds>"
@@ -279,6 +289,7 @@ end}
               instance:
               replace_values:
               row_divider:
+              table_formatter:
               timeout:
               to:
               transpose:
@@ -313,6 +324,7 @@ end}
               instance:
               replace_values:
               row_divider:
+              table_formatter:
               timeout:
               to:
               transpose:
@@ -373,6 +385,7 @@ end}
               instance:
               replace_values:
               row_divider:
+              table_formatter:
               timeout:
               to:
               transpose:
@@ -415,6 +428,7 @@ end}
               instance:
               replace_values:
               row_divider:
+              table_formatter:
               timeout:
               to:
               transpose:

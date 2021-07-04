@@ -66,9 +66,16 @@ describe PanelQueryTableIncludeProcessor do
       expect(Asciidoctor.convert("include::grafana_panel_query_table:#{STUBS[:panel_sql][:id]}[query=\"#{STUBS[:panel_sql][:letter]}\",dashboard=\"#{STUBS[:dashboard]}\",format=\",%.2f\"]", to_file: false)).to match(/<p>\| 1594308060000 \| 43.90/)
     end
 
-    it 'handles column and row divider' do
+    it 'handles column and row divider in deprecated table formatter' do
       expect(@report.logger).not_to receive(:error)
-      expect(Asciidoctor.convert("include::grafana_panel_query_table:#{STUBS[:panel_sql][:id]}[query=\"#{STUBS[:panel_sql][:letter]}\",dashboard=\"#{STUBS[:dashboard]}\",column_divider=\" col \",row_divider=\"row \"]", to_file: false)).to match(/<p>row 1594308060000 col 43.9/)
+      expect_any_instance_of(GrafanaReporter::Logger::TwoWayDelegateLogger).to receive(:warn).with(/You are using deprecated 'table_formatter' named 'adoc_deprecated'/)
+      expect(Asciidoctor.convert("include::grafana_panel_query_table:#{STUBS[:panel_sql][:id]}[query=\"#{STUBS[:panel_sql][:letter]}\",dashboard=\"#{STUBS[:dashboard]}\",column_divider=\" col \",row_divider=\"row \",table_formatter=\"adoc_deprecated\"]", to_file: false)).to match(/<p>row 1594308060000 col 43.9/)
+    end
+
+    # TODO: properly add headline on transposed results
+    it 'can include headline' do
+      expect(@report.logger).not_to receive(:error)
+      expect(Asciidoctor.convert("include::grafana_panel_query_table:#{STUBS[:panel_sql][:id]}[query=\"#{STUBS[:panel_sql][:letter]}\",dashboard=\"#{STUBS[:dashboard]}\",include_headline=\"true\"]", to_file: false)).to match(/<p>\| time_sec \| Warmwasser\n/)
     end
 
     it 'can transpose results' do

@@ -1,5 +1,8 @@
 # frozen_string_literal: true
 
+require_relative 'abstract_table_format_strategy'
+require_relative 'csv_table_format_strategy'
+
 module GrafanaReporter
   # @abstract Override {#pre_process} and {#post_process} in subclass.
   #
@@ -287,22 +290,27 @@ module GrafanaReporter
       result
     end
 
-    # Used to build a output format matching the requested report format.
+    # Used to build a table output in a custom format.
     # @param result [Hash] preformatted sql hash, (see {Grafana::AbstractDatasource#request})
     # @param opts [Hash] options for the formatting:
-    # @option opts [Grafana::Variable] :row_divider requested row divider for the result table
-    # @option opts [Grafana::Variable] :column_divider requested row divider for the result table
-    # @option opts [Regex or String] :escape_regex regular expression which specifies a part of a cell content, which has to be escaped; defaults to `|`
-    # @option opts [String] :escape_replacement specifies how the found :escape_regex shall be replaced; defaults to `\\|`
-    # @return [String] formatted table result in requested output format
+    # @option opts [Grafana::Variable] :row_divider requested row divider for the result table, only to be used with table_formatter `adoc_deprecated`
+    # @option opts [Grafana::Variable] :column_divider requested row divider for the result table, only to be used with table_formatter `adoc_deprecated`
+    # @option opts [Grafana::Variable] :include_headline specifies if table should contain headline, defaults to false
+    # @option opts [Grafana::Variable] :table_formatter specifies which formatter shall be used, defaults to 'csv'
+    # @return [String] table in custom output format
     def format_table_output(result, opts)
-      opts = { escape_regex: '|', escape_replacement: '\\|', row_divider: Grafana::Variable.new('| '), column_divider: Grafana::Variable.new(' | ') }.merge(opts.delete_if {|_k, v| v.nil? })
+      opts = { include_headline: Grafana::Variable.new('false'), table_formatter: Grafana::Variable.new('csv'), row_divider: Grafana::Variable.new('| '), column_divider: Grafana::Variable.new(' | ') }.merge(opts.delete_if {|_k, v| v.nil? })
 
-      result[:content].map do |row|
-        opts[:row_divider].raw_value + row.map do |item|
-          item.to_s.gsub(opts[:escape_regex], opts[:escape_replacement])
-        end.join(opts[:column_divider].raw_value)
+      if opts[:table_formatter].raw_value == 'adoc_deprecated'
+        @grafana.logger.warn("You are using deprecated 'table_formatter' named 'adoc_deprecated', which will be removed in a future version. Start using 'adoc' or register your own implementation of AbstractTableFormatStrategy.")
+        return result[:content].map do |row|
+          opts[:row_divider].raw_value + row.map do |item|
+            item.to_s.gsub('|', '\\|')
+          end.join(opts[:column_divider].raw_value)
+        end
       end
+
+      AbstractTableFormatStrategy.get(opts[:table_formatter].raw_value).format(result, opts[:include_headline].raw_value.downcase == 'true')
     end
 
     # Used to translate the relative date strings used by grafana, e.g. +now-5d/w+ to the

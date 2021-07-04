@@ -23,12 +23,12 @@ module GrafanaReporter
         dashboard = '#{panel.dashboard.id}'
         instance = 'default'
         panel = @report.grafana(instance).dashboard(dashboard).panel(#{panel.id})
-        query = QueryValueQuery.new(panel, variables: { 'result_type' => 'panel_table', 'query' => '#{ref_id}', 'column_divider' => ', ', 'row_divider' => '' })
+        query = QueryValueQuery.new(panel, variables: { 'result_type' => 'panel_table', 'query' => '#{ref_id}' })
         %>
 
         This is a test table for panel <%= panel.id %>:
 
-        <%= query.execute.join("\\n") %>
+        <%= query.execute %>
 
         For detailed API documentation you may start with:
           1) the AbstractReport (https://rubydoc.info/gems/ruby-grafana-reporter/GrafanaReporter/AbstractReport), or

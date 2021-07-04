@@ -33,7 +33,7 @@ module GrafanaReporter
       @result = replace_values(@result, @variables.select { |k, _v| k =~ /^replace_values_\d+/ })
       @result = filter_columns(@result, @variables['filter_columns'])
 
-      @result = format_table_output(@result, row_divider: @variables['row_divider'], column_divider: @variables['column_divider'])
+      @result = format_table_output(@result, row_divider: @variables['row_divider'], column_divider: @variables['column_divider'], table_formatter: @variables['table_formatter'], include_headline: @variables['include_headline'])
     end
   end
 end
