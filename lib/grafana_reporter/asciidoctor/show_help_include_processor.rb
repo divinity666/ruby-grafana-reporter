@@ -23,7 +23,7 @@ module GrafanaReporter
         @report.next_step
         @report.logger.debug('Processing ShowHelpIncludeProcessor')
 
-        reader.unshift_lines GrafanaReporter::Help.new.asciidoctor.split("\n")
+        reader.unshift_lines Help.new.asciidoctor.split("\n")
       end
 
       # @see ProcessorMixin#build_demo_entry
