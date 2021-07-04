@@ -292,8 +292,8 @@ module GrafanaReporter
     # @param opts [Hash] options for the formatting:
     # @option opts [Grafana::Variable] :row_divider requested row divider for the result table
     # @option opts [Grafana::Variable] :column_divider requested row divider for the result table
-    # @option opts [Regex or String] :escape_regex regular expression which specifies a part of a cell content, which has to be escaped
-    # @option opts [String] :escape_replacement specifies how the found :escape_regex shall be replaced
+    # @option opts [Regex or String] :escape_regex regular expression which specifies a part of a cell content, which has to be escaped; defaults to `|`
+    # @option opts [String] :escape_replacement specifies how the found :escape_regex shall be replaced; defaults to `\\|`
     # @return [String] formatted table result in requested output format
     def format_table_output(result, opts)
       opts = { escape_regex: '|', escape_replacement: '\\|', row_divider: Grafana::Variable.new('| '), column_divider: Grafana::Variable.new(' | ') }.merge(opts.delete_if {|_k, v| v.nil? })
