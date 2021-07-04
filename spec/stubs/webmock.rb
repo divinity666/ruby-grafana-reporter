@@ -136,7 +136,7 @@ RSpec.configure do |config|
         'Authorization' => "Bearer #{STUBS[:key_admin]}"
       })
     )
-    .to_return(status: 500, body: File.read('./spec/tests/broken_image_response.html'), headers: {})
+    .to_return(status: 500, body: File.read('./spec/tests/broken_image_response.txt'), headers: {})
 
     stub_request(:get, %r{http://localhost/api/annotations(?:\?.*)?}).with(
       headers: default_header.merge({
