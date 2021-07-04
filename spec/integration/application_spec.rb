@@ -170,7 +170,7 @@ describe Application do
 
       # render report
       expect(subject.config.logger).not_to receive(:error)
-      expect { subject.configure_and_run(['-c', './spec/tests/erb.config', '-t', 'demo_report.adoc', '-o', './result.txt']) }.not_to output(/ERROR/).to_stderr
+      expect { subject.configure_and_run(['-c', './spec/tests/erb.config', '-t', 'demo_report', '-o', './result.txt']) }.not_to output(/ERROR/).to_stderr
       expect(File.exist?('./result.txt')).to be true
       expect(File.read('./result.txt')).to include('This is a test table for panel ')
     end
