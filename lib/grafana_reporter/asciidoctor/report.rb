@@ -15,7 +15,7 @@ module GrafanaReporter
       # Starts to create an asciidoctor report. It utilizes all extensions in the {GrafanaReporter::Asciidoctor}
       # namespace to realize the conversion.
       # @see AbstractReport#build
-      def build(template, destination_file_or_path, custom_attributes)
+      def build
         attrs = { 'convert-backend' => 'pdf' }.merge(@config.default_document_attributes.merge(@custom_attributes))
         logger.debug("Document attributes: #{attrs}")
 
@@ -41,22 +41,14 @@ module GrafanaReporter
         ::Asciidoctor.convert_file(@template, extension_registry: registry, backend: attrs['convert-backend'],
                                               to_file: path, attributes: attrs, header_footer: true)
 
-        @destination_file_or_path.close if @destination_file_or_path.is_a?(File)
-
         # store report including als images as ZIP file, if the result is not a PDF
         if attrs['convert-backend'] != 'pdf'
-          dest_path = if @destination_file_or_path.is_a?(File) || @destination_file_or_path.is_a?(Tempfile)
-                        @destination_file_or_path.path
-                      else
-                        @destination_file_or_path
-                      end
-
           # build zip file
           zip_file = Tempfile.new('gf_zip')
           buffer = Zip::OutputStream.write_buffer do |zipfile|
             # add report file
-            zipfile.put_next_entry("#{dest_path.gsub(@config.reports_folder, '')}.#{attrs['convert-backend']}")
-            zipfile.write File.read(dest_path)
+            zipfile.put_next_entry("#{path.gsub(@config.reports_folder, '')}.#{attrs['convert-backend']}")
+            zipfile.write File.read(path)
 
             # add image files
             @image_files.each do |file|
@@ -71,9 +63,9 @@ module GrafanaReporter
           # replace original file with zip file
           zip_file.rewind
           begin
-            File.write(dest_path, zip_file.read)
+            File.write(path, zip_file.read)
           rescue StandardError => e
-            logger.fatal("Could not overwrite report file '#{dest_path}' with ZIP file. (#{e.message}).")
+            logger.fatal("Could not overwrite report file '#{path}' with ZIP file. (#{e.message}).")
           end
 
           # cleanup temporary zip file
