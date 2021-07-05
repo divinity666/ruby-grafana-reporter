@@ -8,6 +8,10 @@ describe AbstractQuery do
     expect { subject.post_process }.to raise_error(NotImplementedError)
   end
 
+  it 'raises error, if a wrong grafana object is handed over' do
+    expect { AbstractQuery.new(Grafana::Variable.new('test')) }.to raise_error(GrafanaReporterError)
+  end
+
   context 'translate date' do
     it 'can translate now' do
       expect(subject.translate_date('now', Variable.new('2020-07-28T20:58:03.005+0200'), false)).to eq('1595962683000')
