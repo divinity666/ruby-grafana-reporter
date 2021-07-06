@@ -130,7 +130,7 @@ module Grafana
         variables.each do |name, variable|
           # only set ticks if value is string
           var_name = name.gsub(/^var-/, '')
-          next unless var_name =~ /^[\w]+$/
+          next unless var_name =~ /^\w+$/
 
           res = res.gsub(/(?:\$\{#{var_name}(?::(?<format>\w+))?\}|\$#{var_name}(?!\w))/) do
             format = default_variable_format

@@ -51,7 +51,8 @@ module GrafanaReporter
 
         begin
           # catch properly if datasource could not be identified
-          query = QueryValueQuery.new(@report.grafana(instance), variables: { 'table_formatter' => 'adoc_plain' }.merge(build_attribute_hash(doc.attributes, attrs)))
+          vars = { 'table_formatter' => 'adoc_plain' }.merge(build_attribute_hash(doc.attributes, attrs))
+          query = QueryValueQuery.new(@report.grafana(instance), variables: vars)
           query.datasource = @report.grafana(instance).datasource_by_id(target.split(':')[1].to_i)
           query.raw_query = attrs['sql']
 

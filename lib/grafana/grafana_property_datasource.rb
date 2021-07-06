@@ -26,7 +26,7 @@ module Grafana
 
     # @see AbstractDatasource#default_variable_format
     def default_variable_format
-        'glob'
+      'glob'
     end
 
     # @see AbstractDatasource#name

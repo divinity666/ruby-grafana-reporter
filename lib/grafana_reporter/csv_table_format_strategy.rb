@@ -17,7 +17,7 @@ module GrafanaReporter
         row.map { |item| item.to_s.gsub(',', '\,') }.join(',')
       end.join("\n")
 
-      "#{headline + "\n" if include_headline}#{content}"
+      "#{"#{headline}\n" if include_headline}#{content}"
     end
   end
 end

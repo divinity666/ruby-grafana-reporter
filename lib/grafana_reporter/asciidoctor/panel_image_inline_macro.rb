@@ -48,7 +48,8 @@ module GrafanaReporter
         begin
           # set alt text to a default, because otherwise asciidoctor fails
           attrs['alt'] = '' unless attrs['alt']
-          query = PanelImageQuery.new(@report.grafana(instance).dashboard(dashboard).panel(target), variables: build_attribute_hash(parent.document.attributes, attrs))
+          query = PanelImageQuery.new(@report.grafana(instance).dashboard(dashboard).panel(target),
+                                      variables: build_attribute_hash(parent.document.attributes, attrs))
 
           image = query.execute
           image_path = @report.save_image_file(image)

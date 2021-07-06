@@ -13,7 +13,6 @@ module GrafanaReporter
     # It can be run to test the grafana connection, render a single template
     # or run as a service.
     class Application
-
       # Contains the {Configuration} object of the application.
       attr_accessor :config
 

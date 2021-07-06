@@ -14,7 +14,6 @@ module GrafanaReporter
         attrs = @config.default_document_attributes.merge(@custom_attributes)
         logger.debug("Document attributes: #{attrs}")
 
-        # TODO: if path is true, a default filename has to be generated. check if this should be a general function instead
         File.write(path, ::ERB.new(File.read(@template)).result(ReportJail.new(self, attrs).bind))
       end
 
@@ -30,7 +29,7 @@ module GrafanaReporter
 
       # @see AbstractReport#demo_report_classes
       def self.demo_report_classes
-        [ DemoReportBuilder ]
+        [DemoReportBuilder]
       end
     end
   end

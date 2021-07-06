@@ -225,7 +225,7 @@ module GrafanaReporter
         i = reports.length
 
         # TODO: make reporter HTML results customizable
-        template = <<~EOS
+        template = <<~HTML_TEMPLATE
           <html>
           <head></head>
           <body>
@@ -255,7 +255,7 @@ module GrafanaReporter
           <p style="font-size: small; color:grey">You are running ruby-grafana-reporter version <%= GRAFANA_REPORTER_VERSION.join('.') %>.</p>
           </body>
           </html>
-        EOS
+        HTML_TEMPLATE
 
         content = ::ERB.new(template).result(binding)
 

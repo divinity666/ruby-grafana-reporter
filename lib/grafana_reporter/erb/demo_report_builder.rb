@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module GrafanaReporter
   module ERB
     # This class builds a demo report for ERB templates
@@ -18,22 +20,22 @@ module GrafanaReporter
         end
         return nil unless ref_id
 
-        <<~EOS
-        <%
-        dashboard = '#{panel.dashboard.id}'
-        instance = 'default'
-        panel = @report.grafana(instance).dashboard(dashboard).panel(#{panel.id})
-        query = QueryValueQuery.new(panel, variables: { 'result_type' => 'panel_table', 'query' => '#{ref_id}' })
-        %>
+        <<~DEMO_ERB_TEMPLATE
+          <%
+          dashboard = '#{panel.dashboard.id}'
+          instance = 'default'
+          panel = @report.grafana(instance).dashboard(dashboard).panel(#{panel.id})
+          query = QueryValueQuery.new(panel, variables: { 'result_type' => 'panel_table', 'query' => '#{ref_id}' })
+          %>
 
-        This is a test table for panel <%= panel.id %>:
+          This is a test table for panel <%= panel.id %>:
 
-        <%= query.execute %>
+          <%= query.execute %>
 
-        For detailed API documentation you may start with:
-          1) the AbstractReport (https://rubydoc.info/gems/ruby-grafana-reporter/GrafanaReporter/AbstractReport), or
-          2) subclasses of the AbstractQuery (https://rubydoc.info/gems/ruby-grafana-reporter/GrafanaReporter/AbstractQuery)
-        EOS
+          For detailed API documentation you may start with:
+            1) the AbstractReport (https://rubydoc.info/gems/ruby-grafana-reporter/GrafanaReporter/AbstractReport), or
+            2) subclasses of the AbstractQuery (https://rubydoc.info/gems/ruby-grafana-reporter/GrafanaReporter/AbstractQuery)
+        DEMO_ERB_TEMPLATE
       end
     end
   end

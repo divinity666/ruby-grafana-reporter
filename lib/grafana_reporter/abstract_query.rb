@@ -92,6 +92,7 @@ module GrafanaReporter
       end
 
       raise DatasourceRequestInvalidReturnValueError.new(@datasource, @result) unless datasource_response_valid?
+
       post_process
       @result
     end
@@ -299,10 +300,15 @@ module GrafanaReporter
     # @option opts [Grafana::Variable] :table_formatter specifies which formatter shall be used, defaults to 'csv'
     # @return [String] table in custom output format
     def format_table_output(result, opts)
-      opts = { include_headline: Grafana::Variable.new('false'), table_formatter: Grafana::Variable.new('csv'), row_divider: Grafana::Variable.new('| '), column_divider: Grafana::Variable.new(' | ') }.merge(opts.delete_if {|_k, v| v.nil? })
+      opts = { include_headline: Grafana::Variable.new('false'),
+               table_formatter: Grafana::Variable.new('csv'),
+               row_divider: Grafana::Variable.new('| '),
+               column_divider: Grafana::Variable.new(' | ') }.merge(opts.delete_if {|_k, v| v.nil? })
 
       if opts[:table_formatter].raw_value == 'adoc_deprecated'
-        @grafana.logger.warn("You are using deprecated 'table_formatter' named 'adoc_deprecated', which will be removed in a future version. Start using 'adoc' or register your own implementation of AbstractTableFormatStrategy.")
+        @grafana.logger.warn("You are using deprecated 'table_formatter' named 'adoc_deprecated', which will be "\
+                             "removed in a future version. Start using 'adoc' or register your own implementation "\
+                             "of AbstractTableFormatStrategy.")
         return result[:content].map do |row|
           opts[:row_divider].raw_value + row.map do |item|
             item.to_s.gsub('|', '\\|')
@@ -399,10 +405,10 @@ module GrafanaReporter
     def datasource_response_valid?
       return false if @result.nil?
       return false unless @result.is_a?(Hash)
-      # TODO: check if it should be ok if a datasource request returns an empty hash only
+      # TODO: compare how empty valid responses look like in grafana
       return true if @result.empty?
-      return false unless @result.has_key?(:header)
-      return false unless @result.has_key?(:content)
+      return false unless @result.key?(:header)
+      return false unless @result.key?(:content)
       return false unless @result[:header].is_a?(Array)
       return false unless @result[:content].is_a?(Array)
 
