@@ -124,7 +124,7 @@ describe Variable do
 
     it "handles selection 'All' properly" do
       obj = Dashboard.new(JSON.parse(File.read('./spec/tests/demo_dashboard.json'))['dashboard'], Grafana::Grafana.new('')).variables.select { |item| item.name == 'testmulti' }.first
-      obj.raw_value = 'All'
+      obj.raw_value = '$__all'
       expect(obj.value_formatted).to eq("'1','2',',','$','/','\"','''','.','a','|','\\'")
     end
   end

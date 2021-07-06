@@ -63,92 +63,96 @@ module Grafana
       value = @raw_value
 
       # handle value 'All' properly
-      # TODO: fix check for selection of All properly
-      if (value == 'All') || (@text == 'All')
+      if value == '$__all'
         if !@config['options'].empty?
+          # this query contains predefined values, so capture them and format the values accordingly
+          # this happens either if type='custom' or a query, which is never updated
           value = @config['options'].map { |item| item['value'] }
-        elsif !@config['query'].empty?
-          # TODO: replace variables in this query, too
+
+        elsif @config['type'] == 'query' && !@config['query'].empty?
+          # TODO: replace variables in query, execute it and evaluate the results as if they were normally selected
+          # "multiFormat": contains variable replacement in "query", e.g. 'regex values' or 'glob'
+          # "datasource": contains name of datasource
           return @config['query']
-          # TODO: handle 'All' value properly for query attributes
+
         else
-          # TODO: how to handle All selection properly at this point?
+          # TODO: add support for variable type: 'datasource' and 'adhoc'
         end
       end
 
       case format
       when 'csv'
-        return value.join(',').to_s if multi?
+        return value.join(',').to_s if multi? && value.is_a?(Array)
 
         value.to_s
 
       when 'distributed'
-        return value.join(",#{name}=") if multi?
+        return value.join(",#{name}=") if multi? && value.is_a?(Array)
 
         value
       when 'doublequote'
-        if multi?
+        if multi? && value.is_a?(Array)
           value = value.map { |item| "\"#{item.gsub(/\\/, '\\\\').gsub(/"/, '\\"')}\"" }
           return value.join(',')
         end
         "\"#{value.gsub(/"/, '\\"')}\""
 
       when 'json'
-        if multi?
+        if multi? && value.is_a?(Array)
           value = value.map { |item| "\"#{item.gsub(/["\\]/, '\\\\\0')}\"" }
           return "[#{value.join(',')}]"
         end
         "\"#{value.gsub(/"/, '\\"')}\""
 
       when 'percentencode'
-        value = "{#{value.join(',')}}" if multi?
+        value = "{#{value.join(',')}}" if multi? && value.is_a?(Array)
         ERB::Util.url_encode(value)
 
       when 'pipe'
-        return value.join('|') if multi?
+        return value.join('|') if multi? && value.is_a?(Array)
 
         value
 
       when 'raw'
-        return "{#{value.join(',')}}" if multi?
+        return "{#{value.join(',')}}" if multi? && value.is_a?(Array)
 
         value
 
       when 'regex'
-        if multi?
+        if multi? && value.is_a?(Array)
           value = value.map { |item| item.gsub(%r{[/$.|\\]}, '\\\\\0') }
           return "(#{value.join('|')})"
         end
         value.gsub(%r{[/$.|\\]}, '\\\\\0')
 
       when 'singlequote'
-        if multi?
+        if multi? && value.is_a?(Array)
           value = value.map { |item| "'#{item.gsub(/'/, '\\\\\0')}'" }
           return value.join(',')
         end
         "'#{value.gsub(/'/, '\\\\\0')}'"
 
       when 'sqlstring'
-        if multi?
+        if multi? && value.is_a?(Array)
           value = value.map { |item| "'#{item.gsub(/'/, "''")}'" }
           return value.join(',')
         end
         "'#{value.gsub(/'/, "''")}'"
 
       when 'lucene'
-        if multi?
+        if multi? && value.is_a?(Array)
           value = value.map { |item| "\"#{item.gsub(%r{[" |=/\\]}, '\\\\\0')}\"" }
           return "(#{value.join(' OR ')})"
         end
         value.gsub(%r{[" |=/\\]}, '\\\\\0')
 
       when /^date(?::(?<format>.*))?$/
-        # TODO: validate how grafana handles multivariables with date format
+        # TODO: grafana does not seem to allow multivariables with date format - so properly handle here as well
         get_date_formatted(value, Regexp.last_match(1))
 
       when ''
         # default
-        if multi?
+        if multi? && value.is_a?(Array)
           value = value.map { |item| "'#{item.gsub(/'/, "''")}'" }
           return value.join(',')
         end
@@ -162,7 +166,7 @@ module Grafana
       end
     end
 
-    # @return [Boolean] true, if the value can contain multiple selections, i.e. is an Array
+    # @return [Boolean] true, if the value can contain multiple selections, i.e. can contain an Array
     def multi?
       return @config['multi'] unless @config['multi'].nil?
 
@@ -196,6 +200,8 @@ module Grafana
       until work_string.empty?
         tmp = work_string.scan(/^(?:M{1,4}|D{1,4}|d{1,4}|e|E|w{1,2}|W{1,2}|Y{4}|Y{2}|A|a|H{1,2}|
                                     h{1,2}|k{1,2}|m{1,2}|s{1,2}|S+|X)/x)
+
+        # TODO: add test for sub! and switch to non-modifying frozen string action
         if tmp.empty?
           matches << work_string[0]
           work_string.sub!(/^#{work_string[0]}/, '')
