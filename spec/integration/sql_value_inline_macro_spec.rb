@@ -29,14 +29,14 @@ describe SqlValueInlineMacro do
     end
 
     it 'returns fatal error message if no sql statement specified' do
-      expect(@report.logger).to receive(:fatal).with(/No SQL statement/)
+      expect(@report.logger).to receive(:error).with(/No SQL statement/)
       expect(Asciidoctor.convert("grafana_sql_value:#{STUBS[:datasource_sql]}[test=\"bla\"]", to_file: false)).to include('MissingSqlQueryError')
-      expect(@report.logger).to receive(:fatal).with(/No SQL statement/)
+      expect(@report.logger).to receive(:error).with(/No SQL statement/)
       expect(Asciidoctor.convert("grafana_sql_value:#{STUBS[:datasource_sql]}[]", to_file: false)).to include('MissingSqlQueryError')
     end
 
     it 'returns error message if invalid datasource id is specified' do
-      expect(@report.logger).to receive(:fatal).with(/Datasource/)
+      expect(@report.logger).to receive(:error).with(/Datasource/)
       expect(Asciidoctor.convert('grafana_sql_value:99[sql="SELECT 1"]', to_file: false)).to include('GrafanaError: Datasource')
     end
 

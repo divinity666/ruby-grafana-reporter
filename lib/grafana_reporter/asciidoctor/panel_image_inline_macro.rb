@@ -52,6 +52,9 @@ module GrafanaReporter
 
           image = query.execute
           image_path = @report.save_image_file(image)
+        rescue GrafanaError => e
+          @report.logger.error(e.message)
+          return create_inline(parent, :quoted, e.message)
         rescue GrafanaReporterError => e
           @report.logger.error(e.message)
           return create_inline(parent, :quoted, e.message)

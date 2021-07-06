@@ -42,6 +42,9 @@ module GrafanaReporter
           query.raw_query = { property_name: attrs[:field] }
 
           description = query.execute
+        rescue GrafanaError => e
+          @report.logger.error(e.message)
+          return create_inline(parent, :quoted, e.message)
         rescue GrafanaReporterError => e
           @report.logger.error(e.message)
           return create_inline(parent, :quoted, e.message)

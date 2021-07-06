@@ -28,8 +28,8 @@ describe SqlTableIncludeProcessor do
   end
 
   it 'shows fatal error if sql statement is missing' do
-    expect(@report.logger).to receive(:fatal).with('GrafanaError: No SQL statement has been specified. (Grafana::MissingSqlQueryError)')
-    expect(Asciidoctor.convert("include::grafana_sql_table:#{STUBS[:datasource_sql]}[from=\"now/y\",to=\"now/y\"]", to_file: false)).to include('|GrafanaError: No SQL statement has been specified. (Grafana::MissingSqlQueryError)')
+    expect(@report.logger).to receive(:error).with("GrafanaError: No SQL statement has been specified. (Grafana::MissingSqlQueryError)")
+    expect(Asciidoctor.convert("include::grafana_sql_table:#{STUBS[:datasource_sql]}[from=\"now/y\",to=\"now/y\"]", to_file: false)).to include('GrafanaError: No SQL statement has been specified. (Grafana::MissingSqlQueryError)')
   end
 
   it 'shows error if a reporter error occurs' do
