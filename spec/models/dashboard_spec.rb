@@ -7,7 +7,7 @@ describe Dashboard do
     expect(dashboard.panels.length).to eq(11)
     expect(dashboard.panel(11)).to be_a(Panel)
     expect(dashboard.panel(11).field('id')).to eq(11)
-    expect(dashboard.panel(11).field('no_field_exists')).to eq('')
+    expect(dashboard.panel(11).field('no_field_exists')).to be nil
     expect { dashboard.panel(99) }.to raise_error(PanelDoesNotExistError)
   end
 
