@@ -9,7 +9,7 @@ module GrafanaReporter
 
       def initialize(report, attributes)
         @report = report
-        @attributes = { 'grafana_report_timestamp' => ::Grafana::Variable.new(Time.now.to_s) }.merge(attributes)
+        @attributes = attributes
       end
 
       # @return binding to this object

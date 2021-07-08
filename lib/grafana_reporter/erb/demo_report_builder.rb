@@ -24,8 +24,12 @@ module GrafanaReporter
           <%
           dashboard = '#{panel.dashboard.id}'
           instance = 'default'
+          # load the panel object from grafana instance
           panel = @report.grafana(instance).dashboard(dashboard).panel(#{panel.id})
-          query = QueryValueQuery.new(panel, variables: { 'result_type' => 'panel_table', 'query' => '#{ref_id}' })
+          # build a complete attributes hash, including the variables set for this report call
+          # e.g. including command line parameters etc.
+          attrs = @attributes.merge({ 'result_type' => 'panel_table', 'query' => '#{ref_id}' })
+          query = QueryValueQuery.new(panel, variables: attrs)
           %>
 
           This is a test table for panel <%= panel.id %>:

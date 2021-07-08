@@ -11,7 +11,7 @@ module GrafanaReporter
       # namespace to realize the conversion.
       # @see AbstractReport#build
       def build
-        attrs = @config.default_document_attributes.merge(@custom_attributes)
+        attrs = @config.default_document_attributes.merge(@custom_attributes).merge({ 'grafana_report_timestamp' => ::Grafana::Variable.new(Time.now.to_s) })
         logger.debug("Document attributes: #{attrs}")
 
         File.write(path, ::ERB.new(File.read(@template)).result(ReportJail.new(self, attrs).bind))
