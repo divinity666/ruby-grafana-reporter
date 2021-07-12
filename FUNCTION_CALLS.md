@@ -61,7 +61,7 @@ See also: https://grafana.com/docs/grafana/latest/http_api/alerting/#get-alerts
 
 | Option | Description
 | -- | -- 
-| `column_divider="<divider>"` | Replace the default column divider with another one. Defaults to ` \| ` for being interpreted as a asciidoctor column.
+| `column_divider="<divider>"` | Replace the default column divider with another one, when used in conjunction with `table_formatter` set to `adoc_deprecated`. Defaults to ` \| ` for being interpreted as a asciidoctor column. DEPRECATED: switch to `table_formatter` named `adoc_plain`, or implement a custom table formatter.
 | `dashboard="<dashboard_uid>"` | Specifies the dashboard to be used. If `grafana_default_dashboard` is specified in the report template, this value can be overridden with this option. If this option, or the global option `grafana_default_dashboard` is set, the resulting alerts will be limited to this dashboard. To show all alerts in this case, specify `dashboard=""` as option
 | `filter_columns="<column_name_1>,<column_name_2>,..."` | Removes specified columns from result. Execution is applied in the following order `format`, `replace_values`, `filter_columns`, `transpose`.
 | `format="<format_col1>,<format_col2>,..."` | Specify format in which the results shall be returned, e.g. `%.2f` for only two digit decimals of a float. Several columns are separated by `,`. Execution is applied in the following order `format`, `replace_values`, `filter_columns`, `transpose`.
@@ -69,7 +69,8 @@ See also: https://grafana.com/docs/grafana/latest/http_api/alerting/#get-alerts
 | `from_timezone="<timezone>"` | can be used to override system timezone for `from` time and will also override `grafana_default_from_timezone` option
 | `instance="<instance_name>"` | can be used to override global grafana instance, set in the report with `grafana_default_instance`. If nothing is set, the configured grafana instance with name `default` will be used.
 | `replace_values="<replace_1>:<with_1>,<replace_2>:<with_2>,..."` | Specify result values which shall be replaced, e.g. `2:OK` will replace query values `2` with value `OK`. Replacing several values is possible by separating by `,`. Matches with regular expressions are also supported, but must be full matches, i.e. have to start with `^` and end with `$`, e.g. `^[012]$:OK`. Number replacements can also be performed, e.g. `<8.2` or `<>3`. Execution is applied in the following order `format`, `replace_values`, `filter_columns`, `transpose`.
-| `row_divider="<divider>"` | Replace the default row divider with another one. Defaults to `\| ` for being interpreted as a asciidoctor row.
+| `row_divider="<divider>"` | Replace the default row divider with another one, when used in conjunction with `table_formatter` set to `adoc_deprecated`. . Defaults to `\| ` for being interpreted as a asciidoctor row. DEPRECATED: switch to `table_formatter` named `adoc_plain`, or implement a custom table formatter.
+| `table_formatter="<formatter>"` | Specify a table formatter fitting for your expected target format. It defaults to `adoc_plain` for asciidoctor templates and to `csv` for all other templates, e.g. ERB.
 | `timeout="<timeout_in_seconds>"` | Set a timeout for the current query. If not overridden with `grafana_default_timeout` in the report template, this defaults to 60 seconds.
 | `to="<timestamp>"` | can be used to override default `to` time
 | `to_timezone="<timezone>"` | can be used to override system timezone for `to` time and will also override `grafana_default_to_timezone` option
@@ -80,11 +81,11 @@ Usage: `include::grafana_annotations[columns="<column_name_1>,<column_name_2>,..
 
 Returns a table of all annotations, matching the specified filter criteria and the specified columns. Supports all query parameters from the Grafana Alerting API, such as `limit`, `alertId`, `panelId` and others.
 
-See also: https://grafana.com/docs/grafana/latest/http_api/annotations/#find_annotations
+See also: https://grafana.com/docs/grafana/latest/http_api/annotations/#find-annotations
 
 | Option | Description
 | -- | -- 
-| `column_divider="<divider>"` | Replace the default column divider with another one. Defaults to ` \| ` for being interpreted as a asciidoctor column.
+| `column_divider="<divider>"` | Replace the default column divider with another one, when used in conjunction with `table_formatter` set to `adoc_deprecated`. Defaults to ` \| ` for being interpreted as a asciidoctor column. DEPRECATED: switch to `table_formatter` named `adoc_plain`, or implement a custom table formatter.
 | `dashboard="<dashboard_uid>"` | Specifies the dashboard to be used. If `grafana_default_dashboard` is specified in the report template, this value can be overridden with this option. If this option, or the global option `grafana_default_dashboard` is set, the resulting alerts will be limited to this dashboard. To show all alerts in this case, specify `dashboard=""` as option
 | `filter_columns="<column_name_1>,<column_name_2>,..."` | Removes specified columns from result. Execution is applied in the following order `format`, `replace_values`, `filter_columns`, `transpose`.
 | `format="<format_col1>,<format_col2>,..."` | Specify format in which the results shall be returned, e.g. `%.2f` for only two digit decimals of a float. Several columns are separated by `,`. Execution is applied in the following order `format`, `replace_values`, `filter_columns`, `transpose`.
@@ -92,7 +93,8 @@ See also: https://grafana.com/docs/grafana/latest/http_api/annotations/#find_ann
 | `from_timezone="<timezone>"` | can be used to override system timezone for `from` time and will also override `grafana_default_from_timezone` option
 | `instance="<instance_name>"` | can be used to override global grafana instance, set in the report with `grafana_default_instance`. If nothing is set, the configured grafana instance with name `default` will be used.
 | `replace_values="<replace_1>:<with_1>,<replace_2>:<with_2>,..."` | Specify result values which shall be replaced, e.g. `2:OK` will replace query values `2` with value `OK`. Replacing several values is possible by separating by `,`. Matches with regular expressions are also supported, but must be full matches, i.e. have to start with `^` and end with `$`, e.g. `^[012]$:OK`. Number replacements can also be performed, e.g. `<8.2` or `<>3`. Execution is applied in the following order `format`, `replace_values`, `filter_columns`, `transpose`.
-| `row_divider="<divider>"` | Replace the default row divider with another one. Defaults to `\| ` for being interpreted as a asciidoctor row.
+| `row_divider="<divider>"` | Replace the default row divider with another one, when used in conjunction with `table_formatter` set to `adoc_deprecated`. . Defaults to `\| ` for being interpreted as a asciidoctor row. DEPRECATED: switch to `table_formatter` named `adoc_plain`, or implement a custom table formatter.
+| `table_formatter="<formatter>"` | Specify a table formatter fitting for your expected target format. It defaults to `adoc_plain` for asciidoctor templates and to `csv` for all other templates, e.g. ERB.
 | `timeout="<timeout_in_seconds>"` | Set a timeout for the current query. If not overridden with `grafana_default_timeout` in the report template, this defaults to 60 seconds.
 | `to="<timestamp>"` | can be used to override default `to` time
 | `to_timezone="<timezone>"` | can be used to override system timezone for `to` time and will also override `grafana_default_to_timezone` option
@@ -128,7 +130,7 @@ Usage: `grafana_panel_property:<panel_id>["<type>",options]`
 
 Returns a property field for the specified panel. `<type>` can either be `title` or `description`. Grafana variables will be replaced in the returned value.
 
-See also: https://grafana.com/docs/grafana/latest/variables/templates-and-variables/#variable-syntax
+See also: https://grafana.com/docs/grafana/latest/variables/syntax/
 
 | Option | Description
 | -- | -- 
@@ -140,11 +142,11 @@ Usage: `include::grafana_panel_query_table:<panel_id>[query="<query_letter>",opt
 
 Returns the results of a query, which is configured in a grafana panel, as a table in asciidoctor. Grafana variables will be replaced in the panel's SQL statement.
 
-See also: https://grafana.com/docs/grafana/latest/variables/templates-and-variables/#variable-syntax
+See also: https://grafana.com/docs/grafana/latest/variables/syntax/
 
 | Option | Description
 | -- | -- 
-| `column_divider="<divider>"` | Replace the default column divider with another one. Defaults to ` \| ` for being interpreted as a asciidoctor column.
+| `column_divider="<divider>"` | Replace the default column divider with another one, when used in conjunction with `table_formatter` set to `adoc_deprecated`. Defaults to ` \| ` for being interpreted as a asciidoctor column. DEPRECATED: switch to `table_formatter` named `adoc_plain`, or implement a custom table formatter.
 | `dashboard="<dashboard_uid>"` | Specifies the dashboard to be used. If `grafana_default_dashboard` is specified in the report template, this value can be overridden with this option.
 | `filter_columns="<column_name_1>,<column_name_2>,..."` | Removes specified columns from result. Execution is applied in the following order `format`, `replace_values`, `filter_columns`, `transpose`.
 | `format="<format_col1>,<format_col2>,..."` | Specify format in which the results shall be returned, e.g. `%.2f` for only two digit decimals of a float. Several columns are separated by `,`. Execution is applied in the following order `format`, `replace_values`, `filter_columns`, `transpose`.
@@ -152,7 +154,8 @@ See also: https://grafana.com/docs/grafana/latest/variables/templates-and-variab
 | `from_timezone="<timezone>"` | can be used to override system timezone for `from` time and will also override `grafana_default_from_timezone` option
 | `instance="<instance_name>"` | can be used to override global grafana instance, set in the report with `grafana_default_instance`. If nothing is set, the configured grafana instance with name `default` will be used.
 | `replace_values="<replace_1>:<with_1>,<replace_2>:<with_2>,..."` | Specify result values which shall be replaced, e.g. `2:OK` will replace query values `2` with value `OK`. Replacing several values is possible by separating by `,`. Matches with regular expressions are also supported, but must be full matches, i.e. have to start with `^` and end with `$`, e.g. `^[012]$:OK`. Number replacements can also be performed, e.g. `<8.2` or `<>3`. Execution is applied in the following order `format`, `replace_values`, `filter_columns`, `transpose`.
-| `row_divider="<divider>"` | Replace the default row divider with another one. Defaults to `\| ` for being interpreted as a asciidoctor row.
+| `row_divider="<divider>"` | Replace the default row divider with another one, when used in conjunction with `table_formatter` set to `adoc_deprecated`. . Defaults to `\| ` for being interpreted as a asciidoctor row. DEPRECATED: switch to `table_formatter` named `adoc_plain`, or implement a custom table formatter.
+| `table_formatter="<formatter>"` | Specify a table formatter fitting for your expected target format. It defaults to `adoc_plain` for asciidoctor templates and to `csv` for all other templates, e.g. ERB.
 | `timeout="<timeout_in_seconds>"` | Set a timeout for the current query. If not overridden with `grafana_default_timeout` in the report template, this defaults to 60 seconds.
 | `to="<timestamp>"` | can be used to override default `to` time
 | `to_timezone="<timezone>"` | can be used to override system timezone for `to` time and will also override `grafana_default_to_timezone` option
@@ -163,7 +166,7 @@ Usage: `grafana_panel_query_value:<panel_id>[query="<query_letter>",options]`
 
 Returns the value in the first column and the first row of a query, which is configured in a grafana panel. Grafana variables will be replaced in the panel's SQL statement.
 
-See also: https://grafana.com/docs/grafana/latest/variables/templates-and-variables/#variable-syntax
+See also: https://grafana.com/docs/grafana/latest/variables/syntax/
 
 | Option | Description
 | -- | -- 
@@ -183,18 +186,19 @@ Usage: `include::grafana_sql_table:<datasource_id>[sql="<sql_query>",options]`
 
 Returns a table with all results of the given query. Grafana variables will be replaced in the SQL statement.
 
-See also: https://grafana.com/docs/grafana/latest/variables/templates-and-variables/#variable-syntax
+See also: https://grafana.com/docs/grafana/latest/variables/syntax/
 
 | Option | Description
 | -- | -- 
-| `column_divider="<divider>"` | Replace the default column divider with another one. Defaults to ` \| ` for being interpreted as a asciidoctor column.
+| `column_divider="<divider>"` | Replace the default column divider with another one, when used in conjunction with `table_formatter` set to `adoc_deprecated`. Defaults to ` \| ` for being interpreted as a asciidoctor column. DEPRECATED: switch to `table_formatter` named `adoc_plain`, or implement a custom table formatter.
 | `filter_columns="<column_name_1>,<column_name_2>,..."` | Removes specified columns from result. Execution is applied in the following order `format`, `replace_values`, `filter_columns`, `transpose`.
 | `format="<format_col1>,<format_col2>,..."` | Specify format in which the results shall be returned, e.g. `%.2f` for only two digit decimals of a float. Several columns are separated by `,`. Execution is applied in the following order `format`, `replace_values`, `filter_columns`, `transpose`.
 | `from="<timestamp>"` | can be used to override default `from` time
 | `from_timezone="<timezone>"` | can be used to override system timezone for `from` time and will also override `grafana_default_from_timezone` option
 | `instance="<instance_name>"` | can be used to override global grafana instance, set in the report with `grafana_default_instance`. If nothing is set, the configured grafana instance with name `default` will be used.
 | `replace_values="<replace_1>:<with_1>,<replace_2>:<with_2>,..."` | Specify result values which shall be replaced, e.g. `2:OK` will replace query values `2` with value `OK`. Replacing several values is possible by separating by `,`. Matches with regular expressions are also supported, but must be full matches, i.e. have to start with `^` and end with `$`, e.g. `^[012]$:OK`. Number replacements can also be performed, e.g. `<8.2` or `<>3`. Execution is applied in the following order `format`, `replace_values`, `filter_columns`, `transpose`.
-| `row_divider="<divider>"` | Replace the default row divider with another one. Defaults to `\| ` for being interpreted as a asciidoctor row.
+| `row_divider="<divider>"` | Replace the default row divider with another one, when used in conjunction with `table_formatter` set to `adoc_deprecated`. . Defaults to `\| ` for being interpreted as a asciidoctor row. DEPRECATED: switch to `table_formatter` named `adoc_plain`, or implement a custom table formatter.
+| `table_formatter="<formatter>"` | Specify a table formatter fitting for your expected target format. It defaults to `adoc_plain` for asciidoctor templates and to `csv` for all other templates, e.g. ERB.
 | `timeout="<timeout_in_seconds>"` | Set a timeout for the current query. If not overridden with `grafana_default_timeout` in the report template, this defaults to 60 seconds.
 | `to="<timestamp>"` | can be used to override default `to` time
 | `to_timezone="<timezone>"` | can be used to override system timezone for `to` time and will also override `grafana_default_to_timezone` option
@@ -205,7 +209,7 @@ Usage: `grafana_sql_value:<datasource_id>[sql="<sql_query>",options]`
 
 Returns the value in the first column and the first row of the given query. Grafana variables will be replaced in the SQL statement.
 
-See also: https://grafana.com/docs/grafana/latest/variables/templates-and-variables/#variable-syntax
+See also: https://grafana.com/docs/grafana/latest/variables/syntax/
 
 | Option | Description
 | -- | -- 
