@@ -127,24 +127,18 @@ module GrafanaReporter
     # Is being called to start the report generation. To execute the specific report generation, this function
     # calls the abstract {#build} method with the given parameters.
     # @param template [String] path to the template to be used, trailing extension may be omitted, whereas {#default_template_extension} will be appended
-    # @param destination_file_or_path [True, String or File] path to the destination report or file object to use
+    # @param destination_file_or_path [String or File] path to the destination report or file object to use
     # @param custom_attributes [Hash] custom attributes, which shall be merged with priority over the configuration
     # @return [void]
     def create_report(template, destination_file_or_path = nil, custom_attributes = {})
       init_before_create
       @template = template
+      @destination_file_or_path = destination_file_or_path
       @custom_attributes = custom_attributes
 
       # automatically add extension, if a file with default template extension exists
       @template = "#{@template}.#{self.class.default_template_extension}" if File.file?("#{@template}.#{self.class.default_template_extension}") && !File.file?(@template.to_s)
       raise MissingTemplateError, @template.to_s unless File.file?(@template.to_s)
-
-      # determine destination file, if only true is handed over
-      if destination_file_or_path == true
-        @destination_file_or_path = @template.to_s.gsub(/(?:\.#{self.class.default_template_extension})?$/, ".#{self.class.default_result_extension}")
-      else
-        @destination_file_or_path = destination_file_or_path
-      end
 
       notify(:on_before_create)
       @start_time = Time.new
