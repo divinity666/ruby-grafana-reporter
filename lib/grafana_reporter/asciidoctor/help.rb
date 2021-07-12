@@ -60,11 +60,11 @@ module GrafanaReporter
 
         prepared_help[:global_options].sort.map do |k, v|
           result << %(
-  #{opts[:headline_separator] * opts[:level]} #{opts[:code_begin]}#{k}#{opts[:code_end]}
-  Usage: #{opts[:code_begin]}#{v['call']}#{opts[:code_end]}
+#{opts[:headline_separator] * opts[:level]} #{opts[:code_begin]}#{k}#{opts[:code_end]}
+Usage: #{opts[:code_begin]}#{v['call']}#{opts[:code_end]}
 
-  #{v['description']}
-  )
+#{v['description']}
+)
         end
 
         result.join
