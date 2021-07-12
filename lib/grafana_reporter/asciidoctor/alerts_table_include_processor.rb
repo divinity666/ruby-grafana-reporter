@@ -59,7 +59,8 @@ module GrafanaReporter
         grafana_obj = @report.grafana(instance).dashboard(dashboard_id) if dashboard_id
         grafana_obj = grafana_obj.panel(panel_id) if panel_id
 
-        query = AlertsTableQuery.new(grafana_obj, variables: build_attribute_hash(doc.attributes, attrs))
+        vars = { 'table_formatter' => 'adoc_plain' }.merge(build_attribute_hash(doc.attributes, attrs))
+        query = AlertsTableQuery.new(grafana_obj, variables: vars)
         defaults = {}
         defaults['dashboardId'] = dashboard_id if dashboard_id
         defaults['panelId'] = panel_id if panel_id

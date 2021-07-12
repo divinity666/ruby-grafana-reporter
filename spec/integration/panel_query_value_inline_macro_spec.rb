@@ -66,7 +66,7 @@ describe PanelQueryValueInlineMacro do
   end
 
   it 'shows fatal error if query is missing' do
-    expect(@report.logger).to receive(:fatal).with(/GrafanaError: The specified query '' does not exist in the panel '11' in dashboard.*/)
+    expect(@report.logger).to receive(:error).with(/GrafanaError: The specified query '' does not exist in the panel '11' in dashboard.*/)
     expect(Asciidoctor.convert("grafana_panel_query_value:#{STUBS[:panel_sql][:id]}[dashboard=\"#{STUBS[:dashboard]}\",format=\",%.2f\",filter_columns=\"time_sec\"]", to_file: false)).to include('GrafanaError: The specified query \'\' does not exist in the panel \'11\' in dashboard')
   end
 

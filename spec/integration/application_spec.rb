@@ -136,22 +136,63 @@ describe Application do
   context 'ERB templating' do
     subject { GrafanaReporter::Application::Application.new }
 
+    before :context do
+      @result_folder = './spec/tmp_test_folder'
+      Dir.mkdir(@result_folder) if !Dir.exist?(@result_folder)
+    end
+
+    after :context do
+      Dir.rmdir(@result_folder) if Dir.exist?(@result_folder)
+    end
+
     before do
-      File.delete('./result.txt') if File.exist?('./result.txt')
+      File.delete("#{@result_folder}/result.txt") if File.exist?("#{@result_folder}/result.txt")
+      File.delete('./demo_report.erb') if File.exist?('./demo_report.erb')
+      File.delete("#{@result_folder}/erb.template.txt") if File.exist?("#{@result_folder}/erb.template.txt")
       allow(subject.config.logger).to receive(:debug)
       allow(subject.config.logger).to receive(:info)
       allow(subject.config.logger).to receive(:warn)
     end
 
     after do
-      File.delete('./result.txt') if File.exist?('./result.txt')
+      File.delete("#{@result_folder}/result.txt") if File.exist?("#{@result_folder}/result.txt")
+      File.delete('./demo_report.erb') if File.exist?('./demo_report.erb')
+      File.delete("#{@result_folder}/erb.template.txt") if File.exist?("#{@result_folder}/erb.template.txt")
+      #File.delete('./spec/tests/tmp_demo_report.adoc') if File.exist?('./spec/tests/tmp_demo_report.adoc')
     end
 
     it 'can single render a template with extension' do
       expect(subject.config.logger).not_to receive(:error)
-      expect { subject.configure_and_run(['-c', './spec/tests/erb.config', '-t', 'spec/tests/erb.template', '-o', './result.txt', '-d', 'ERROR']) }.not_to output(/ERROR/).to_stderr
-      expect(File.exist?('./result.txt')).to be true
-      expect(File.read('./result.txt')).to include('This is a test 1594308060000.')
+      expect { subject.configure_and_run(['-c', './spec/tests/erb.config', '-t', 'spec/tests/erb.template', '-o', "#{@result_folder}/result.txt", '-d', 'ERROR']) }.not_to output(/ERROR/).to_stderr
+      expect(File.exist?("#{@result_folder}/result.txt")).to be true
+      expect(File.read("#{@result_folder}/result.txt")).to include('This is a test 1594308060000.')
+    end
+
+    it 'can single render a template without destination configured' do
+      expect(subject.config.logger).not_to receive(:error)
+      expect { subject.configure_and_run(['-c', './spec/tests/erb.config', '-t', 'spec/tests/erb.template', '-d', 'ERROR']) }.not_to output(/ERROR/).to_stderr
+      expect(File.exist?("#{@result_folder}/erb.template.txt")).to be true
+      expect(File.read("#{@result_folder}/erb.template.txt")).to include('This is a test 1594308060000.')
+    end
+
+    it 'can build and render a demo report' do
+      @config = ["d\n", "y\n", "y\n"]
+      config_wizard = GrafanaReporter::ConsoleConfigurationWizard.new
+      allow(config_wizard).to receive(:puts)
+      allow(config_wizard).to receive(:print)
+      allow_any_instance_of(DemoReportWizard).to receive(:puts)
+      allow_any_instance_of(DemoReportWizard).to receive(:print)
+      allow(config_wizard).to receive(:gets).and_return(*@config)
+
+      # build demo report
+      config_wizard.start_wizard('./spec/tests/erb.config', Configuration.new)
+
+      # render report
+      expect(subject.config.logger).not_to receive(:error)
+      expect(subject.config.logger).not_to receive(:warn)
+      expect { subject.configure_and_run(['-c', './spec/tests/erb.config', '-t', 'demo_report', '-o', "#{@result_folder}/result.txt"]) }.not_to output(/ERROR/).to_stderr
+      expect(File.exist?("#{@result_folder}/result.txt")).to be true
+      expect(File.read("#{@result_folder}/result.txt")).to include('This is a test table for panel ')
     end
   end
 

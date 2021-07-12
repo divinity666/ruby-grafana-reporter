@@ -224,35 +224,40 @@ module GrafanaReporter
       def get_reports_status_as_html(reports)
         i = reports.length
 
-        content = '<html>'\
-                  '<head></head>'\
-                  '<body>'\
-                  '<table>'\
-                  '<thead>'\
-                  '<th>#</th>'\
-                  '<th>Start Time</th>'\
-                  '<th>End Time</th>'\
-                  '<th>Template</th>'\
-                  '<th>Execution time</th>'\
-                  '<th>Status</th>'\
-                  '<th>Error</th>'\
-                  '<th>Action</th>'\
-                  '</thead>' +
-                  reports.reverse.map do |report|
-                    '<tr>'\
-                    "<td>#{i -= 1}</td>"\
-                    "<td>#{report.start_time}</td>"\
-                    "<td>#{report.end_time}</td>"\
-                    "<td>#{report.template}</td>"\
-                    "<td>#{report.execution_time.to_i} secs</td>"\
-                    "<td>#{report.status} (#{(report.progress * 100).to_i}%)</td>"\
-                    "<td>#{report.error.join('<br>')}</td>"\
-                    "<td>#{!report.done && !report.cancel ? "<a href=\"/cancel_report?report_id=#{report.object_id}\">Cancel</a>&nbsp;" : ''}"\
-                    "#{(report.status == 'finished') || (report.status == 'cancelled') ? "<a href=\"/view_report?report_id=#{report.object_id}\">View</a>&nbsp;" : '&nbsp;'}"\
-                    "<a href=\"/view_log?report_id=#{report.object_id}\">Log</a></td>"\
-                    '</tr>'
-                  end.join('') +
-                  '</table></body></html>'
+        # TODO: make reporter HTML results customizable
+        template = <<~HTML_TEMPLATE
+          <html>
+          <head></head>
+          <body>
+          <table>
+            <thead>
+              <th>#</th><th>Start Time</th><th>End Time</th><th>Template</th><th>Execution time</th>
+              <th>Status</th><th>Error</th><th>Action</th>
+            </thead>
+            <tbody>
+            <% reports.reverse.map do |report| %>
+              <tr><td><%= i-= 1 %></td><td><%= report.start_time %></td><td><%= report.end_time %></td>
+              <td><%= report.template %></td><td><%= report.execution_time.to_i %> secs</td>
+              <td><%= report.status %> (<%= (report.progress * 100).to_i %>%)</td>
+              <td><%= report.error.join('<br>') %></td>
+              <td><% if !report.done && !report.cancel %>
+                <a href="/cancel_report?report_id=<%= report.object_id %>">Cancel</a>
+              <% end %>
+              &nbsp;
+              <% if (report.status == 'finished') || (report.status == 'cancelled') %>
+                <a href="/view_report?report_id=<%= report.object_id %>">View</a>
+              <% end %>
+              &nbsp;
+              <a href="/view_log?report_id=<%= report.object_id %>">Log</a></td></tr>
+            <% end.join('') %>
+            <tbody>
+          </table>
+          <p style="font-size: small; color:grey">You are running ruby-grafana-reporter version <%= GRAFANA_REPORTER_VERSION.join('.') %>.</p>
+          </body>
+          </html>
+        HTML_TEMPLATE
+
+        content = ::ERB.new(template).result(binding)
 
         http_response(200, 'OK', content, "Content-Type": 'text/html')
       end

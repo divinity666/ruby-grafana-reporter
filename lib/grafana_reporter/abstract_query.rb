@@ -1,5 +1,8 @@
 # frozen_string_literal: true
 
+require_relative 'abstract_table_format_strategy'
+require_relative 'csv_table_format_strategy'
+
 module GrafanaReporter
   # @abstract Override {#pre_process} and {#post_process} in subclass.
   #
@@ -89,6 +92,7 @@ module GrafanaReporter
       end
 
       raise DatasourceRequestInvalidReturnValueError.new(@datasource, @result) unless datasource_response_valid?
+
       post_process
       @result
     end
@@ -216,7 +220,6 @@ module GrafanaReporter
     # @param result [Hash] preformatted query result (see {Grafana::AbstractDatasource#request}.
     # @param configs [Array<Grafana::Variable>] one variable for replacing values in one column
     # @return [Hash] query result with replaced values
-    # TODO: make sure that caught errors are also visible in logger
     def replace_values(result, configs)
       return result if configs.empty?
 
@@ -231,8 +234,11 @@ module GrafanaReporter
 
           k = arr[0]
           v = arr[1]
-          k.gsub!(/\\([:,])/, '\1')
-          v.gsub!(/\\([:,])/, '\1')
+
+          # allow keys and values to contain escaped colons or commas
+          k = k.gsub(/\\([:,])/, '\1')
+          v = v.gsub(/\\([:,])/, '\1')
+
           result[:content].map do |row|
             (row.length - 1).downto 0 do |i|
               if cols.include?(i + 1) || cols.empty?
@@ -267,6 +273,7 @@ module GrafanaReporter
                                  end
                       end
                     rescue StandardError => e
+                      @grafana.logger.error(e.message)
                       row[i] = e.message
                     end
                   end
@@ -284,22 +291,32 @@ module GrafanaReporter
       result
     end
 
-    # Used to build a output format matching the requested report format.
+    # Used to build a table output in a custom format.
     # @param result [Hash] preformatted sql hash, (see {Grafana::AbstractDatasource#request})
     # @param opts [Hash] options for the formatting:
-    # @option opts [Grafana::Variable] :row_divider requested row divider for the result table
-    # @option opts [Grafana::Variable] :column_divider requested row divider for the result table
-    # @option opts [Regex or String] :escape_regex regular expression which specifies a part of a cell content, which has to be escaped
-    # @option opts [String] :escape_replacement specifies how the found :escape_regex shall be replaced
-    # @return [String] formatted table result in requested output format
+    # @option opts [Grafana::Variable] :row_divider requested row divider for the result table, only to be used with table_formatter `adoc_deprecated`
+    # @option opts [Grafana::Variable] :column_divider requested row divider for the result table, only to be used with table_formatter `adoc_deprecated`
+    # @option opts [Grafana::Variable] :include_headline specifies if table should contain headline, defaults to false
+    # @option opts [Grafana::Variable] :table_formatter specifies which formatter shall be used, defaults to 'csv'
+    # @return [String] table in custom output format
     def format_table_output(result, opts)
-      opts = { escape_regex: '|', escape_replacement: '\\|', row_divider: Grafana::Variable.new('| '), column_divider: Grafana::Variable.new(' | ') }.merge(opts.delete_if {|_k, v| v.nil? })
+      opts = { include_headline: Grafana::Variable.new('false'),
+               table_formatter: Grafana::Variable.new('csv'),
+               row_divider: Grafana::Variable.new('| '),
+               column_divider: Grafana::Variable.new(' | ') }.merge(opts.delete_if {|_k, v| v.nil? })
 
-      result[:content].map do |row|
-        opts[:row_divider].raw_value + row.map do |item|
-          item.to_s.gsub(opts[:escape_regex], opts[:escape_replacement])
-        end.join(opts[:column_divider].raw_value)
+      if opts[:table_formatter].raw_value == 'adoc_deprecated'
+        @grafana.logger.warn("You are using deprecated 'table_formatter' named 'adoc_deprecated', which will be "\
+                             "removed in a future version. Start using 'adoc' or register your own implementation "\
+                             "of AbstractTableFormatStrategy.")
+        return result[:content].map do |row|
+          opts[:row_divider].raw_value + row.map do |item|
+            item.to_s.gsub('|', '\\|')
+          end.join(opts[:column_divider].raw_value)
+        end
       end
+
+      AbstractTableFormatStrategy.get(opts[:table_formatter].raw_value).format(result, opts[:include_headline].raw_value.downcase == 'true')
     end
 
     # Used to translate the relative date strings used by grafana, e.g. +now-5d/w+ to the
@@ -317,9 +334,10 @@ module GrafanaReporter
     # @param timezone [Grafana::Variable] timezone to use, if not system timezone
     # @return [String] translated date as timestamp string
     def translate_date(orig_date, report_time, is_to_time, timezone = nil)
-      # TODO: add test case for creation of variable, if not given, maybe also print a warning
+      @grafana.logger.warn("#translate_date has been called without 'report_time' - using current time as fallback.") unless report_time
       report_time ||= ::Grafana::Variable.new(Time.now.to_s)
       orig_date = orig_date.raw_value if orig_date.is_a?(Grafana::Variable)
+
       return (DateTime.parse(report_time.raw_value).to_time.to_i * 1000).to_s unless orig_date
       return orig_date if orig_date =~ /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/
       return orig_date if orig_date =~ /^\d+$/
@@ -387,10 +405,10 @@ module GrafanaReporter
     def datasource_response_valid?
       return false if @result.nil?
       return false unless @result.is_a?(Hash)
-      # TODO: check if it should be ok if a datasource request returns an empty hash only
+      # TODO: compare how empty valid responses look like in grafana
       return true if @result.empty?
-      return false unless @result.has_key?(:header)
-      return false unless @result.has_key?(:content)
+      return false unless @result.key?(:header)
+      return false unless @result.key?(:content)
       return false unless @result[:header].is_a?(Array)
       return false unless @result[:content].is_a?(Array)
 

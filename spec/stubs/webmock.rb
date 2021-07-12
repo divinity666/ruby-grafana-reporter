@@ -8,7 +8,7 @@ STUBS = {
   key_admin: 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx',
   key_viewer: 'viewerxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx',
   dashboard: 'IDBRfjSmz',
-  panel_ds_unknown: { id: '10' },
+  panel_ds_unknown: { id: '15' },
   panel_sql: { id: '11', letter: 'A', title: 'Temperaturen' },
   panel_graphite: { id: '12', letter: 'A' },
   panel_prometheus: { id: '13', letter: 'A' },
@@ -114,7 +114,7 @@ RSpec.configure do |config|
     )
     .to_return(status: 200, body: '{"results":{"A":{"refId":"A","meta":{"rowCount":0,"sql":"SELECT 1 as value WHERE value = 0"},"series":null,"tables":null,"dataframes":null}}}', headers: {})
 
-    stub_request(:get, %r{http://localhost/render/d-solo/IDBRfjSmz\?from=\d+&fullscreen=true&panelId=(?:10|11)&theme=light&timeout=60(?:&var-[^&]+)*}).with(
+    stub_request(:get, %r{http://localhost/render/d-solo/IDBRfjSmz\?from=\d+&fullscreen=true&panelId=(?:15|11)&theme=light&timeout=60(?:&var-[^&]+)*}).with(
       headers: default_header.merge({
         'Accept' => 'image/png',
         'Authorization' => "Bearer #{STUBS[:key_admin]}"
@@ -136,7 +136,7 @@ RSpec.configure do |config|
         'Authorization' => "Bearer #{STUBS[:key_admin]}"
       })
     )
-    .to_return(status: 500, body: File.read('./spec/tests/broken_image_response.html'), headers: {})
+    .to_return(status: 500, body: File.read('./spec/tests/broken_image_response.txt'), headers: {})
 
     stub_request(:get, %r{http://localhost/api/annotations(?:\?.*)?}).with(
       headers: default_header.merge({

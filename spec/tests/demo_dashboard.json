@@ -190,7 +190,7 @@
     },
       {
         "datasource": "UnknownDatasource",
-        "id": 10,
+        "id": 15,
         "targets": [
           {
             "hide": false,
@@ -281,7 +281,7 @@
             "hide": false,
             "metricColumn": "none",
             "rawQuery": true,
-            "rawSql": "SELECT\n    time as time_sec,\n    MAX(value / 10) as max_temperature,\n    AVG(value / 10) as avg_temperature,\n    MIN(value / 10) as min_temperatureq\n  FROM rm_temperatur\n  WHERE $__unixEpochFilter(time)\n  GROUP BY YEAR(FROM_UNIXTIME(time)), MONTH(FROM_UNIXTIME(time)), DAY(FROM_UNIXTIME(time))\n",
+            "rawSql": "SELECT     time as time_sec,     MAX(value / 10) as max_temperature,     AVG(value / 10) as avg_temperature,     MIN(value / 10) as min_temperatureq   FROM rm_temperatur   WHERE $__unixEpochFilter(time)   GROUP BY YEAR(FROM_UNIXTIME(time)), MONTH(FROM_UNIXTIME(time)), DAY(FROM_UNIXTIME(time)) ",
             "refId": "A",
             "select": [
               [
@@ -412,7 +412,7 @@
             "group": [],
             "metricColumn": "none",
             "rawQuery": true,
-            "rawSql": "SELECT\n  time as time_sec,\n  value / 10 as Außentemperatur\nFROM rm_temperatur\nWHERE $__unixEpochFilter(time)\nORDER BY time DESC",
+            "rawSql": "SELECT   time as time_sec,   value / 10 as Außentemperatur FROM rm_temperatur WHERE $__unixEpochFilter(time) ORDER BY time DESC",
             "refId": "D",
             "select": [
               [
@@ -440,7 +440,7 @@
             "hide": false,
             "metricColumn": "none",
             "rawQuery": true,
-            "rawSql": "SELECT\n  time as time_sec,\n  value / 10 as Ist\nFROM istwert_hk1\nWHERE $__unixEpochFilter(time)\nORDER BY time DESC",
+            "rawSql": "SELECT   time as time_sec,   value / 10 as Ist FROM istwert_hk1 WHERE $__unixEpochFilter(time) ORDER BY time DESC",
             "refId": "A",
             "select": [
               [
@@ -468,7 +468,7 @@
             "hide": false,
             "metricColumn": "none",
             "rawQuery": true,
-            "rawSql": "SELECT\n  time as time_sec,\n  value / 10 as Soll\nFROM sollwert_hk1\nWHERE $__unixEpochFilter(time)\nORDER BY time DESC\n",
+            "rawSql": "SELECT   time as time_sec,   value / 10 as Soll FROM sollwert_hk1 WHERE $__unixEpochFilter(time) ORDER BY time DESC ",
             "refId": "B",
             "select": [
               [
@@ -496,7 +496,7 @@
             "hide": false,
             "metricColumn": "none",
             "rawQuery": true,
-            "rawSql": "SELECT\n  time as time_sec,\n  value / 10 as Warmwasser\nFROM warmwasser_temperatur\nWHERE $__unixEpochFilter(time)\nORDER BY time DESC",
+            "rawSql": "SELECT   time as time_sec,   value / 10 as Warmwasser FROM warmwasser_temperatur WHERE $__unixEpochFilter(time) ORDER BY time DESC",
             "refId": "C",
             "select": [
               [
@@ -523,7 +523,7 @@
         "timeRegions": [],
         "timeShift": null,
         "title": "Temperaturen",
-        "description": "ich baue hier eine $my-var Variable ein",
+        "description": "ich baue hier eine $my_var Variable ein",
         "tooltip": {
           "shared": false,
           "sort": 0,
@@ -626,7 +626,7 @@
                 "group": [],
                 "metricColumn": "none",
                 "rawQuery": true,
-                "rawSql": "SELECT\n  time as time_sec,\n  value as Sonnenrichtung\nFROM rm_sonnenrichtung\nWHERE $__unixEpochFilter(time)\nORDER BY time",
+                "rawSql": "SELECT   time as time_sec,   value as Sonnenrichtung FROM rm_sonnenrichtung WHERE $__unixEpochFilter(time) ORDER BY time",
                 "refId": "A",
                 "select": [
                   [
@@ -653,7 +653,7 @@
                 "group": [],
                 "metricColumn": "none",
                 "rawQuery": true,
-                "rawSql": "SELECT\n  time as time_sec,\n  value as Sonnenhöhe\nFROM rm_sonnenhoehe\nWHERE $__unixEpochFilter(time)\nORDER BY time",
+                "rawSql": "SELECT   time as time_sec,   value as Sonnenhöhe FROM rm_sonnenhoehe WHERE $__unixEpochFilter(time) ORDER BY time",
                 "refId": "B",
                 "select": [
                   [
@@ -780,7 +780,7 @@
                 "hide": false,
                 "metricColumn": "none",
                 "rawQuery": true,
-                "rawSql": "SELECT time_sec, kWh FROM (SELECT\n  time as time_sec,\n  IF(@lastvalue <> -1, IF(value < 0, 0, (value - @lastvalue) * 0.1), 0) as kWh,\n  IF(value < 0, @lastvalue := 0, @lastvalue := value)\nFROM wirkarbeit, (SELECT @lastvalue := -1) SQLVars\nWHERE $__unixEpochFilter(time)\nORDER BY time ASC) aq",
+                "rawSql": "SELECT time_sec, kWh FROM (SELECT   time as time_sec,   IF(@lastvalue <> -1, IF(value < 0, 0, (value - @lastvalue) * 0.1), 0) as kWh,   IF(value < 0, @lastvalue := 0, @lastvalue := value) FROM wirkarbeit, (SELECT @lastvalue := -1) SQLVars WHERE $__unixEpochFilter(time) ORDER BY time ASC) aq",
                 "refId": "A",
                 "select": [
                   [
@@ -808,7 +808,7 @@
                 "hide": false,
                 "metricColumn": "none",
                 "rawQuery": true,
-                "rawSql": "(SELECT\n  $__unixEpochFrom() as time,\n  value as \"Verdichter an\"\nFROM verdichter_an\nWHERE time <= $__unixEpochFrom() LIMIT 1)\nUNION\n(SELECT\n  time as time,\n  value as \"Verdichter an\"\nFROM verdichter_an\nWHERE $__unixEpochFilter(time))\nUNION\n(SELECT\n  $__unixEpochTo() as time,\n  value as \"Verdichter an\"\nFROM verdichter_an\nWHERE time <= $__unixEpochTo() LIMIT 1)",
+                "rawSql": "(SELECT   $__unixEpochFrom() as time,   value as \"Verdichter an\" FROM verdichter_an WHERE time <= $__unixEpochFrom() LIMIT 1) UNION (SELECT   time as time,   value as \"Verdichter an\" FROM verdichter_an WHERE $__unixEpochFilter(time)) UNION (SELECT   $__unixEpochTo() as time,   value as \"Verdichter an\" FROM verdichter_an WHERE time <= $__unixEpochTo() LIMIT 1)",
                 "refId": "B",
                 "select": [
                   [
@@ -988,7 +988,7 @@
                 "group": [],
                 "metricColumn": "none",
                 "rawQuery": true,
-                "rawSql": "SELECT\n  time as time_sec,\n  value as Helligkeit\nFROM rm_lichtwert\nWHERE $__unixEpochFilter(time)\nORDER BY time DESC",
+                "rawSql": "SELECT   time as time_sec,   value as Helligkeit FROM rm_lichtwert WHERE $__unixEpochFilter(time) ORDER BY time DESC",
                 "refId": "A",
                 "select": [
                   [
@@ -1015,7 +1015,7 @@
                 "group": [],
                 "metricColumn": "none",
                 "rawQuery": true,
-                "rawSql": "(SELECT\n  $__unixEpochFrom() as time,\n  value as Regen\nFROM rm_regen\nWHERE time <= $__unixEpochFrom() LIMIT 1)\nUNION ALL\n(SELECT\n  time as time,\n  value as Regen\nFROM rm_regen\nWHERE $__unixEpochFilter(time))\nUNION ALL\n(SELECT\n  $__unixEpochTo() as time,\n  value as Regen\nFROM rm_regen\nWHERE time <= $__unixEpochTo() LIMIT 1)",
+                "rawSql": "(SELECT   $__unixEpochFrom() as time,   value as Regen FROM rm_regen WHERE time <= $__unixEpochFrom() LIMIT 1) UNION ALL (SELECT   time as time,   value as Regen FROM rm_regen WHERE $__unixEpochFilter(time)) UNION ALL (SELECT   $__unixEpochTo() as time,   value as Regen FROM rm_regen WHERE time <= $__unixEpochTo() LIMIT 1)",
                 "refId": "C",
                 "select": [
                   [
@@ -1041,7 +1041,7 @@
                 "group": [],
                 "metricColumn": "none",
                 "rawQuery": true,
-                "rawSql": "SELECT\n  time as time_sec,\n  value as 'Windstärke'\nFROM rm_wind\nWHERE $__unixEpochFilter(time)\nORDER BY time DESC",
+                "rawSql": "SELECT   time as time_sec,   value as 'Windstärke' FROM rm_wind WHERE $__unixEpochFilter(time) ORDER BY time DESC",
                 "refId": "B",
                 "select": [
                   [

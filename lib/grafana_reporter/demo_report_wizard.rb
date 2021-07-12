@@ -84,7 +84,6 @@ module GrafanaReporter
       results
     end
 
-    # TODO: move this method to Asciidoctor::Report
     def format_results(raw_results)
       results = ['= Demo report',
                  "Created by `+ruby-grafana-reporter+` version #{GRAFANA_REPORTER_VERSION.join('.')}",

@@ -1,7 +1,7 @@
-include GrafanaReporter
+include GrafanaReporter::Asciidoctor
 
 describe Help do
-  subject { GrafanaReporter::Help.new }
+  subject { Help.new }
 
   it 'can build help for github' do
     result = subject.github

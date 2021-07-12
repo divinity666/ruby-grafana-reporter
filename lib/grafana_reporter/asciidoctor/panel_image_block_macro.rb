@@ -46,10 +46,14 @@ module GrafanaReporter
                              " panel: #{target})")
 
         begin
-          query = PanelImageQuery.new(@report.grafana(instance).dashboard(dashboard).panel(target), variables: build_attribute_hash(parent.document.attributes, attrs))
+          query = PanelImageQuery.new(@report.grafana(instance).dashboard(dashboard).panel(target),
+                                      variables: build_attribute_hash(parent.document.attributes, attrs))
 
           image = query.execute
           image_path = @report.save_image_file(image)
+        rescue GrafanaError => e
+          @report.logger.error(e.message)
+          return create_paragraph(parent, e.message, attrs)
         rescue GrafanaReporterError => e
           @report.logger.error(e.message)
           return create_paragraph(parent, e.message, attrs)

@@ -10,23 +10,25 @@ module GrafanaReporter
 
   # Raised if a datasource shall be queried, which is not (yet) supported by the reporter
   class DatasourceNotSupportedError < GrafanaReporterError
-    def initialize(ds, query)
-      super("The datasource '#{ds.name}' is of type '#{ds.type}' which is currently not supported for "\
-            "the query type '#{query}'.")
+    def initialize(datasource, query)
+      super("The datasource '#{datasource.name}' is of type '#{datasource.type}' which is currently "\
+            "not supported for the query type '#{query}'.")
     end
   end
 
   # Raised if some unhandled exception is raised during a datasource request execution.
   class DatasourceRequestInternalError < GrafanaReporterError
-    def initialize(ds, message)
-      super("The datasource request to '#{ds.name}' (#{ds.class}) failed with an internal error: #{message}")
+    def initialize(datasource, message)
+      super("The datasource request to '#{datasource.name}' (#{datasource.class}) failed with "\
+            "an internal error: #{message}")
     end
   end
 
   # Raised if the return value of a datasource request does not match the expected return hash.
   class DatasourceRequestInvalidReturnValueError < GrafanaReporterError
-    def initialize(ds, message)
-      super("The datasource request to '#{ds.name}' (#{ds.class}) returned an invalid value: '#{message}'")
+    def initialize(datasource, message)
+      super("The datasource request to '#{datasource.name}' (#{datasource.class})"\
+            "returned an invalid value: '#{message}'")
     end
   end
 

@@ -42,12 +42,12 @@ module Grafana
       @model = model
     end
 
-    # @return [String] category of the datasource, e.g. `tsdb` or `sql`
+    # @return [String] category of the datasource, e.g. +tsdb+ or +sql+
     def category
       @model['meta']['category']
     end
 
-    # @return [String] type of the datasource, e.g. `mysql`
+    # @return [String] type of the datasource, e.g. +mysql+
     def type
       @model['type'] || @model['meta']['id']
     end
@@ -126,10 +126,13 @@ module Grafana
       while repeat && (repeat_count < 3)
         repeat = false
         repeat_count += 1
+
         variables.each do |name, variable|
           # only set ticks if value is string
           var_name = name.gsub(/^var-/, '')
-          res = res.gsub(/(?:\$\{#{var_name}(?::(?<format>\w+))?\}|\$#{var_name})/) do
+          next unless var_name =~ /^\w+$/
+
+          res = res.gsub(/(?:\$\{#{var_name}(?::(?<format>\w+))?\}|\$#{var_name}(?!\w))/) do
             format = default_variable_format
             if $LAST_MATCH_INFO
               format = $LAST_MATCH_INFO[:format] if $LAST_MATCH_INFO[:format]

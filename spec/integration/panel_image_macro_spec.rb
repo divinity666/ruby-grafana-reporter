@@ -25,7 +25,7 @@ describe PanelImageBlockMacro do
   end
 
   it 'shows errors properly if panel is unknown' do
-    expect(@report.logger).to receive(:fatal)
+    expect(@report.logger).to receive(:error)
     expect(Asciidoctor.convert("grafana_panel_image::999[dashboard=\"#{STUBS[:dashboard]}\"]", to_file: false)).to include('Error')
   end
 
@@ -35,7 +35,7 @@ describe PanelImageBlockMacro do
   end
 
   it 'shows error if image rendering failed' do
-    expect(@report.logger).to receive(:fatal).with(/(Grafana::ImageCouldNotBeRenderedError)/)
+    expect(@report.logger).to receive(:error).with(/(Grafana::ImageCouldNotBeRenderedError)/)
     expect(Asciidoctor.convert("grafana_panel_image::#{STUBS[:panel_broken_image][:id]}[dashboard=\"#{STUBS[:dashboard]}\"]", to_file: false)).to include('(Grafana::ImageCouldNotBeRenderedError)')
   end
 end
@@ -72,7 +72,7 @@ describe PanelImageInlineMacro do
   end
 
   it 'shows error if image rendering failed' do
-    expect(@report.logger).to receive(:fatal).with(/(Grafana::ImageCouldNotBeRenderedError)/)
+    expect(@report.logger).to receive(:error).with(/(Grafana::ImageCouldNotBeRenderedError)/)
     expect(Asciidoctor.convert("grafana_panel_image:#{STUBS[:panel_broken_image][:id]}[dashboard=\"#{STUBS[:dashboard]}\"]", to_file: false)).to include('(Grafana::ImageCouldNotBeRenderedError)')
   end
 end

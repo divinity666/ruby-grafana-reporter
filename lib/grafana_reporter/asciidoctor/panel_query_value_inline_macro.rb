@@ -59,6 +59,9 @@ module GrafanaReporter
           query = QueryValueQuery.new(panel, variables: build_attribute_hash(parent.document.attributes, attrs))
 
           create_inline(parent, :quoted, query.execute)
+        rescue GrafanaError => e
+          @report.logger.error(e.message)
+          create_inline(parent, :quoted, e.message)
         rescue GrafanaReporterError => e
           @report.logger.error(e.message)
           create_inline(parent, :quoted, e.message)

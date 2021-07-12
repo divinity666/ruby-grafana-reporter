@@ -49,11 +49,15 @@ module GrafanaReporter
 
         begin
           # catch properly if datasource could not be identified
-          query = QueryValueQuery.new(@report.grafana(instance), variables: build_attribute_hash(parent.document.attributes, attrs))
+          query = QueryValueQuery.new(@report.grafana(instance),
+                                      variables: build_attribute_hash(parent.document.attributes, attrs))
           query.datasource = @report.grafana(instance).datasource_by_id(target)
           query.raw_query = attrs['sql']
 
           create_inline(parent, :quoted, query.execute)
+        rescue GrafanaError => e
+          @report.logger.error(e.message)
+          create_inline(parent, :quoted, e.message)
         rescue GrafanaReporterError => e
           @report.logger.error(e.message)
           create_inline(parent, :quoted, e.message)

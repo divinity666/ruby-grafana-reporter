@@ -10,20 +10,26 @@ module GrafanaReporter
       # Starts to create an asciidoctor report. It utilizes all extensions in the {GrafanaReporter::Asciidoctor}
       # namespace to realize the conversion.
       # @see AbstractReport#build
-      def build(template, destination_file_or_path, custom_attributes)
-        attrs = @config.default_document_attributes.merge(@custom_attributes)
+      def build
+        attrs = @config.default_document_attributes.merge(@custom_attributes).merge({ 'grafana_report_timestamp' => ::Grafana::Variable.new(Time.now.to_s) })
         logger.debug("Document attributes: #{attrs}")
 
-        # TODO: if path is true, a default filename has to be generated. check if this should be a general function instead
-        File.write(path, ::ERB.new(File.read(template)).result(ReportJail.new(self, attrs).bind))
+        File.write(path, ::ERB.new(File.read(@template)).result(ReportJail.new(self, attrs).bind))
+      end
 
-        # TODO: check if closing output file is correct here, or maybe can be moved to AbstractReport.done!
-        @destination_file_or_path.close if @destination_file_or_path.is_a?(File)
+      # @see AbstractReport#default_template_extension
+      def self.default_template_extension
+        'erb'
+      end
+
+      # @see AbstractReport#default_result_extension
+      def self.default_result_extension
+        'txt'
       end
 
       # @see AbstractReport#demo_report_classes
       def self.demo_report_classes
-        []
+        [DemoReportBuilder]
       end
     end
   end

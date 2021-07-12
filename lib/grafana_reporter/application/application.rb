@@ -13,7 +13,6 @@ module GrafanaReporter
     # It can be run to test the grafana connection, render a single template
     # or run as a service.
     class Application
-
       # Contains the {Configuration} object of the application.
       attr_accessor :config
 
@@ -140,7 +139,13 @@ module GrafanaReporter
 
         when Configuration::MODE_SINGLE_RENDER
           begin
-            config.report_class.new(config).create_report(config.template, config.to_file)
+            template_ext = config.report_class.default_template_extension
+            report_ext = config.report_class.default_result_extension
+            default_to_file = File.basename(config.template.to_s.gsub(/(?:\.#{template_ext})?$/, ".#{report_ext}"))
+
+            to_file = config.to_file
+            to_file = "#{config.reports_folder}#{default_to_file}" if to_file == true
+            config.report_class.new(config).create_report(config.template, to_file)
           rescue StandardError => e
             puts "#{e.message}\n#{e.backtrace.join("\n")}"
           end

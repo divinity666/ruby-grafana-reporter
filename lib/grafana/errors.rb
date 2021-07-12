@@ -37,9 +37,9 @@ module Grafana
 
   # Raised if a given datasource does not exist in a specific {Grafana} instance.
   class DatasourceDoesNotExistError < GrafanaError
-    # @param field [String] specifies, how the datasource has been searched, e.g. 'id' or 'name'
+    # @param field [String] specifies, how the datasource has been searched, e.g. +id+ or +name+
     # @param datasource_identifier [String] identifier of the datasource, which could not be found,
-    #   e.g. the specifiy id or name
+    #   e.g. the specified id or name
     def initialize(field, datasource_identifier)
       super("Datasource with #{field} '#{datasource_identifier}' does not exist.")
     end

@@ -16,6 +16,8 @@ module Grafana
       panel = query_description[:raw_query][:panel]
       property_name = query_description[:raw_query][:property_name]
 
+      return "Panel property '#{property_name}' does not exist for panel '#{panel.id}'" unless panel.field(property_name)
+
       {
         header: [query_description[:raw_query][:property_name]],
         content: [replace_variables(panel.field(property_name), query_description[:variables])]
@@ -24,7 +26,12 @@ module Grafana
 
     # @see AbstractDatasource#default_variable_format
     def default_variable_format
-        'glob'
+      'glob'
+    end
+
+    # @see AbstractDatasource#name
+    def name
+      self.class.to_s
     end
   end
 end

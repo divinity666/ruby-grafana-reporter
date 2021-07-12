@@ -19,7 +19,7 @@ module Grafana
         body: {
           from: query_description[:from],
           to: query_description[:to],
-          queries: [rawSql: prepare_sql(sql), datasourceId: id, format: 'table']
+          queries: [rawSql: sql, datasourceId: id, format: 'table']
         }.to_json,
         request: Net::HTTP::Post
       }
@@ -65,14 +65,6 @@ module Grafana
       end
 
       results
-    end
-
-    def prepare_sql(sql)
-      # remove comments in query
-      sql.gsub!(/--[^\r\n]*(?:[\r\n]+|$)/, ' ')
-      sql.gsub!(/\r\n/, ' ')
-      sql.gsub!(/\n/, ' ')
-      sql
     end
   end
 end

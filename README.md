@@ -12,8 +12,13 @@ Reporting Service for Grafana
 * [Features](#features)
 * [Supported datasources](#supported-datasources)
 * [Quick Start](#quick-start)
-* [Grafana integration](#grafana-integration)
-* [Webservice overview](#webservice-overview)
+  * [Setup](#setup)
+  * [Grafana integration](#grafana-integration)
+* [Advanced information](#advanced-information)
+  * [Webservice](#webservice)
+  * [Using ERB templates](#using-erb-templates)
+  * [Using webhooks](#using-webhooks)
+  * [Developing your own plugin](#developing-your-own-plugin)
 * [Roadmap](#roadmap)
 * [Donations](#donations)
 
@@ -73,6 +78,9 @@ specification to a raw query, which then in fact is sent to the database.
 
 ## Quick Start
 
+
+### Setup
+
 You don't have a grafana setup runnning already? No worries, just configure
 `https://play.grafana.org` in the configuration wizard and see the magic
 happen!
@@ -126,7 +134,7 @@ asciidoctor:
 ```
 * start/restart the asciidoctor docker container
 
-## Grafana integration
+### Grafana integration
 
 For using the reporter directly from grafana, you need to simply add a link to your
 grafana dashboard:
@@ -158,12 +166,14 @@ you should change the link of the `Demo Report` link to
 hitting the new link in the dashboard, grafana will add the selected template as
 a variable and forward it to the reporter.
 
-## Webservice overview
+## Advanced information
+
+### Webservice
 
 Running the reporter as a webservice provides the following URLs
 
     /overview - for all running or retained renderings
-    /render - for rendering a template, 'var-template' is the only mandatory GET parameter
+    /render - for rendering a template, 'var-template' is the only mandatory GET parameter, all parameters will be passed to the report templates as attributes
     /view_report - for viewing the status or receving the result of a specific rendering, is automatically called after a successfull /render call
     /cancel_report - for cancelling the rendering of a specific report, normally not called manually, but on user interaction in the /view_report or /overview URL
 
@@ -171,11 +181,135 @@ The main endpoint to call for report generation is configured in the previous ch
 
 However, if you would like to see, currently running report generations and previously generated reports, you may want to call the endpoint `/overview`.
 
+### Using ERB templates
+
+By default the configuration wizard will setup the reporter with the asciidoctor
+template language enabled. For several reasons, you may want to take advantage of
+the ruby included
+[ERB template language](https://docs.ruby-lang.org/en/master/ERB.html).
+
+Anyway you should consider, that ERB templates can include harmful code. So make
+sure, that you will only use ERB templates in a safe environment.
+
+To enable the ERB template language, you need to modify your configuration file
+in the section `grafana-reporter`:
+
+````
+grafana-reporter:
+  report-class: GrafanaReporter::ERB::Report
+````
+
+Restart the grafana reporter instance, if running as webservice. That's all.
+
+In ERB templates, you have access to the variables `report`, which is a reference
+to the currently executed
+[ERB Report object](https://rubydoc.info/gems/ruby-grafana-reporter/GrafanaReporter/ERB/Report)
+and `attributes`, which contains a hash
+of variables, which have been handed over to the report generations, e.g. from
+a webservice call.
+
+To test the configuration, you may want to run the configuration wizard again,
+which will create an ERB template for you.
+
+### Using webhooks
+
+Webhooks provide an easy way to get automatically informed about the progress
+of a report. The nice thing is, that this is completely independent from
+running the reporter as webservice, i.e. these callbacks are also called if you
+run the reporter standalone.
+
+To use webhooks, you have to specify, in which progress states of a report you
+are interested. Therefore you have to configure it in the `grafana-reporter`
+section of your configuration file, e.g.
+
+````
+grafana-reporter:
+  callbacks:
+    all:
+      - http://<<your_callback_url>>
+````
+
+Remember to restart the reporter, if it is running as a webservice.
+
+After having done so, your callback url will be called for each event with
+a JSON body including all necessary information of the report. For details see
+[callback](https://rubydoc.info/gems/ruby-grafana-reporter/GrafanaReporter/ReportWebhook#callback-instance_method).
+
+### Developing your own plugin
+
+The reporter is designed to allow easy integration of your own plugins,
+without having to modify the reporter base source on github (or anywhere
+else). This section shows how to implement and load a custom datasource.
+
+Implementing a custom datasource is needed, if you use a custom datasource
+grafana plugin, which is not yet supported by the reporter. In that case you
+can build your own custom datasource for the reporter and load it on demand
+with a command line parameter, without having to build your own fork of this
+project.
+
+This documentation will provide a simple, but mocked implementation of an
+imagined grafana datasource.
+
+First of all, let's create a new text file, e.g. `my_datasource.rb` with the
+following content:
+
+````
+class MyDatasource < ::Grafana::AbstractDatasource
+  def self.handles?(model)
+    tmp = new(model)
+    tmp.type == 'my_datasource'
+  end
+
+  def request(query_description)
+    # see https://rubydoc.info/gems/ruby-grafana-reporter/Grafana/AbstractDatasource#request-instance_method
+    # for detailed information of given parameters and expected return format
+
+    # TODO: call your datasource, e.g. via REST call
+    # TODO: return the value in the needed format
+  end
+
+  def raw_query_from_panel_model(panel_query_target)
+    # TODO: extract or build the query from the given grafana panel query target hash
+  end
+
+  def default_variable_format
+    # TODO, specify the default variable format
+    # see https://rubydoc.info/gems/ruby-grafana-reporter/Grafana/Variable#value_formatted-instance_method
+    # for detailed information.
+  end
+end
+````
+
+The only thing left to do now, is to make this datasource known to the
+reporter. This can be done with the `-r` command line flag, e.g.
+
+````
+ruby-grafana-reporter -r my_datasource.rb
+````
+
+The reporter implemented some magic, to automatically register datasource
+implementations on load, if they inherit from `::Grafana::AbstractDatasource`.
+This means, that you don't have to do anything else here.
+
+Now the reporter knows about your datasource implementation and will use it,
+if you request information from a panel, which is linked to the type
+`my_datasource` as specified in the `handles?` method above. If any errors
+occur during execution, the reporter will catch them and show them in the error
+log.
+
+Registering a custom ruby file is independent from running the reporter as a
+webservice or as a standalone executable. In any case the reporter will apply
+the file.
+
+Technically, loading your own plugin will call require for your ruby file,
+_after_ all reporter files have been loaded and _before_ the execution of the
+webservice or a rendering process starts.
+
 ## Roadmap
 
 This is just a collection of things, I am heading for in future, without a schedule.
 
-* Support all grafana datasources
+* Support grafana internal datasources
 * Solve code TODOs
 * Become [rubocop](https://rubocop.org/) ready
 

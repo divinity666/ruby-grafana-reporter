@@ -41,7 +41,7 @@ task :build do
   rm "spec/tmp_single_file_lib_ruby-grafana-reporter.rb"
 
   # update help documentation
-  File.write('FUNCTION_CALLS.md', GrafanaReporter::Help.new.github)
+  File.write('FUNCTION_CALLS.md', GrafanaReporter::Asciidoctor::Help.new.github)
 
   # build new versions
   require_relative 'lib/VERSION'

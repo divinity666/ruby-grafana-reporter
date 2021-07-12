@@ -18,7 +18,7 @@ module Grafana
     def field(field)
       return @model[field] if @model.key?(field)
 
-      ''
+      nil
     end
 
     # @return [String] panel ID
