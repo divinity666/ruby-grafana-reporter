@@ -34,4 +34,10 @@ describe PanelPropertyInlineMacro do
     expect(@report.logger).to receive(:error).with(/does not exist for panel/)
     expect(Asciidoctor.convert("grafana_panel_property:#{STUBS[:panel_sql][:id]}[\"does_not_exist\",dashboard=\"#{STUBS[:dashboard]}\"]", to_file: false)).to include('GrafanaReporterError')
   end
+
+  it 'handles standard error on internal fault' do
+    obj = PanelPropertyInlineMacro.new.current_report(@report)
+    expect(@report.logger).to receive(:fatal).with('undefined method `document\' for nil:NilClass')
+    obj.process(nil, STUBS[:panel_sql][:id], { 'instance' => 'default', 'dashboard' => STUBS[:dashboard] })
+  end
 end

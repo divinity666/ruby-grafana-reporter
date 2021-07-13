@@ -14,6 +14,7 @@ STUBS = {
   panel_prometheus: { id: '13', letter: 'A' },
   panel_influx: { id: '14', letter: 'A' },
   panel_broken_image: { id: '13' },
+  panel_does_not_exist: { id: '99'},
   datasource_sql: '1',
   datasource_graphite: '3',
   datasource_prometheus: '4',

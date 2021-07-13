@@ -83,11 +83,22 @@ describe PanelQueryTableIncludeProcessor do
       expect(Asciidoctor.convert("include::grafana_panel_query_table:#{STUBS[:panel_sql][:id]}[query=\"#{STUBS[:panel_sql][:letter]}\",dashboard=\"#{STUBS[:dashboard]}\",transpose=\"true\"]", to_file: false)).to match(/<p>\| 1594308060000 \| 1594308030000 \|/)
     end
 
+    it 'handles grafana errors' do
+      expect(@report.logger).to receive(:error).with('GrafanaError: The specified panel id \'99\' does not exist on the dashboard \'IDBRfjSmz\'. (Grafana::PanelDoesNotExistError)')
+      expect(Asciidoctor.convert("include::grafana_panel_query_table:#{STUBS[:panel_does_not_exist][:id]}[query=\"#{STUBS[:panel_sql][:letter]}\",dashboard=\"#{STUBS[:dashboard]}\"]", to_file: false)).to include('|GrafanaError: The specified panel id \'99\' does not exist on the dashboard \'IDBRfjSmz\'. (Grafana::PanelDoesNotExistError)')
+    end
+
     it 'shows error if a reporter error occurs' do
       expect(@report.logger).to receive(:error).with('GrafanaReporterError: The specified time range \'schwurbel\' is unknown.')
       expect(Asciidoctor.convert("include::grafana_panel_query_table:#{STUBS[:panel_sql][:id]}[query=\"#{STUBS[:panel_sql][:letter]}\",dashboard=\"#{STUBS[:dashboard]}\",from=\"schwurbel\"]", to_file: false)).to include('|GrafanaReporterError: The specified time range \'schwurbel\' is unknown.')
     end
 
+    it 'handles standard error on internal fault' do
+      obj = PanelQueryTableIncludeProcessor.new.current_report(@report)
+      class MyReader; def unshift_line(*args); end; end
+      expect(@report.logger).to receive(:fatal).with('undefined method `attributes\' for nil:NilClass')
+      obj.process(nil, MyReader.new, ":#{STUBS[:panel_sql][:id]}", { 'instance' => 'default', 'dashboard' => STUBS[:dashboard] })
+    end
   end
 
   context 'unknown datasource' do

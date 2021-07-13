@@ -49,6 +49,12 @@ describe SqlValueInlineMacro do
       expect(@report.logger).to receive(:error).with('GrafanaReporterError: The specified time range \'schwurbel\' is unknown.')
       expect(Asciidoctor.convert("grafana_sql_value:#{STUBS[:datasource_sql]}[sql=\"SELECT 1\",from=\"schwurbel\",to=\"now/y\"]", to_file: false)).to include('GrafanaReporterError: The specified time range \'schwurbel\' is unknown.')
     end
+
+    it 'handles standard error on internal fault' do
+      obj = SqlValueInlineMacro.new.current_report(@report)
+      expect(@report.logger).to receive(:fatal).with('undefined method `document\' for nil:NilClass')
+      obj.process(nil, STUBS[:datasource_sql], { 'instance' => 'default' })
+    end
   end
 
   context 'graphite' do
