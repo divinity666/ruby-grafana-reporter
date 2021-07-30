@@ -29,8 +29,8 @@ module Grafana
     def raw_query_from_panel_model(panel_query_target)
       return panel_query_target['query'] if panel_query_target['rawQuery']
 
-      # TODO: support composed queries
-      raise ComposedQueryNotSupportedError, self
+      # build composed queries
+      build_select(panel_query_target['select']) + build_from(panel_query_target) + build_where(panel_query_target['tags']) + build_group_by(panel_query_target['groupBy'])
     end
 
     # @see AbstractDatasource#default_variable_format
@@ -39,6 +39,76 @@ module Grafana
     end
 
     private
+
+    def build_group_by(stmt)
+      groups = []
+      fill = ""
+
+      stmt.each do |group|
+        case group['type']
+        when 'tag'
+          groups << "\"#{group['params'].first}\""
+
+        when 'fill'
+          fill = " fill(#{group['params'].first})"
+
+        else
+          groups << "#{group['type']}(#{group['params'].join(', ')})"
+
+        end
+      end
+
+      " GROUP BY #{groups.join(', ')}#{fill}"
+    end
+
+    def build_where(stmt)
+      custom_where = []
+
+      stmt.each do |where|
+        custom_where << "\"#{where['key']}\" #{where['operator']} '#{where['value']}'"
+      end
+
+      " WHERE #{"(#{custom_where.join(' AND ')}) AND " unless custom_where.empty?}$timeFilter"
+    end
+
+    def build_from(stmt)
+      " FROM \"#{"stmt['policy']." unless stmt['policy'] == 'default'}#{stmt['measurement']}\""
+    end
+
+    def build_select(stmt)
+      res = "SELECT"
+      parts = []
+
+      stmt.each do |value|
+        part = ""
+
+        value.each do |item|
+          case item['type']
+          when 'field'
+            # frame field parameter as string
+            part = "\"#{item['params'].first}\""
+
+          when 'alias'
+            # append AS with parameter as string
+            part = "#{part} AS \"#{item['params'].first}\""
+
+
+          when 'math'
+            # append parameter as raw value for calculation
+            part = "#{part} #{item['params'].first}"
+
+
+          else
+            # frame current part by brackets and call by item function including parameters
+            part = "#{item['type']}(#{part}#{", #{item['params'].join(', ')}" unless item['params'].empty?})"
+          end
+        end
+
+        parts << part
+      end
+
+      "#{res} #{parts.join(', ')}"
+    end
 
     # @see AbstractDatasource#preformat_response
     def preformat_response(response_body)
