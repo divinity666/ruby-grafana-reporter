@@ -62,7 +62,7 @@ module GrafanaReporter
           vars = { 'table_formatter' => 'adoc_plain' }.merge(build_attribute_hash(doc.attributes, attrs))
           query = QueryValueQuery.new(panel, variables: vars)
 
-          reader.unshift_lines query.execute
+          reader.unshift_lines query.execute.split("\n")
         rescue Grafana::GrafanaError => e
           @report.logger.error(e.message)
           reader.unshift_line "|#{e.message}"

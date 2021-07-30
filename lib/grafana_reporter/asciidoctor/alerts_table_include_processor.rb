@@ -71,7 +71,7 @@ module GrafanaReporter
         query.raw_query = defaults.merge(selected_attrs.each_with_object({}) { |(k, v), h| h[k] = v })
 
         begin
-          reader.unshift_lines query.execute
+          reader.unshift_lines query.execute.split("\n")
         rescue GrafanaReporterError => e
           @report.logger.error(e.message)
           reader.unshift_line "|#{e.message}"

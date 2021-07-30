@@ -56,7 +56,7 @@ module GrafanaReporter
           query.datasource = @report.grafana(instance).datasource_by_id(target.split(':')[1].to_i)
           query.raw_query = attrs['sql']
 
-          reader.unshift_lines query.execute
+          reader.unshift_lines query.execute.split("\n")
         rescue Grafana::GrafanaError => e
           @report.logger.error(e.message)
           reader.unshift_line "|#{e.message}"
