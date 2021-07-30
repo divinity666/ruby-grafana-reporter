@@ -57,7 +57,7 @@ module GrafanaReporter
           query.raw_query = attrs['sql']
 
           reader.unshift_lines query.execute
-        rescue GrafanaError => e
+        rescue Grafana::GrafanaError => e
           @report.logger.error(e.message)
           reader.unshift_line "|#{e.message}"
         rescue GrafanaReporterError => e
