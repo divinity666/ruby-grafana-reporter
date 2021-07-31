@@ -15,7 +15,19 @@ module Grafana
     def request(query_description)
       raise MissingSqlQueryError if query_description[:raw_query].nil?
 
-      url = "/api/datasources/proxy/#{id}/query?db=#{@model['database']}&q=#{ERB::Util.url_encode(query_description[:raw_query])}&epoch=ms"
+      # replace variables
+      query = replace_variables(query_description[:raw_query], query_description[:variables])
+
+      # Unfortunately the grafana internal variables are not replaced in the grafana backend, but in the
+      # frontend, i.e. we have to replace them here manually
+      # replace $timeFilter variable
+      query = query.gsub(/\$timeFilter(?=\W|$)/, "time >= #{query_description[:from]}ms and time <= #{query_description[:to]}ms")
+
+      # replace grafana variables $__interval and $__interval_ms in query
+      query = query.gsub(/\$(?:__)?interval(?=\W|$)/, "#{((query_description[:to].to_i - query_description[:from].to_i) / 1000 / 1000).to_i}s")
+      query = query.gsub(/\$(?:__)?interval_ms(?=\W|$)/, "#{((query_description[:to].to_i - query_description[:from].to_i) / 1000).to_i}")
+
+      url = "/api/datasources/proxy/#{id}/query?db=#{@model['database']}&q=#{ERB::Util.url_encode(query)}&epoch=ms"
 
       webrequest = query_description[:prepared_request]
       webrequest.relative_url = url
@@ -65,7 +77,8 @@ module Grafana
       custom_where = []
 
       stmt.each do |where|
-        custom_where << "\"#{where['key']}\" #{where['operator']} '#{where['value']}'"
+        value = where['operator'] =~ /^[=!]~$/ ? where['value'] : "'#{where['value']}'"
+        custom_where << "\"#{where['key']}\" #{where['operator']} #{value}"
       end
 
       " WHERE #{"(#{custom_where.join(' AND ')}) AND " unless custom_where.empty?}$timeFilter"
@@ -114,6 +127,7 @@ module Grafana
     def preformat_response(response_body)
       # TODO: how to handle multiple query results?
       json = JSON.parse(response_body)['results'].first['series']
+      return {} if json.nil?
 
       header = ['time']
       content = {}
