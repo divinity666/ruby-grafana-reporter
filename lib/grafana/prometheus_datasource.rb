@@ -32,7 +32,7 @@ module Grafana
 
     # @see AbstractDatasource#raw_query_from_panel_model
     def raw_query_from_panel_model(panel_query_target)
-      @endpoint = panel_query_target['format'] == 'time_series' && panel_query_target['instant'] == false ? 'query_range' : 'query'
+      @endpoint = panel_query_target['format'] == 'time_series' && (panel_query_target['instant'] == false || !panel_query_target['instant']) ? 'query_range' : 'query'
       panel_query_target['expr']
     end
 
