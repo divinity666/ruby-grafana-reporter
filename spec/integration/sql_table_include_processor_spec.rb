@@ -47,11 +47,11 @@ describe SqlTableIncludeProcessor do
 
   context 'influx' do
     it 'sorts multiple query results by time' do
-      expect(Asciidoctor.convert("include::grafana_sql_table:#{STUBS[:datasource_influx]}[sql=\"SELECT non_negative_derivative(mean(\\\"value\\\"), 10s) *1000000000 FROM \\\"logins.count\\\" WHERE time >= now() - 1h GROUP BY time(10s), \\\"hostname\\\" fill(null)\"]", to_file: false)).to include("<p>\| 1621781110000 \| 4410823132.66179 \| 3918217168.1713953 \| 696149370.0246137 \| 308698357.77230036 \|  \| 2069259154.5448523 \| 1037231406.781757 \| 2008807302.9000952 \| 454762299.1667595 \| 1096524688.048703\n\|")
+      expect(Asciidoctor.convert("include::grafana_sql_table:#{STUBS[:datasource_influx]}[sql=\"SELECT non_negative_derivative(mean(\\\"value\\\"), 10s) *1000000000 FROM \\\"logins.count\\\" WHERE time >= 0ms and time <= 0ms GROUP BY time(0s), \\\"hostname\\\" fill(null)\"]", to_file: false)).to include("<p>\| 1621781110000 \| 4410823132.66179 \| 3918217168.1713953 \| 696149370.0246137 \| 308698357.77230036 \|  \| 2069259154.5448523 \| 1037231406.781757 \| 2008807302.9000952 \| 454762299.1667595 \| 1096524688.048703\n\|")
     end
 
     it 'leaves sorting as is for single query results' do
-      expect(Asciidoctor.convert("include::grafana_sql_table:#{STUBS[:datasource_influx]}[sql=\"SELECT non_negative_derivative(mean(\\\"value\\\"), 10s) *1000000000 FROM \\\"logins.count\\\" WHERE time >= now() - 1h AND \\\"hostname\\\" = \\\"10.1.0.100.1\\\" GROUP BY time(10s) fill(null)\"]", to_file: false)).to include("<p>\| 1621781130000 \| 2834482201.7361364\n\|")
+      expect(Asciidoctor.convert("include::grafana_sql_table:#{STUBS[:datasource_influx]}[sql=\"SELECT non_negative_derivative(mean(\\\"value\\\"), 10s) *1000000000 FROM \\\"logins.count\\\" WHERE time >= 0ms AND \\\"hostname\\\" = \\\"10.1.0.100.1\\\" GROUP BY time(10s) fill(null)\"]", to_file: false)).to include("<p>\| 1621781130000 \| 2834482201.7361364\n\|")
     end
   end
 
