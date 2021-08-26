@@ -307,8 +307,8 @@ module GrafanaReporter
 
       if opts[:table_formatter].raw_value == 'adoc_deprecated'
         @grafana.logger.warn("You are using deprecated 'table_formatter' named 'adoc_deprecated', which will be "\
-                             "removed in a future version. Start using 'adoc' or register your own implementation "\
-                             "of AbstractTableFormatStrategy.")
+                             "removed in a future version. Start using 'adoc_plain' or register your own "\
+                             "implementation of AbstractTableFormatStrategy.")
         return result[:content].map do |row|
           opts[:row_divider].raw_value + row.map do |item|
             item.to_s.gsub('|', '\\|')
