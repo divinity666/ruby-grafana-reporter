@@ -30,8 +30,8 @@ professional reporting functionality. And this is, where the ruby grafana report
 steps in.
 
 The key functionality of the reporter is to capture data and images from grafana
-dashboards and to use it in your custom reports to finally create reports in PDF,
-HTML, or any other format.
+dashboards and to use it in your custom templates to finally create reports in PDF
+(default), HTML, or any other format.
 
 By default (an extended version of) Asciidoctor is enabled as template language.
 
@@ -331,7 +331,6 @@ Inspired by [Izak Marai's grafana reporter](https://github.com/IzakMarais/report
 
 ## Donations
 
-If this project saves you as much time as I hope it does, and if you'd like to
-support my work, feel free donate. :)
+If you like this project and you would like to support my work, feel free to donate. :)
 
 [![paypal](https://www.paypalobjects.com/en_US/i/btn/btn_donateCC_LG.gif)](https://www.paypal.com/donate?hosted_button_id=35LH6JNLPHPHQ)

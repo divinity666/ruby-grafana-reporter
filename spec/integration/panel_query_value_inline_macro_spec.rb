@@ -70,4 +70,9 @@ describe PanelQueryValueInlineMacro do
     expect(Asciidoctor.convert("grafana_panel_query_value:#{STUBS[:panel_sql][:id]}[dashboard=\"#{STUBS[:dashboard]}\",format=\",%.2f\",filter_columns=\"time_sec\"]", to_file: false)).to include('GrafanaError: The specified query \'\' does not exist in the panel \'11\' in dashboard')
   end
 
+  it 'handles standard error on internal fault' do
+    obj = PanelQueryValueInlineMacro.new.current_report(@report)
+    expect(@report.logger).to receive(:fatal).with('undefined method `document\' for nil:NilClass')
+    obj.process(nil, STUBS[:panel_sql][:id], { 'instance' => 'default', 'dashboard' => STUBS[:dashboard] })
+  end
 end

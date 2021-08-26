@@ -15,7 +15,19 @@ module Grafana
     def request(query_description)
       raise MissingSqlQueryError if query_description[:raw_query].nil?
 
-      url = "/api/datasources/proxy/#{id}/query?db=#{@model['database']}&q=#{ERB::Util.url_encode(query_description[:raw_query])}&epoch=ms"
+      # replace variables
+      query = replace_variables(query_description[:raw_query], query_description[:variables])
+
+      # Unfortunately the grafana internal variables are not replaced in the grafana backend, but in the
+      # frontend, i.e. we have to replace them here manually
+      # replace $timeFilter variable
+      query = query.gsub(/\$timeFilter(?=\W|$)/, "time >= #{query_description[:from]}ms and time <= #{query_description[:to]}ms")
+
+      # replace grafana variables $__interval and $__interval_ms in query
+      query = query.gsub(/\$(?:__)?interval(?=\W|$)/, "#{((query_description[:to].to_i - query_description[:from].to_i) / 1000 / 1000).to_i}s")
+      query = query.gsub(/\$(?:__)?interval_ms(?=\W|$)/, "#{((query_description[:to].to_i - query_description[:from].to_i) / 1000).to_i}")
+
+      url = "/api/datasources/proxy/#{id}/query?db=#{@model['database']}&q=#{ERB::Util.url_encode(query)}&epoch=ms"
 
       webrequest = query_description[:prepared_request]
       webrequest.relative_url = url
@@ -29,8 +41,8 @@ module Grafana
     def raw_query_from_panel_model(panel_query_target)
       return panel_query_target['query'] if panel_query_target['rawQuery']
 
-      # TODO: support composed queries
-      raise ComposedQueryNotSupportedError, self
+      # build composed queries
+      build_select(panel_query_target['select']) + build_from(panel_query_target) + build_where(panel_query_target['tags']) + build_group_by(panel_query_target['groupBy'])
     end
 
     # @see AbstractDatasource#default_variable_format
@@ -40,10 +52,82 @@ module Grafana
 
     private
 
+    def build_group_by(stmt)
+      groups = []
+      fill = ""
+
+      stmt.each do |group|
+        case group['type']
+        when 'tag'
+          groups << "\"#{group['params'].first}\""
+
+        when 'fill'
+          fill = " fill(#{group['params'].first})"
+
+        else
+          groups << "#{group['type']}(#{group['params'].join(', ')})"
+
+        end
+      end
+
+      " GROUP BY #{groups.join(', ')}#{fill}"
+    end
+
+    def build_where(stmt)
+      custom_where = []
+
+      stmt.each do |where|
+        value = where['operator'] =~ /^[=!]~$/ ? where['value'] : "'#{where['value']}'"
+        custom_where << "\"#{where['key']}\" #{where['operator']} #{value}"
+      end
+
+      " WHERE #{"(#{custom_where.join(' AND ')}) AND " unless custom_where.empty?}$timeFilter"
+    end
+
+    def build_from(stmt)
+      " FROM \"#{"stmt['policy']." unless stmt['policy'] == 'default'}#{stmt['measurement']}\""
+    end
+
+    def build_select(stmt)
+      res = "SELECT"
+      parts = []
+
+      stmt.each do |value|
+        part = ""
+
+        value.each do |item|
+          case item['type']
+          when 'field'
+            # frame field parameter as string
+            part = "\"#{item['params'].first}\""
+
+          when 'alias'
+            # append AS with parameter as string
+            part = "#{part} AS \"#{item['params'].first}\""
+
+
+          when 'math'
+            # append parameter as raw value for calculation
+            part = "#{part} #{item['params'].first}"
+
+
+          else
+            # frame current part by brackets and call by item function including parameters
+            part = "#{item['type']}(#{part}#{", #{item['params'].join(', ')}" unless item['params'].empty?})"
+          end
+        end
+
+        parts << part
+      end
+
+      "#{res} #{parts.join(', ')}"
+    end
+
     # @see AbstractDatasource#preformat_response
     def preformat_response(response_body)
       # TODO: how to handle multiple query results?
       json = JSON.parse(response_body)['results'].first['series']
+      return {} if json.nil?
 
       header = ['time']
       content = {}

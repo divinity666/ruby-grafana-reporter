@@ -38,6 +38,12 @@ describe PanelImageBlockMacro do
     expect(@report.logger).to receive(:error).with(/(Grafana::ImageCouldNotBeRenderedError)/)
     expect(Asciidoctor.convert("grafana_panel_image::#{STUBS[:panel_broken_image][:id]}[dashboard=\"#{STUBS[:dashboard]}\"]", to_file: false)).to include('(Grafana::ImageCouldNotBeRenderedError)')
   end
+
+  it 'handles standard error on internal fault' do
+    obj = PanelImageBlockMacro.new.current_report(@report)
+    expect(@report.logger).to receive(:fatal).with('undefined method `document\' for nil:NilClass')
+    obj.process(nil, STUBS[:panel_sql][:id], { 'instance' => 'default', 'dashboard' => STUBS[:dashboard] })
+  end
 end
 
 describe PanelImageInlineMacro do
@@ -74,5 +80,11 @@ describe PanelImageInlineMacro do
   it 'shows error if image rendering failed' do
     expect(@report.logger).to receive(:error).with(/(Grafana::ImageCouldNotBeRenderedError)/)
     expect(Asciidoctor.convert("grafana_panel_image:#{STUBS[:panel_broken_image][:id]}[dashboard=\"#{STUBS[:dashboard]}\"]", to_file: false)).to include('(Grafana::ImageCouldNotBeRenderedError)')
+  end
+
+  it 'handles standard error on internal fault' do
+    obj = PanelImageInlineMacro.new.current_report(@report)
+    expect(@report.logger).to receive(:fatal).with('undefined method `document\' for nil:NilClass')
+    obj.process(nil, STUBS[:panel_sql][:id], { 'instance' => 'default', 'dashboard' => STUBS[:dashboard] })
   end
 end

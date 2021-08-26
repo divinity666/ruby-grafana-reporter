@@ -13,7 +13,7 @@ module GrafanaReporter
     attr_reader :variables, :result, :panel, :dashboard
 
     def timeout
-      # TODO: check where value priorities should be evaluated
+      # TODO: PRIO check where value priorities should be evaluated
       return @variables['timeout'].raw_value if @variables['timeout']
       return @variables['grafana_default_timeout'].raw_value if @variables['grafana_default_timeout']
 
@@ -307,13 +307,13 @@ module GrafanaReporter
 
       if opts[:table_formatter].raw_value == 'adoc_deprecated'
         @grafana.logger.warn("You are using deprecated 'table_formatter' named 'adoc_deprecated', which will be "\
-                             "removed in a future version. Start using 'adoc' or register your own implementation "\
-                             "of AbstractTableFormatStrategy.")
+                             "removed in a future version. Start using 'adoc_plain' or register your own "\
+                             "implementation of AbstractTableFormatStrategy.")
         return result[:content].map do |row|
           opts[:row_divider].raw_value + row.map do |item|
             item.to_s.gsub('|', '\\|')
           end.join(opts[:column_divider].raw_value)
-        end
+        end.join("\n")
       end
 
       AbstractTableFormatStrategy.get(opts[:table_formatter].raw_value).format(result, opts[:include_headline].raw_value.downcase == 'true')
@@ -349,7 +349,7 @@ module GrafanaReporter
       raise TimeRangeUnknownError, orig_date unless date_spec
 
       date = DateTime.parse(report_time.raw_value)
-      # TODO: allow from_translated or similar in ADOC template
+      # TODO: PRIO allow from_translated or similar in ADOC template
       date = date.new_offset(timezone.raw_value) if timezone
 
       until date_spec.empty?

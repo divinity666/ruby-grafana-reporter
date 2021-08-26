@@ -1,0 +1,186 @@
+{
+  "id": 23763571993,
+  "gridPos": {
+    "h": 8,
+    "w": 12,
+    "x": 12,
+    "y": 4
+  },
+  "type": "graph",
+  "title": "Free memory",
+  "datasource": "InfluxDB",
+  "thresholds": [],
+  "pluginVersion": "8.0.6",
+  "links": [],
+  "legend": {
+    "alignAsTable": true,
+    "avg": false,
+    "current": true,
+    "max": false,
+    "min": false,
+    "rightSide": false,
+    "show": true,
+    "total": false,
+    "values": true
+  },
+  "aliasColors": {},
+  "bars": false,
+  "dashLength": 10,
+  "dashes": false,
+  "fill": 1,
+  "lines": true,
+  "linewidth": 1,
+  "nullPointMode": "null",
+  "percentage": false,
+  "pointradius": 5,
+  "points": false,
+  "renderer": "flot",
+  "seriesOverrides": [],
+  "spaceLength": 10,
+  "stack": false,
+  "steppedLine": false,
+  "targets": [
+    {
+      "groupBy": [
+        {
+          "params": [
+            "$__interval"
+          ],
+          "type": "time"
+        },
+        {
+          "params": [
+            "hostname"
+          ],
+          "type": "tag"
+        },
+        {
+          "params": [
+            "null"
+          ],
+          "type": "fill"
+        }
+      ],
+      "measurement": "logins.count",
+      "orderByTime": "ASC",
+      "policy": "default",
+      "refId": "A",
+      "resultFormat": "time_series",
+      "select": [
+        [
+          {
+            "type": "field",
+            "params": [
+              "value"
+            ]
+          },
+          {
+            "type": "median",
+            "params": []
+          },
+          {
+            "type": "non_negative_derivative",
+            "params": [
+              "10s"
+            ]
+          },
+          {
+            "type": "math",
+            "params": [
+              "*1000000000"
+            ]
+          },
+          {
+            "type": "alias",
+            "params": [
+              "bla"
+            ]
+          }
+        ],
+        [
+          {
+            "type": "field",
+            "params": [
+              "value"
+            ]
+          },
+          {
+            "type": "mean",
+            "params": []
+          },
+          {
+            "type": "non_negative_derivative",
+            "params": [
+              "10s"
+            ]
+          },
+          {
+            "type": "math",
+            "params": [
+              "*1000000000"
+            ]
+          },
+          {
+            "type": "alias",
+            "params": [
+              "blubb"
+            ]
+          }
+        ]
+      ],
+      "tags": [
+        {
+          "key": "datacenter",
+          "value": "Africa",
+          "operator": "="
+        }
+      ],
+      "target": "",
+      "query": "SELECT non_negative_derivative(median(\"value\"), 10s) *1000000000 AS \"bla\", non_negative_derivative(mean(\"value\"), 10s) *1000000000 AS \"blubb\" FROM \"logins.count\" WHERE (\"datacenter\" = 'Africa') AND $timeFilter GROUP BY time($__interval), \"hostname\" fill(null)",
+      "rawQuery": false
+    }
+  ],
+  "timeFrom": null,
+  "timeShift": null,
+  "tooltip": {
+    "shared": true,
+    "sort": 0,
+    "value_type": "individual"
+  },
+  "xaxis": {
+    "buckets": null,
+    "mode": "time",
+    "name": null,
+    "show": true,
+    "values": []
+  },
+  "yaxes": [
+    {
+      "format": "bytes",
+      "label": null,
+      "logBase": 1,
+      "max": null,
+      "min": null,
+      "show": true
+    },
+    {
+      "format": "short",
+      "label": null,
+      "logBase": 1,
+      "max": null,
+      "min": null,
+      "show": true
+    }
+  ],
+  "yaxis": {
+    "align": false,
+    "alignLevel": null
+  },
+  "options": {
+    "alertThreshold": true
+  },
+  "fillGradient": 0,
+  "hiddenSeries": false,
+  "timeRegions": []
+}
+
