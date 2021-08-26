@@ -70,12 +70,4 @@ module Grafana
       super("The datasource query provided, does not look like a grafana datasource target (received: #{query}).")
     end
   end
-
-  # Raised if a datasource implementation cannot handle a query, which is composed
-  # in the grafana visual editor.
-  class ComposedQueryNotSupportedError < GrafanaError
-    def initialize(class_obj)
-      super("Composed queries are not yet supported for datasource '#{class_obj}'.")
-    end
-  end
 end
