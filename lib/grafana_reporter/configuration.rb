@@ -157,13 +157,16 @@ module GrafanaReporter
     # `disabled`.
     # @return [Boolean] true, if is ok, false if a newer version exists
     def latest_version_check_ok?
-      value = get_config('grafana-reporter:check-for-updates') || 'disabled'
+      return false if @newer_version_exists
 
+      value = get_config('grafana-reporter:check-for-updates') || 'disabled'
       case value
       when 'always'
         url = 'https://github.com/divinity666/ruby-grafana-reporter/releases/latest'
         response = Grafana::WebRequest.new(url).execute
         return true if response['location'] =~ /.*[\/v]#{GRAFANA_REPORTER_VERSION.join('.')}$/
+
+        @newer_version_exists = true
         return false
 
       else
