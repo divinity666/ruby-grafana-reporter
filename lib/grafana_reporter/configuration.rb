@@ -154,14 +154,19 @@ module GrafanaReporter
 
     # Checks if this is the latest ruby-grafana-reporter version. If and how often the check if
     # performed, depends on the configuration setting `check-for-updates`. By default this is
-    # `disabled`.
+    # `disabled`. If `always` is specified, the checks are performed on each report creation,
+    # but not more often than every 24 hours, i.e. if the reporter is running as a service
     # @return [Boolean] true, if is ok, false if a newer version exists
     def latest_version_check_ok?
       return false if @newer_version_exists
+      if @last_version_check
+        return true if Time.now - @last_version_check < 24*60*60
+      end
 
       value = get_config('grafana-reporter:check-for-updates') || 'disabled'
       case value
       when 'always'
+        @last_version_check = Time.now
         url = 'https://github.com/divinity666/ruby-grafana-reporter/releases/latest'
         response = Grafana::WebRequest.new(url).execute
         return true if response['location'] =~ /.*[\/v]#{GRAFANA_REPORTER_VERSION.join('.')}$/
