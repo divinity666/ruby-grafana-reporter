@@ -65,7 +65,7 @@ Database                  | Image rendering | Raw queries   | Composed queries
 ------------------------- | :-------------: | :-----------: | :------------:
 all SQL based datasources | supported       | supported     | supported
 Graphite                  | supported       | supported     | supported
-InfluxDB                  | supported       | supported     | not (yet) supported
+InfluxDB                  | supported       | supported     | supported
 Prometheus                | supported       | supported     | n/a in grafana
 other datasources         | supported       | not supported | not supported
 
