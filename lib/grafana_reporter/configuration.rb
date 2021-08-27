@@ -152,6 +152,26 @@ module GrafanaReporter
       get_config('default-document-attributes') || {}
     end
 
+    # Checks if this is the latest ruby-grafana-reporter version. If and how often the check if
+    # performed, depends on the configuration setting `check-for-updates`. By default this is
+    # `disabled`.
+    # @return [Boolean] true, if is ok, false if a newer version exists
+    def latest_version_check_ok?
+      value = get_config('grafana-reporter:check-for-updates') || 'disabled'
+
+      case value
+      when 'always'
+        url = 'https://github.com/divinity666/ruby-grafana-reporter/releases/latest'
+        response = Grafana::WebRequest.new(url).execute
+        return true if response['location'] =~ /.*[\/v]#{GRAFANA_REPORTER_VERSION.join('.')}$/
+        return false
+
+      else
+        return true
+
+      end
+    end
+
     # This function shall be called, before the configuration object is used in the
     # {Application::Application#run}. It ensures, that everything is setup properly
     # and all necessary folders exist. Appropriate errors are raised in case of errors.
@@ -304,6 +324,7 @@ module GrafanaReporter
         [
           Hash, 1,
           {
+            'check-for-updates' => [String, 0],
             'debug-level' => [String, 0],
             'run-mode' => [String, 0],
             'test-instance' => [String, 0],

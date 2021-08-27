@@ -149,4 +149,26 @@ describe Configuration do
       subject.validate
     end
   end
+
+  context 'version checks' do
+    subject { Configuration.new }
+
+    it 'returns latest version true if no checks shall be done' do
+      expect(subject.latest_version_check_ok?).to be true
+    end
+
+    it 'returns latest version true if checks shall be done' do
+      subject.set_param('grafana-reporter:check-for-updates', 'always')
+      expect(subject.latest_version_check_ok?).to be true
+    end
+
+    it 'can return latest version false' do
+      # modify stubbed request, to ensure that the versions do not match
+      stub_request(:get, "https://github.com/divinity666/ruby-grafana-reporter/releases/latest")
+      .to_return(status: 302, body: "relocated", headers: {'location' => "https://github.com/divinity666/ruby-grafana-reporter/releases/tag/v0.0.0"})
+
+      subject.set_param('grafana-reporter:check-for-updates', 'always')
+      expect(subject.latest_version_check_ok?).to be false
+    end
+  end
 end

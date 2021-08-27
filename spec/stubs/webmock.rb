@@ -30,6 +30,9 @@ default_header = {
 
 RSpec.configure do |config|
   config.before(:each) do
+    stub_request(:get, "https://github.com/divinity666/ruby-grafana-reporter/releases/latest")
+    .to_return(status: 302, body: "relocated", headers: {'location' => "https://github.com/divinity666/ruby-grafana-reporter/releases/tag/v#{GRAFANA_REPORTER_VERSION.join('.')}"})
+
     stub_request(:get, "http://localhost/api/search").with(
       headers: default_header.merge({
         'Authorization' => /^Bearer (?:#{STUBS[:key_admin]}|#{STUBS[:key_viewer]})$/,
