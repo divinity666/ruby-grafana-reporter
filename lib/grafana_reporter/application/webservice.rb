@@ -252,7 +252,7 @@ module GrafanaReporter
             <% end.join('') %>
             <tbody>
           </table>
-          <p style="font-size: small; color:grey">You are running ruby-grafana-reporter version <%= GRAFANA_REPORTER_VERSION.join('.') %>.</p>
+          <p style="font-size: small; color:grey">You are running ruby-grafana-reporter version <%= GRAFANA_REPORTER_VERSION.join('.') %>.<%= @config.latest_version_check_ok? ? '' : ' Check out the latest version <a href="https://github.com/divinity666/ruby-grafana-reporter/releases/latest">here</a>.' %></p>
           </body>
           </html>
         HTML_TEMPLATE
