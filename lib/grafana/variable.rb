@@ -33,6 +33,7 @@ module Grafana
       if config_or_value.is_a? Hash
         @config = config_or_value
         @name = @config['name']
+        # TODO: if a variable uses type 'query' which is never updated, the selected values are stored in 'options'
         unless @config['current'].nil?
           @raw_value = @config['current']['value']
           @text = @config['current']['text']
@@ -62,7 +63,8 @@ module Grafana
     def value_formatted(format = '')
       value = @raw_value
 
-      # handle value 'All' properly
+      # if 'All' is selected for this template variable, capture all values properly
+      # (from grafana config or query) and format the results afterwards accordingly
       if value == '$__all'
         if !@config['options'].empty?
           # this query contains predefined values, so capture them and format the values accordingly
@@ -147,7 +149,7 @@ module Grafana
         value.gsub(%r{[" |=/\\]}, '\\\\\0')
 
       when /^date(?::(?<format>.*))?$/
-        # TODO: grafana does not seem to allow multivariables with date format - so properly handle here as well
+        # TODO: grafana does not seem to allow multiselection of variables with date format - raise an error if this happens anyway
         get_date_formatted(value, Regexp.last_match(1))
 
       when ''
@@ -201,13 +203,12 @@ module Grafana
         tmp = work_string.scan(/^(?:M{1,4}|D{1,4}|d{1,4}|e|E|w{1,2}|W{1,2}|Y{4}|Y{2}|A|a|H{1,2}|
                                     h{1,2}|k{1,2}|m{1,2}|s{1,2}|S+|X)/x)
 
-        # TODO: add test for sub! and switch to non-modifying frozen string action
         if tmp.empty?
           matches << work_string[0]
-          work_string.sub!(/^#{work_string[0]}/, '')
+          work_string = work_string.sub(/^#{work_string[0]}/, '')
         else
           matches << tmp[0]
-          work_string.sub!(/^#{tmp[0]}/, '')
+          work_string = work_string.sub(/^#{tmp[0]}/, '')
         end
       end
 
