@@ -1,3 +1,7 @@
+require_relative '../stubs/webmock'
+require_relative '../../lib/ruby_grafana_reporter'
+
+include GrafanaReporter
 include GrafanaReporter::Asciidoctor
 
 describe PanelImageBlockMacro do
@@ -16,6 +20,13 @@ describe PanelImageBlockMacro do
   it 'can be processed' do
     expect(@report.logger).not_to receive(:error)
     expect(Asciidoctor.convert("grafana_panel_image::#{STUBS[:panel_sql][:id]}[dashboard=\"#{STUBS[:dashboard]}\"]", to_file: false)).to include('<img src="gf_image_').and match(/(?!Error)/)
+  end
+
+  it 'can forward render-height and render-width' do
+    @report.logger.level = ::Logger::Severity::DEBUG
+    allow(@report.logger).to receive(:debug)
+    expect(@report.logger).to receive(:debug).with(/.*Requesting.*&width=50.*/).at_least(:once)
+    expect(Asciidoctor.convert("grafana_panel_image::#{STUBS[:panel_sql][:id]}[dashboard=\"#{STUBS[:dashboard]}\",render-width=\"50%\"]", to_file: false)).to include('<img src="gf_image_').and match(/(?!Error)/)
   end
 
   it 'can be processed for datasources with unknown type' do

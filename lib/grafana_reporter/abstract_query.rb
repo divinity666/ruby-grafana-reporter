@@ -79,7 +79,7 @@ module GrafanaReporter
       raise DatasourceNotSupportedError.new(@datasource, self) if @datasource.is_a?(Grafana::UnsupportedDatasource)
 
       begin
-        @result = @datasource.request(from: from, to: to, raw_query: raw_query, variables: grafana_variables,
+        @result = @datasource.request(from: from, to: to, raw_query: raw_query, variables: @variables,
                                       prepared_request: @grafana.prepare_request, timeout: timeout)
       rescue ::Grafana::GrafanaError
         # grafana errors will be directly passed through
@@ -413,12 +413,6 @@ module GrafanaReporter
       return false unless @result[:content].is_a?(Array)
 
       true
-    end
-
-    # @return [Hash<String, Variable>] all grafana variables stored in this query, i.e. the variable name
-    #  is prefixed with +var-+
-    def grafana_variables
-      @variables.select { |k, _v| k =~ /^var-.+/ }
     end
 
     def delta_date(date, delta_count, time_letter)
