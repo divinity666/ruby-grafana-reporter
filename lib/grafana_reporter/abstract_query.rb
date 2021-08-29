@@ -405,8 +405,7 @@ module GrafanaReporter
     def datasource_response_valid?
       return false if @result.nil?
       return false unless @result.is_a?(Hash)
-      # TODO: compare how empty valid responses look like in grafana
-      return true if @result.empty?
+      return false if @result.empty?
       return false unless @result.key?(:header)
       return false unless @result.key?(:content)
       return false unless @result[:header].is_a?(Array)
