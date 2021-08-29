@@ -59,6 +59,12 @@ describe Variable do
       expect(subject.text).to eq('resolved')
     end
 
+    it 'can handle type "constant" variables' do
+      obj = Dashboard.new(JSON.parse(File.read('./spec/tests/demo_dashboard.json'))['dashboard'], Grafana::Grafana.new('')).variables.select { |item| item.name == 'constantvariable' }.first
+      expect(obj.text).to eq('test,bla')
+      expect(obj.raw_value).to eq('test,bla')
+    end
+
     context 'date' do
       subject { dashboard.variables.select { |item| item.name == 'timestamp' }.first }
 
@@ -135,6 +141,12 @@ describe Variable do
     it 'contains proper values' do
       expect(subject.multi?).to be_falsey
       expect(subject.raw_value).to eq('10')
+    end
+
+    it 'can handle type "query" variables' do
+      obj = Dashboard.new(JSON.parse(File.read('./spec/tests/demo_dashboard.json'))['dashboard'], Grafana::Grafana.new(STUBS[:url], STUBS[:key_admin])).variables.select { |item| item.name == 'queryvariable' }.first
+      expect(obj.raw_value).to eq('$__all')
+      expect(obj.value_formatted).to eq('\'2\',\'3\'')
     end
 
     it 'contains name' do

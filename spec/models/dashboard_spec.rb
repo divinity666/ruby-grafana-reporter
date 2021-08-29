@@ -12,7 +12,7 @@ describe Dashboard do
   end
 
   it 'contains variables' do
-    expect(dashboard.variables.length).to eq(4)
+    expect(dashboard.variables.length).to eq(6)
     expect(dashboard.variables.select { |item| item.name == 'test' }.first.name).to eq('test')
     variable = dashboard.variables.select { |item| item.name == 'test' }.first
 

@@ -119,6 +119,14 @@ RSpec.configure do |config|
     .to_return(status: 200, body: '{"results":{"A":{"refId":"A","meta":{"rowCount":1,"sql":"SELECT 1"},"series":null,"tables":[{"columns":[{"text":"1"}],"rows":[[1]]}],"dataframes":null}}}', headers: {})
 
     stub_request(:post, 'http://localhost/api/tsdb/query').with(
+      body: /.*SELECT 2[^\d]*/,
+      headers: default_header.merge({
+        'Authorization' => "Bearer #{STUBS[:key_admin]}"
+      })
+    )
+    .to_return(status: 200, body: '{"results":{"A":{"refId":"A","meta":{"rowCount":2,"sql":"SELECT 2 UNION ALL SELECT 3"},"series":null,"tables":[{"columns":[{"text":"1"}],"rows":[[2],[3]],"type":"table","refId":"A","meta":{"rowCount":2,"sql":"SELECT 1 UNION ALL SELECT 2"}}],"dataframes":null}}}', headers: {})
+
+    stub_request(:post, 'http://localhost/api/tsdb/query').with(
       body: /.*SELECT 1 as value WHERE value = 0*/,
       headers: default_header.merge({
         'Authorization' => "Bearer #{STUBS[:key_admin]}"

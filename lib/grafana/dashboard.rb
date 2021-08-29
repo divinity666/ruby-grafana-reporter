@@ -53,7 +53,7 @@ module Grafana
       list = @model['templating']['list']
       return unless list.is_a? Array
 
-      list.each { |item| @variables << Variable.new(item) }
+      list.each { |item| @variables << Variable.new(item, self) }
     end
 
     # read panels

@@ -29,15 +29,14 @@ module Grafana
 
     # @param config_or_value [Hash, Object] configuration hash of a variable out of an {Dashboard} instance
     #  or a value of any kind.
-    def initialize(config_or_value)
+    # @param dashboard [Dashboard] parent dashboard, if applicable; especially needed for query variable
+    #  evaluation.
+    def initialize(config_or_value, dashboard = nil)
       if config_or_value.is_a? Hash
+        @dashboard = dashboard
         @config = config_or_value
         @name = @config['name']
-        # TODO: if a variable uses type 'query' which is never updated, the selected values are stored in 'options'
-        unless @config['current'].nil?
-          @raw_value = @config['current']['value']
-          @text = @config['current']['text']
-        end
+        init_values
       else
         @config = {}
         @raw_value = config_or_value
@@ -68,14 +67,19 @@ module Grafana
       if value == '$__all'
         if !@config['options'].empty?
           # this query contains predefined values, so capture them and format the values accordingly
-          # this happens either if type='custom' or a query, which is never updated
-          value = @config['options'].map { |item| item['value'] }
+          # this happens either for type='custom' or type 'query', if it is never updated
+          value = @config['options'].reject { |item| item['value'] == '$__all' }.map { |item| item['value'] }
 
         elsif @config['type'] == 'query' && !@config['query'].empty?
-          # TODO: replace variables in query, execute it and evaluate the results as if they were normally selected
-          # "multiFormat": contains variable replacement in "query", e.g. 'regex values' or 'glob'
-          # "datasource": contains name of datasource
-          return @config['query']
+          # variables in this configuration are not stored in grafana, i.e. if all is selected here,
+          # the values have to be fetched from the datasource
+          query = ::GrafanaReporter::QueryValueQuery.new(@dashboard)
+          query.datasource = @dashboard.grafana.datasource_by_name(@config['datasource'])
+          query.variables['result_type'] = Variable.new('object')
+          query.raw_query = @config['query']
+          result = query.execute
+
+          value = result[:content].map { |item| item[0].to_s }
 
         else
           # TODO: add support for variable type: 'datasource' and 'adhoc'
@@ -168,8 +172,9 @@ module Grafana
       end
     end
 
-    # @return [Boolean] true, if the value can contain multiple selections, i.e. can contain an Array
+    # @return [Boolean] true, if the value can contain multiple selections, i.e. can contain an Array or does contain all
     def multi?
+      return true if @raw_value == '$__all'
       return @config['multi'] unless @config['multi'].nil?
 
       @raw_value.is_a? Array
@@ -188,6 +193,20 @@ module Grafana
     end
 
     private
+
+    def init_values
+      case @config['type']
+      when 'constant'
+        self.raw_value = @config['query']
+
+      else
+        if !@config['current'].nil?
+          self.raw_value = @config['current']['value']
+        else
+          raise GrafanaError.new("Grafana variable with type '#{@config['type']}' and name '#{@config['name']}' could not be handled properly. Please raise a ticket.")
+        end
+      end
+    end
 
     # Realize time formatting according
     # {https://grafana.com/docs/grafana/latest/variables/variable-types/global-variables/#__from-and-__to}
