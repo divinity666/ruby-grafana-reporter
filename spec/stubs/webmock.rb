@@ -103,6 +103,14 @@ RSpec.configure do |config|
     .to_return(status: 404, body: '{"message":"Dashboard not found"}', headers: {})
 
     stub_request(:post, 'http://localhost/api/tsdb/query').with(
+      body: /.*SELECT error.*/,
+      headers: default_header.merge({
+        'Authorization' => "Bearer #{STUBS[:key_admin]}"
+      })
+    )
+    .to_return(status: 200, body: '{"results":{"A":{"refId":"A","error":"db query error: query failed - please inspect Grafana server log for details"}}}', headers: {})
+
+    stub_request(:post, 'http://localhost/api/tsdb/query').with(
       body: /.*SELECT 1[^\d]*/,
       headers: default_header.merge({
         'Authorization' => "Bearer #{STUBS[:key_admin]}"
