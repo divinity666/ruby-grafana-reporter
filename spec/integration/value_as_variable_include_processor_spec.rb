@@ -10,14 +10,20 @@ describe ValueAsVariableIncludeProcessor do
     Asciidoctor::Extensions.register do
       include_processor ValueAsVariableIncludeProcessor.new.current_report(report)
       inline_macro SqlValueInlineMacro.new.current_report(report)
+      inline_macro PanelQueryValueInlineMacro.new.current_report(report)
     end
     @report = report
   end
 
-  it 'can be processed' do
+  it 'can call inline processors' do
     expect(@report.logger).not_to receive(:error)
-    expect(Asciidoctor.convert("include::grafana_value_as_variable[call=\"grafana_sql_value:#{STUBS[:datasource_sql]}\",sql=\"SELECT 1\",variable_name=\"test\"\"]", to_file: false)).not_to include('1')
-    expect(Asciidoctor.convert("include::grafana_value_as_variable[call=\"grafana_sql_value:#{STUBS[:datasource_sql]}\",sql=\"SELECT 1\",variable_name=\"test\"\"]\n{test}", to_file: false)).to include('1')
+    expect(Asciidoctor.convert("include::grafana_value_as_variable[call=\"grafana_sql_value:#{STUBS[:datasource_sql]}\",sql=\"SELECT 1\",variable_name=\"test\"]", to_file: false)).not_to include('1')
+    expect(Asciidoctor.convert("include::grafana_value_as_variable[call=\"grafana_sql_value:#{STUBS[:datasource_sql]}\",sql=\"SELECT 1\",variable_name=\"test\"]\n{test}", to_file: false)).to include('1')
+  end
+
+  it 'can call inline processors with global parameters' do
+    expect(@report.logger).not_to receive(:error)
+    expect(Asciidoctor.convert(":grafana_default_dashboard: #{STUBS[:dashboard]}\n\ninclude::grafana_value_as_variable[call=\"grafana_panel_query_value:#{STUBS[:panel_sql][:id]}\",query=\"#{STUBS[:panel_sql][:letter]}\",variable_name=\"test\"]\n{test}", to_file: false)).to include('<p>1594308060000')
   end
 
   it 'shows error if mandatory call attributes is missing' do

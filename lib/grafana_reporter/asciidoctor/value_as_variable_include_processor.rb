@@ -58,11 +58,6 @@ module GrafanaReporter
           return reader
         end
 
-        # TODO: remove dirty hack to allow the document as parameter for other processors
-        def doc.document
-          self
-        end
-
         # TODO: properly show error messages also in document
         ext = doc.extensions.find_inline_macro_extension(call) if doc.extensions.inline_macros?
         if !ext
