@@ -109,12 +109,12 @@ end}
           res_item[:description] = item['description']
           res_item[:see] = item['see']
 
-          opts = ((item['options'] ? item['options'].keys : [])
+          opts = ((item['options'] ? item['options'].keys : []) +
                   (item['standard_options'] ? item['standard_options'].keys : [])).sort
           opts.each do |opt_key|
             res_item[:options][opt_key] = {}
 
-            if item['standard_options'].key?(opt_key)
+            if std_opts.key?(opt_key)
               res_item[:options][opt_key][:call] = std_opts[opt_key]['call']
               res_item[:options][opt_key][:description] = "#{std_opts[opt_key]['description']} "\
                                                           "#{item['standard_options'][opt_key]}".chop
