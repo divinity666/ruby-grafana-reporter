@@ -1,6 +1,3 @@
-require_relative '../stubs/webmock'
-require_relative '../../lib/ruby_grafana_reporter'
-
 include GrafanaReporter
 include GrafanaReporter::Asciidoctor
 
