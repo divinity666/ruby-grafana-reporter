@@ -154,7 +154,7 @@ module Grafana
 
       when /^date(?::(?<format>.*))?$/
         # TODO: grafana does not seem to allow multiselection of variables with date format - raise an error if this happens anyway
-        get_date_formatted(value, Regexp.last_match(1))
+        Variable.format_as_date(value, Regexp.last_match(1))
 
       when ''
         # default
@@ -192,26 +192,11 @@ module Grafana
       @text = new_text
     end
 
-    private
-
-    def init_values
-      case @config['type']
-      when 'constant'
-        self.raw_value = @config['query']
-
-      else
-        if !@config['current'].nil?
-          self.raw_value = @config['current']['value']
-        else
-          raise GrafanaError.new("Grafana variable with type '#{@config['type']}' and name '#{@config['name']}' could not be handled properly. Please raise a ticket.")
-        end
-      end
-    end
-
+    # TODO fix documentation
     # Realize time formatting according
     # {https://grafana.com/docs/grafana/latest/variables/variable-types/global-variables/#__from-and-__to}
     # and {https://momentjs.com/docs/#/displaying/}.
-    def get_date_formatted(value, format)
+    def self.format_as_date(value, format)
       return (Float(value) / 1000).to_i.to_s if format == 'seconds'
       return Time.at((Float(value) / 1000).to_i).utc.iso8601(3) if !format || (format == 'iso')
 
@@ -238,6 +223,22 @@ module Grafana
       end
 
       Time.at((Float(value) / 1000).to_i).strftime(format_string)
+    end
+
+    private
+
+    def init_values
+      case @config['type']
+      when 'constant'
+        self.raw_value = @config['query']
+
+      else
+        if !@config['current'].nil?
+          self.raw_value = @config['current']['value']
+        else
+          raise GrafanaError.new("Grafana variable with type '#{@config['type']}' and name '#{@config['name']}' could not be handled properly. Please raise a ticket.")
+        end
+      end
     end
   end
 end

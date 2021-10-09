@@ -173,7 +173,9 @@ module GrafanaReporter
     def format_columns(result, formats)
       return result unless formats
 
+      # TODO: allow also date-format as described in https://grafana.com/docs/grafana/latest/variables/variable-types/global-variables/#from-and-to
       formats.text.split(',').each_index do |i|
+        # TODO: support escaped commas in formats
         format = formats.text.split(',')[i]
         next if format.empty?
 
@@ -181,7 +183,11 @@ module GrafanaReporter
           next unless row.length > i
 
           begin
-            row[i] = format % row[i] if row[i]
+            if format =~ /^date:/
+              row[i] = ::Grafana::Variable.format_as_date(row[i], format.sub(/^date:/, '')) if row[i]
+            else
+              row[i] = format % row[i] if row[i]
+            end
           rescue StandardError => e
             @grafana.logger.error(e.message)
             row[i] = e.message
