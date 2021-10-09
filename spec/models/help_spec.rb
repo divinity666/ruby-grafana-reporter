@@ -8,6 +8,7 @@ describe Help do
     expect(result).to include('grafana_panel_image')
     expect(result).to include('| --')
     expect(result).to include('Valid columns are')
+    expect(result).to include('sprintf')
   end
 
   it 'can build help for asciidoctor' do
@@ -15,5 +16,6 @@ describe Help do
     expect(result).to include('grafana_panel_image')
     expect(result).to include('|==')
     expect(result).to include('Valid columns are')
+    expect(result).to include('sprintf')
   end
 end

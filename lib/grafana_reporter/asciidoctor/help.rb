@@ -82,7 +82,7 @@ Usage: #{opts[:code_begin]}#{v[:call]}#{opts[:code_end]}
 #{v[:description]}#{"\n\nSee also: #{v[:see]}" if v[:see]}#{unless v[:options].empty?
 %(
 #{opts[:table_begin]}| Option | Description#{"\n#{opts[:head_postfix_col] * 2}" if opts[:head_postfix_col]}
-#{v[:options].sort.map { |_opt_k, opt_v| "| #{opts[:code_begin]}#{opt_v[:call]}#{opts[:code_end]} | #{opt_v[:description].gsub('|', '\|')}" }.join("\n") }#{opts[:table_end]})
+#{v[:options].sort.map { |_opt_k, opt_v| "| #{opts[:code_begin]}#{opt_v[:call]}#{opts[:code_end]} | #{opt_v[:description].gsub('|', '\|')}#{"\nSee also: #{opt_v[:see]}" if opt_v[:see]}" }.join("\n") }#{opts[:table_end]})
 end}
 )
         end
@@ -196,8 +196,10 @@ end}
             format:
               call: format="<format_col1>,<format_col2>,..."
               description: >-
-                Specify format in which the results shall be returned, e.g. `%.2f` for only two digit decimals of a
-                float. Several columns are separated by `,`. Execution is applied in the following order `format`,
+                Specify format in which the results in a specific column shall be returned, e.g. `%.2f` for only
+                two digit decimals of a float. Several column formats are separated by `,`, i.e. `%.2f,%.3f` would
+                apply `%.2f` to the first column and `%.3f` to the second column. All other columns would not be
+                formatted. Execution of related functions is applied in the following order `format`,
                 `replace_values`, `filter_columns`, `transpose`.
               see: 'https://ruby-doc.org/core/Kernel.html#method-i-sprintf'
 
@@ -207,21 +209,23 @@ end}
                 Specify result values which shall be replaced, e.g. `2:OK` will replace query values `2` with value `OK`.
                 Replacing several values is possible by separating by `,`. Matches with regular expressions are also
                 supported, but must be full matches, i.e. have to start with `^` and end with `$`, e.g. `^[012]$:OK`.
-                Number replacements can also be performed, e.g. `<8.2` or `<>3`. Execution is applied in the following order `format`,
+                Number replacements can also be performed, e.g. `<8.2` or `<>3`. Execution of related functions is
+                applied in the following order `format`,
                 `replace_values`, `filter_columns`, `transpose`.
               see: https://ruby-doc.org/core/Regexp.html#class-Regexp-label-Character+Classes
 
             filter_columns:
               call: filter_columns="<column_name_1>,<column_name_2>,..."
               description: >-
-                Removes specified columns from result. Execution is applied in the following order `format`, `replace_values`,
-                `filter_columns`, `transpose`.
+                Removes specified columns from result. Execution of related functions is applied in the following
+                order `format`, `replace_values`, `filter_columns`, `transpose`.
 
             transpose:
               call: transpose="true"
               description: >-
-                Transposes the query result, i.e. columns become rows and rows become columnns. Execution is applied in the
-                following order `format`, `replace_values`, `filter_columns`, `transpose`.
+                Transposes the query result, i.e. columns become rows and rows become columnns. Execution of related
+                functions is applied in the following order `format`, `replace_values`, `filter_columns`,
+                `transpose`.
 
             column_divider:
               call: column_divider="<divider>"
@@ -234,7 +238,7 @@ end}
               call: row_divider="<divider>"
               description: >-
                 Replace the default row divider with another one, when used in conjunction with `table_formatter` set to
-                `adoc_deprecated`. . Defaults to `| ` for being interpreted as a asciidoctor row. DEPRECATED: switch to
+                `adoc_deprecated`. Defaults to `| ` for being interpreted as a asciidoctor row. DEPRECATED: switch to
                 `table_formatter` named `adoc_plain`, or implement a custom table formatter.
 
             table_formatter:
