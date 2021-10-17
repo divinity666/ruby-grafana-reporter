@@ -10,11 +10,15 @@ module Grafana
     #   }
     # @see AbstractDatasource#request
     def request(query_description)
+      panel = query_description[:raw_query][:panel]
+
       webrequest = query_description[:prepared_request]
-      webrequest.relative_url = query_description[:raw_query][:panel].render_url + url_params(query_description)
+      webrequest.relative_url = panel.render_url + url_params(query_description)
       webrequest.options.merge!({ accept: 'image/png' })
 
       result = webrequest.execute
+
+      raise ImageCouldNotBeRenderedError, panel if result.body.include?('<html')
 
       { header: ['image'], content: [result.body] }
     end
