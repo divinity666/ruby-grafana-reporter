@@ -53,7 +53,8 @@ module Grafana
   class ImageCouldNotBeRenderedError < GrafanaError
     def initialize(panel)
       super("The specified panel '#{panel.id}' from dashboard '#{panel.dashboard.id}' could not be "\
-        'rendered to an image.')
+        'rendered to an image. Check if rendering is possible manually by selecting "Share" and then '\
+        '"Direct link rendered image" from a panel\'s options menu.')
     end
   end
 
