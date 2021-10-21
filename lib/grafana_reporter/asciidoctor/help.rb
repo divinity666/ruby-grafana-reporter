@@ -199,7 +199,8 @@ end}
                 Specify format in which the results in a specific column shall be returned, e.g. `%.2f` for only
                 two digit decimals of a float. Several column formats are separated by `,`, i.e. `%.2f,%.3f` would
                 apply `%.2f` to the first column and `%.3f` to the second column. All other columns would not be
-                formatted. Execution of related functions is applied in the following order `format`,
+                formatted. You may also format time in milliseconds to a time format by specifying e.g. `date:iso`.
+                Execution of related functions is applied in the following order `format`,
                 `replace_values`, `filter_columns`, `transpose`.
               see: 'https://ruby-doc.org/core/Kernel.html#method-i-sprintf'
 

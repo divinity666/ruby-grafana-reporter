@@ -192,10 +192,12 @@ module Grafana
       @text = new_text
     end
 
-    # TODO fix documentation
-    # Realize time formatting according
+    # Applies the date format according
     # {https://grafana.com/docs/grafana/latest/variables/variable-types/global-variables/#__from-and-__to}
-    # and {https://momentjs.com/docs/#/displaying/}.
+    # and {https://momentjs.com/docs/#/displaying/} to a given value.
+    # @param value [String] time as milliseconds to be formatted
+    # @param format [String] format string in which the time value shall be returned
+    # @return [String] time converted to the specified time format
     def self.format_as_date(value, format)
       return (Float(value) / 1000).to_i.to_s if format == 'seconds'
       return Time.at((Float(value) / 1000).to_i).utc.iso8601(3) if !format || (format == 'iso')

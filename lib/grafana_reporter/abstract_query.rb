@@ -167,13 +167,16 @@ module GrafanaReporter
     # The formatting will be applied separately for every column. Therefore the column formats have to be named
     # in the {Grafana::Variable#raw_value} and have to be separated by +,+ (comma). If no value is specified for
     # a column, no change will happen.
+    #
+    # It is also possible to format milliseconds as dates by specifying date formats, e.g. +date:iso+. It is
+    # possible to use any date format according
+    # {https://grafana.com/docs/grafana/latest/variables/variable-types/global-variables/#from-and-to}
     # @param result [Hash] preformatted sql hash, (see {Grafana::AbstractDatasource#request})
     # @param formats [Grafana::Variable] formats, which shall be applied to the columns in the query result
     # @return [Hash] formatted query result
     def format_columns(result, formats)
       return result unless formats
 
-      # TODO: allow also date-format as described in https://grafana.com/docs/grafana/latest/variables/variable-types/global-variables/#from-and-to
       formats.text.split(',').each_index do |i|
         # TODO: support escaped commas in formats
         format = formats.text.split(',')[i]
