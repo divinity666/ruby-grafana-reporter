@@ -200,6 +200,7 @@ end}
                 two digit decimals of a float. Several column formats are separated by `,`, i.e. `%.2f,%.3f` would
                 apply `%.2f` to the first column and `%.3f` to the second column. All other columns would not be
                 formatted. You may also format time in milliseconds to a time format by specifying e.g. `date:iso`.
+                Commas in format strings are supported, but have to be escaped by useing `_,`.
                 Execution of related functions is applied in the following order `format`,
                 `replace_values`, `filter_columns`, `transpose`.
               see: 'https://ruby-doc.org/core/Kernel.html#method-i-sprintf'
@@ -218,8 +219,9 @@ end}
             filter_columns:
               call: filter_columns="<column_name_1>,<column_name_2>,..."
               description: >-
-                Removes specified columns from result. Execution of related functions is applied in the following
-                order `format`, `replace_values`, `filter_columns`, `transpose`.
+                Removes specified columns from result.  Commas in format strings are supported, but have to be
+                escaped by useing `_,`. Execution of related functions is applied in the following order
+                `format`, `replace_values`, `filter_columns`, `transpose`.
 
             transpose:
               call: transpose="true"

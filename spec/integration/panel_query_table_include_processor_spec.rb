@@ -24,6 +24,10 @@ describe PanelQueryTableIncludeProcessor do
       expect(Asciidoctor.convert("include::grafana_panel_query_table:#{STUBS[:panel_sql][:id]}[query=\"#{STUBS[:panel_sql][:letter]}\",dashboard=\"#{STUBS[:dashboard]}\",format=\"date:iso\"]", to_file: false)).to match(/<p>\| 2020-07-09T15:21:00.000Z \| 43.9/)
     end
 
+    it 'can format timestamp as date string with escaped comma in format' do
+      expect(Asciidoctor.convert("include::grafana_panel_query_table:#{STUBS[:panel_sql][:id]}[query=\"#{STUBS[:panel_sql][:letter]}\",dashboard=\"#{STUBS[:dashboard]}\",format=\"date:MM_, D\"]", to_file: false)).to match(/<p>\| 07, 9 \| 43.9/)
+    end
+
     it 'can translate times' do
       @report.logger.level = ::Logger::Severity::DEBUG
       expect(@report.logger).to receive(:debug).exactly(5).times.with(any_args)

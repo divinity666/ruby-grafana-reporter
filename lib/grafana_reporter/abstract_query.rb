@@ -143,6 +143,8 @@ module GrafanaReporter
     #
     # Multiple columns may be filtered. Therefore the column titles have to be named in the
     # {Grafana::Variable#raw_value} and have to be separated by +,+ (comma).
+    #
+    # Commas can be used in a format string, but need to be escaped by using +_,+.
     # @param result [Hash] preformatted sql hash, (see {Grafana::AbstractDatasource#request})
     # @param filter_columns_variable [Grafana::Variable] column names, which shall be removed in the query result
     # @return [Hash] filtered query result
@@ -150,8 +152,8 @@ module GrafanaReporter
       return result unless filter_columns_variable
 
       filter_columns = filter_columns_variable.raw_value
-      filter_columns.split(',').each do |filter_column|
-        pos = result[:header].index(filter_column)
+      filter_columns.split(/(?<!_),/).each do |filter_column|
+        pos = result[:header].index(filter_column.gsub("_,", ","))
 
         unless pos.nil?
           result[:header].delete_at(pos)
@@ -171,15 +173,16 @@ module GrafanaReporter
     # It is also possible to format milliseconds as dates by specifying date formats, e.g. +date:iso+. It is
     # possible to use any date format according
     # {https://grafana.com/docs/grafana/latest/variables/variable-types/global-variables/#from-and-to}
+    #
+    # Commas can be used in a format string, but need to be escaped by using +_,+.
     # @param result [Hash] preformatted sql hash, (see {Grafana::AbstractDatasource#request})
     # @param formats [Grafana::Variable] formats, which shall be applied to the columns in the query result
     # @return [Hash] formatted query result
     def format_columns(result, formats)
       return result unless formats
 
-      formats.text.split(',').each_index do |i|
-        # TODO: support escaped commas in formats
-        format = formats.text.split(',')[i]
+      formats.text.split(/(?<!_),/).each_index do |i|
+        format = formats.text.split(/(?<!_),/)[i].gsub("_,", ",")
         next if format.empty?
 
         result[:content].map do |row|
