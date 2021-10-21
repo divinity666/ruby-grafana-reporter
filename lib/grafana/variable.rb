@@ -153,7 +153,9 @@ module Grafana
         value.gsub(%r{[" |=/\\]}, '\\\\\0')
 
       when /^date(?::(?<format>.*))?$/
-        # TODO: grafana does not seem to allow multiselection of variables with date format - raise an error if this happens anyway
+        if multi? && value.is_a?(Array)
+          raise GrafanaError, "Date format cannot be specified for a variable containing an array of values"
+        end
         Variable.format_as_date(value, Regexp.last_match(1))
 
       when ''

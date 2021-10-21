@@ -128,6 +128,10 @@ describe Variable do
       expect(subject.value_formatted('other')).to eq("{1,2,,,$,/,\",',.,a,|,\\}")
     end
 
+    it "raises error if date format is specified for multiselect field" do
+      expect { subject.value_formatted('date:iso') }.to raise_error(GrafanaError)
+    end
+
     it "handles selection 'All' properly" do
       obj = Dashboard.new(JSON.parse(File.read('./spec/tests/demo_dashboard.json'))['dashboard'], Grafana::Grafana.new('')).variables.select { |item| item.name == 'testmulti' }.first
       obj.raw_value = '$__all'
