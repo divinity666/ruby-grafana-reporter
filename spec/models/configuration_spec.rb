@@ -158,7 +158,7 @@ describe Configuration do
     end
 
     it 'returns latest version true if checks shall be done' do
-      subject.set_param('grafana-reporter:check-for-updates', 'always')
+      subject.set_param('grafana-reporter:check-for-updates', 1)
       expect(subject.latest_version_check_ok?).to be true
     end
 
@@ -167,7 +167,7 @@ describe Configuration do
       stub_request(:get, "https://github.com/divinity666/ruby-grafana-reporter/releases/latest")
       .to_return(status: 302, body: "relocated", headers: {'location' => "https://github.com/divinity666/ruby-grafana-reporter/releases/tag/v0.0.0"})
 
-      subject.set_param('grafana-reporter:check-for-updates', 'always')
+      subject.set_param('grafana-reporter:check-for-updates', 1)
       expect(subject.latest_version_check_ok?).to be false
     end
   end

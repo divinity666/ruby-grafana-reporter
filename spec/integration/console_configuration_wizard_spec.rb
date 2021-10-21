@@ -35,7 +35,7 @@ describe ConsoleConfigurationWizard do
       subject.start_wizard(config_file, Configuration.new)
       expect(File.exist?(config_file)).to be true
       expect(File.exist?("#{folder}/demo_report.adoc")).to be false
-      expect(YAML.load_file(config_file)).to eq({'grafana' => {'default' => {'host' => @config[1].strip, 'api_key' => STUBS[:key_admin]}}, 'grafana-reporter' => {'check-for-updates' => 'always', 'report-class' => 'GrafanaReporter::Asciidoctor::Report', 'templates-folder' => folder, 'reports-folder' => '.', 'report-retention' => 24, 'webservice-port' => 8815}, 'default-document-attributes' => {'imagesdir' => '.'}})
+      expect(YAML.load_file(config_file)).to eq({'grafana' => {'default' => {'host' => @config[1].strip, 'api_key' => STUBS[:key_admin]}}, 'grafana-reporter' => {'check-for-updates' => 1, 'report-class' => 'GrafanaReporter::Asciidoctor::Report', 'templates-folder' => folder, 'reports-folder' => '.', 'report-retention' => 24, 'webservice-port' => 8815}, 'default-document-attributes' => {'imagesdir' => '.'}})
     end
 
     it 'creates valid config file without working access' do

@@ -154,30 +154,28 @@ module GrafanaReporter
 
     # Checks if this is the latest ruby-grafana-reporter version. If and how often the check if
     # performed, depends on the configuration setting `check-for-updates`. By default this is
-    # `disabled`. If `always` is specified, the checks are performed on each report creation,
-    # but not more often than every 24 hours, i.e. if the reporter is running as a service
+    # 0 (=disabled). If a number >0 is specified, the checks are performed once every n-days on
+    # report creation or call of overview webpage.
     # @return [Boolean] true, if is ok, false if a newer version exists
     def latest_version_check_ok?
       return false if @newer_version_exists
+
+      value = get_config('grafana-reporter:check-for-updates') || 0
+      return true if value <= 0
+
+      # repeat check only every n-th day
       if @last_version_check
-        return true if Time.now - @last_version_check < 24*60*60
+        return true if (Time.now - @last_version_check) < (value * 24*60*60)
       end
 
-      value = get_config('grafana-reporter:check-for-updates') || 'disabled'
-      case value
-      when 'always'
-        @last_version_check = Time.now
-        url = 'https://github.com/divinity666/ruby-grafana-reporter/releases/latest'
-        response = Grafana::WebRequest.new(url).execute
-        return true if response['location'] =~ /.*[\/v]#{GRAFANA_REPORTER_VERSION.join('.')}$/
+      # check for newer version
+      @last_version_check = Time.now
+      url = 'https://github.com/divinity666/ruby-grafana-reporter/releases/latest'
+      response = Grafana::WebRequest.new(url).execute
+      return true if response['location'] =~ /.*[\/v]#{GRAFANA_REPORTER_VERSION.join('.')}$/
 
-        @newer_version_exists = true
-        return false
-
-      else
-        return true
-
-      end
+      @newer_version_exists = true
+      return false
     end
 
     # This function shall be called, before the configuration object is used in the
@@ -332,7 +330,7 @@ module GrafanaReporter
         [
           Hash, 1,
           {
-            'check-for-updates' => [String, 0],
+            'check-for-updates' => [Integer, 0],
             'debug-level' => [String, 0],
             'run-mode' => [String, 0],
             'test-instance' => [String, 0],

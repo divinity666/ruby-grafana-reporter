@@ -72,8 +72,9 @@ module GrafanaReporter
 #{grafana}
 
 grafana-reporter:
-# you may set check-for-updates to 'disabled' if you do not want them to happen
-  check-for-updates: always
+# Specifies how often the reporter shall check for newer versions [number of days].
+# You may set check-for-updates to 0 to disable
+  check-for-updates: 1
   report-class: GrafanaReporter::Asciidoctor::Report
   templates-folder: #{templates}
   reports-folder: #{reports}
