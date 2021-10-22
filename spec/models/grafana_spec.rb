@@ -15,6 +15,11 @@ describe Grafana do
     it 'raises error if dashboard does not exist' do
       expect { subject.dashboard('blabla') }.to raise_error(DashboardDoesNotExistError)
     end
+
+    it 'can return organization information' do
+      expect(subject.organization['id']).to eq(STUBS[:org_id])
+      expect(subject.organization['name']).to eq(STUBS[:org_name])
+    end
   end
 
   context 'with https' do
