@@ -19,4 +19,8 @@ describe Dashboard do
     expect(dashboard.from_time).to eq('now-24h')
     expect(dashboard.to_time).to be_nil
   end
+
+  it 'can return title' do
+    expect(dashboard.title).to eq("Todayd")
+  end
 end

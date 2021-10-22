@@ -35,6 +35,11 @@ module Grafana
       @model['uid']
     end
 
+    # @return [String] dashboard title
+    def title
+      @model['title']
+    end
+
     # @return [Panel] panel for the specified ID
     def panel(id)
       panels = @panels.select { |item| item.field('id') == id.to_i }
