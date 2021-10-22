@@ -37,6 +37,18 @@ module Grafana
       @organization
     end
 
+    # @return [String] grafana version
+    def version
+      return @version if @version
+
+      response = prepare_request({ relative_url: '/api/health' }).execute
+      if response.is_a?(Net::HTTPOK)
+        @version = JSON.parse(response.body)['version']
+      end
+
+      @version
+    end
+
     # Used to test a connection to the grafana instance.
     #
     # Running this function also determines, if the API configured here has Admin or NON-Admin privileges,

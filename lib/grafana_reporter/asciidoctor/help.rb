@@ -265,8 +265,13 @@ end}
             call: 'include::grafana_help[]'
 
           grafana_environment:
-            description: Shows all available variables in the rendering context which can be used in the asciidoctor template.
+            description: >-
+              Shows all available variables in the rendering context which can be used in the asciidoctor template.
+              If optional `instance` is specified, additional information about the configured grafana instance will be provided.
+              This is especially helpful for debugging.
             call: 'include::grafana_environment[]'
+            standard_options:
+              instance:
 
           grafana_alerts:
             description: >-

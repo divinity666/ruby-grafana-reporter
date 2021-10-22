@@ -13,6 +13,9 @@ module GrafanaReporter
     #
     # == Used document parameters
     # All, to be listed as the available environment.
+    #
+    # == Supported options
+    # +instance+ - grafana instance name, if extended information about the grafana instance shall be printed
     class ShowEnvironmentIncludeProcessor < ::Asciidoctor::Extensions::IncludeProcessor
       include ProcessorMixin
 
@@ -22,12 +25,38 @@ module GrafanaReporter
       end
 
       # :nodoc:
-      def process(doc, reader, _target, _attrs)
+      def process(doc, reader, _target, attrs)
         # return if @report.cancel
         @report.next_step
         @report.logger.debug('Processing ShowEnvironmentIncludeProcessor')
 
-        vars = ['== Accessible Variables',
+        vars = ['== Reporter',
+                '|===',
+                "| Version | #{GRAFANA_REPORTER_VERSION.join('.')}",
+                "| Build date | #{GRAFANA_REPORTER_RELEASE_DATE}",
+                '|===']
+
+        if attrs['instance']
+          grafana = @report.grafana(attrs['instance'])
+
+          vars += ['== Grafana Instance',
+                   '|===',
+                   "| Instance name | #{attrs['instance']}",
+                   "| Version | #{grafana.version}",
+                   "| Organization | #{grafana.organization['name']} (ID: #{grafana.organization['id']})",
+                   "| Access permissions | #{grafana.test_connection}",
+                   '|===',
+                   '',
+                   '== Accessible Dashboards',
+                   '|===',
+                   '| Dashboard ID | Dashboard name | # Panels']
+          grafana.dashboard_ids.each do |id|
+            vars << "| #{id} | #{grafana.dashboard(id).title} | #{grafana.dashboard(id).panels.length}"
+          end
+          vars << '|==='
+        end
+
+        vars += ['== Accessible Variables',
                 '|===']
         doc.attributes.sort.each do |k, v|
           vars << "| `+{#{k}}+` | #{v}"
