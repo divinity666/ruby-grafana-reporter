@@ -10,7 +10,7 @@ module GrafanaReporter
     end
 
     # @see AbstractTableFormatStrategy#format
-    def format(result, include_headline)
+    def format(result, include_headline, transposed)
       headline = result[:header].map { |item| item.to_s.gsub(',', '\\,') }.join(',')
 
       content = result[:content].map do |row|

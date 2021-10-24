@@ -80,7 +80,6 @@ describe PanelQueryTableIncludeProcessor do
       expect(Asciidoctor.convert("include::grafana_panel_query_table:#{STUBS[:panel_sql][:id]}[query=\"#{STUBS[:panel_sql][:letter]}\",dashboard=\"#{STUBS[:dashboard]}\",column_divider=\" col \",row_divider=\"row \",table_formatter=\"adoc_deprecated\"]", to_file: false)).to match(/<p>row 1594308060000 col 43.9/)
     end
 
-    # TODO: properly add headline on transposed results
     it 'can include headline' do
       expect(@report.logger).not_to receive(:error)
       expect(Asciidoctor.convert("include::grafana_panel_query_table:#{STUBS[:panel_sql][:id]}[query=\"#{STUBS[:panel_sql][:letter]}\",dashboard=\"#{STUBS[:dashboard]}\",include_headline=\"true\"]", to_file: false)).to match(/<p>\| time_sec \| Warmwasser\n/)
@@ -89,6 +88,11 @@ describe PanelQueryTableIncludeProcessor do
     it 'can transpose results' do
       expect(@report.logger).not_to receive(:error)
       expect(Asciidoctor.convert("include::grafana_panel_query_table:#{STUBS[:panel_sql][:id]}[query=\"#{STUBS[:panel_sql][:letter]}\",dashboard=\"#{STUBS[:dashboard]}\",transpose=\"true\"]", to_file: false)).to match(/<p>\| 1594308060000 \| 1594308030000 \|/)
+    end
+
+    it 'can include headline properly on transposed results' do
+      expect(@report.logger).not_to receive(:error)
+      expect(Asciidoctor.convert("include::grafana_panel_query_table:#{STUBS[:panel_sql][:id]}[query=\"#{STUBS[:panel_sql][:letter]}\",dashboard=\"#{STUBS[:dashboard]}\",include_headline=\"true\",transpose=\"true\"]", to_file: false)).to match(/<p>\| time_sec \| 1594308060000 \| .*\n\| Warmwasser \| 43.9 \| .*\n/)
     end
 
     it 'handles grafana errors' do

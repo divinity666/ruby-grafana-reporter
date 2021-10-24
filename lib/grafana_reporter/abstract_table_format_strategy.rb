@@ -26,8 +26,9 @@ module GrafanaReporter
     # @abstract
     # @param column [Array] datasource table result
     # @param include_headline [Boolean] true, if headline should be included in result
+    # @param transposed [Boolean] true, if result array is in transposed format
     # @return [String] formatted in table format
-    def format(content, include_headline)
+    def format(content, include_headline, transposed)
       raise NotImplementedError
     end
   end

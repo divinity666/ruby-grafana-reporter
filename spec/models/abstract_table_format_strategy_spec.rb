@@ -8,6 +8,6 @@ describe AbstractTableFormatStrategy do
   end
 
   it 'has abstract methods' do
-    expect { subject.format(nil, nil) }.to raise_error(NotImplementedError)
+    expect { subject.format(nil, nil, nil) }.to raise_error(NotImplementedError)
   end
 end

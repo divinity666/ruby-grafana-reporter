@@ -11,14 +11,21 @@ module GrafanaReporter
       end
 
       # @see AbstractTableFormatStrategy#format
-      def format(result, include_headline)
-        headline = '| ' + result[:header].map { |item| item.to_s.gsub(' | ', '\\|') }.join(' | ')
+      def format(result, include_headline, transposed)
+        content = result[:content]
+        if include_headline
+          if transposed
+            content.each_index do |i|
+              content[i] = [result[:header][i]] + content[i]
+            end
+          else
+            content = content.unshift(result[:header])
+          end
+        end
 
-        content = result[:content].map do |row|
+        content.map do |row|
           '| ' + row.map { |item| item.to_s.gsub(' | ', '\\|') }.join(' | ')
         end.join("\n")
-
-        "#{"#{headline}\n" if include_headline}#{content}"
       end
     end
   end

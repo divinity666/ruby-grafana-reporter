@@ -195,6 +195,7 @@ module GrafanaReporter
               row[i] = format % row[i] if row[i]
             end
           rescue StandardError => e
+            # TODO: grafana is sometimes nil
             @grafana.logger.error(e.message)
             row[i] = e.message
           end
@@ -260,6 +261,7 @@ module GrafanaReporter
                   begin
                     row[i] = row[i].to_s.gsub(/#{k}/, v) if row[i].to_s =~ /#{k}/
                   rescue StandardError => e
+                    # TODO: grafana is sometimes nil
                     @grafana.logger.error(e.message)
                     row[i] = e.message
                   end
@@ -285,6 +287,7 @@ module GrafanaReporter
                                  end
                       end
                     rescue StandardError => e
+                      # TODO: grafana is sometimes nil
                       @grafana.logger.error(e.message)
                       row[i] = e.message
                     end
@@ -310,14 +313,17 @@ module GrafanaReporter
     # @option opts [Grafana::Variable] :column_divider requested row divider for the result table, only to be used with table_formatter `adoc_deprecated`
     # @option opts [Grafana::Variable] :include_headline specifies if table should contain headline, defaults to false
     # @option opts [Grafana::Variable] :table_formatter specifies which formatter shall be used, defaults to 'csv'
+    # @option opts [Grafana::Variable] :transposed specifies whether the result table is transposed
     # @return [String] table in custom output format
     def format_table_output(result, opts)
       opts = { include_headline: Grafana::Variable.new('false'),
                table_formatter: Grafana::Variable.new('csv'),
                row_divider: Grafana::Variable.new('| '),
-               column_divider: Grafana::Variable.new(' | ') }.merge(opts.delete_if {|_k, v| v.nil? })
+               column_divider: Grafana::Variable.new(' | '),
+               transpose: Grafana::Variable.new('false') }.merge(opts.delete_if {|_k, v| v.nil? })
 
       if opts[:table_formatter].raw_value == 'adoc_deprecated'
+        # TODO: grafana is sometimes nil
         @grafana.logger.warn("You are using deprecated 'table_formatter' named 'adoc_deprecated', which will be "\
                              "removed in a future version. Start using 'adoc_plain' or register your own "\
                              "implementation of AbstractTableFormatStrategy.")
@@ -328,7 +334,7 @@ module GrafanaReporter
         end.join("\n")
       end
 
-      AbstractTableFormatStrategy.get(opts[:table_formatter].raw_value).format(result, opts[:include_headline].raw_value.downcase == 'true')
+      AbstractTableFormatStrategy.get(opts[:table_formatter].raw_value).format(result, opts[:include_headline].raw_value.downcase == 'true', opts[:transpose].raw_value.downcase == 'true')
     end
 
     # Used to translate the relative date strings used by grafana, e.g. +now-5d/w+ to the
@@ -346,6 +352,7 @@ module GrafanaReporter
     # @param timezone [Grafana::Variable] timezone to use, if not system timezone
     # @return [String] translated date as timestamp string
     def translate_date(orig_date, report_time, is_to_time, timezone = nil)
+      # TODO: grafana is sometimes nil
       @grafana.logger.warn("#translate_date has been called without 'report_time' - using current time as fallback.") unless report_time
       report_time ||= ::Grafana::Variable.new(Time.now.to_s)
       orig_date = orig_date.raw_value if orig_date.is_a?(Grafana::Variable)
