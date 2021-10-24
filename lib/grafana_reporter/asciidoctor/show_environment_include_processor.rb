@@ -37,29 +37,29 @@ module GrafanaReporter
         vars = vars.merge(build_attribute_hash(doc.attributes, attrs))
 
         # query reporter environment
-        result = ['== Reporter']
+        result = ['== Reporter', '|===']
         query = QueryValueQuery.new(grafana, variables: vars.merge({'transpose' => 'true'}))
-        query.datasource = ReporterEnvironmentDatasource.new(nil)
+        query.datasource = ::GrafanaReporter::ReporterEnvironmentDatasource.new(nil)
         result += query.execute.split("\n")
 
         # query grafana environment
-        result += ['',
-                 '== Grafana Instance']
+        result += ['|===', '',
+                   '== Grafana Instance', '|===']
         query = QueryValueQuery.new(grafana, variables: vars.merge({'transpose' => 'true'}))
         query.raw_query = {grafana: grafana, mode: 'general'}
-        query.datasource = GrafanaEnvironmentDatasource.new(nil)
+        query.datasource = ::Grafana::GrafanaEnvironmentDatasource.new(nil)
         result += query.execute.split("\n")
 
-        result += ['',
-                 '== Accessible Dashboards']
+        result += ['|===', '',
+                   '== Accessible Dashboards', '|===']
         query = QueryValueQuery.new(grafana, variables: vars)
         query.raw_query = {grafana: grafana, mode: 'dashboards'}
-        query.datasource = GrafanaEnvironmentDatasource.new(nil)
+        query.datasource = Grafana::GrafanaEnvironmentDatasource.new(nil)
         result += query.execute.split("\n")
 
-        result += ['',
-                 '== Accessible Variables',
-                 '|===']
+        result += ['|===', '',
+                   '== Accessible Variables',
+                   '|===']
         doc.attributes.sort.each do |k, v|
           result << "| `+{#{k}}+` | #{v}"
         end
