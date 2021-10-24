@@ -9,15 +9,17 @@ module GrafanaReporter
       'csv'
     end
 
-    # @see AbstractTableFormatStrategy#format
-    def format(result, include_headline, transposed)
-      headline = result[:header].map { |item| item.to_s.gsub(',', '\\,') }.join(',')
-
-      content = result[:content].map do |row|
-        row.map { |item| item.to_s.gsub(',', '\,') }.join(',')
-      end.join("\n")
-
-      "#{"#{headline}\n" if include_headline}#{content}"
+    # @see AbstractTableFormatStrategy#format_rules
+    def format_rules
+      {
+        row_start: '',
+        row_end: "\n",
+        cell_start: '',
+        between_cells: ', ',
+        cell_end: '',
+        replace_string_or_regex: ',',
+        replacement: '\\,'
+      }
     end
   end
 end

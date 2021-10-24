@@ -10,22 +10,17 @@ module GrafanaReporter
         'adoc_plain'
       end
 
-      # @see AbstractTableFormatStrategy#format
-      def format(result, include_headline, transposed)
-        content = result[:content]
-        if include_headline
-          if transposed
-            content.each_index do |i|
-              content[i] = [result[:header][i]] + content[i]
-            end
-          else
-            content = content.unshift(result[:header])
-          end
-        end
-
-        content.map do |row|
-          '| ' + row.map { |item| item.to_s.gsub(' | ', '\\|') }.join(' | ')
-        end.join("\n")
+      # @see AbstractTableFormatStrategy#format_rules
+      def format_rules
+        {
+          row_start: '| ',
+          row_end: "\n",
+          cell_start: '',
+          between_cells: ' | ',
+          cell_end: '',
+          replace_string_or_regex: '|',
+          replacement: '\\|'
+        }
       end
     end
   end
