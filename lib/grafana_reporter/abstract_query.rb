@@ -44,6 +44,7 @@ module GrafanaReporter
       else
         raise GrafanaReporterError, "Internal error in AbstractQuery: given object is of type #{grafana_obj.class.name}, which is not supported"
       end
+      @logger = @grafana ? @grafana.logger : ::Logger.new($stderr, level: :info)
       @variables = {}
       @variables['from'] = Grafana::Variable.new(nil)
       @variables['to'] = Grafana::Variable.new(nil)
@@ -195,8 +196,7 @@ module GrafanaReporter
               row[i] = format % row[i] if row[i]
             end
           rescue StandardError => e
-            # TODO: grafana is sometimes nil
-            @grafana.logger.error(e.message)
+            @logger.error(e.message)
             row[i] = e.message
           end
         end
@@ -261,8 +261,7 @@ module GrafanaReporter
                   begin
                     row[i] = row[i].to_s.gsub(/#{k}/, v) if row[i].to_s =~ /#{k}/
                   rescue StandardError => e
-                    # TODO: grafana is sometimes nil
-                    @grafana.logger.error(e.message)
+                    @logger.error(e.message)
                     row[i] = e.message
                   end
 
@@ -287,8 +286,7 @@ module GrafanaReporter
                                  end
                       end
                     rescue StandardError => e
-                      # TODO: grafana is sometimes nil
-                      @grafana.logger.error(e.message)
+                      @logger.error(e.message)
                       row[i] = e.message
                     end
                   end
@@ -323,10 +321,9 @@ module GrafanaReporter
                transpose: Grafana::Variable.new('false') }.merge(opts.delete_if {|_k, v| v.nil? })
 
       if opts[:table_formatter].raw_value == 'adoc_deprecated'
-        # TODO: grafana is sometimes nil
-        @grafana.logger.warn("You are using deprecated 'table_formatter' named 'adoc_deprecated', which will be "\
-                             "removed in a future version. Start using 'adoc_plain' or register your own "\
-                             "implementation of AbstractTableFormatStrategy.")
+        @logger.warn("You are using deprecated 'table_formatter' named 'adoc_deprecated', which will be "\
+                     "removed in a future version. Start using 'adoc_plain' or register your own "\
+                     "implementation of AbstractTableFormatStrategy.")
         return result[:content].map do |row|
           opts[:row_divider].raw_value + row.map do |item|
             item.to_s.gsub('|', '\\|')
@@ -352,8 +349,7 @@ module GrafanaReporter
     # @param timezone [Grafana::Variable] timezone to use, if not system timezone
     # @return [String] translated date as timestamp string
     def translate_date(orig_date, report_time, is_to_time, timezone = nil)
-      # TODO: grafana is sometimes nil
-      @grafana.logger.warn("#translate_date has been called without 'report_time' - using current time as fallback.") unless report_time
+      @logger.warn("#translate_date has been called without 'report_time' - using current time as fallback.") unless report_time
       report_time ||= ::Grafana::Variable.new(Time.now.to_s)
       orig_date = orig_date.raw_value if orig_date.is_a?(Grafana::Variable)
 
