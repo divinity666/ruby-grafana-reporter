@@ -28,42 +28,44 @@ module GrafanaReporter
       def process(doc, reader, _target, attrs)
         # return if @report.cancel
         @report.next_step
+        instance = attrs['instance'] || doc.attr('grafana_default_instance') || 'default'
+        attrs['result_type'] = 'sql_table'
         @report.logger.debug('Processing ShowEnvironmentIncludeProcessor')
+        grafana = @report.grafana(instance)
 
-        vars = ['== Reporter',
-                '|===',
-                "| Version | #{GRAFANA_REPORTER_VERSION.join('.')}",
-                "| Build date | #{GRAFANA_REPORTER_RELEASE_DATE}",
-                '|===']
+        vars = { 'table_formatter' => 'adoc_plain', 'include_headline' => 'true'}
+        vars = vars.merge(build_attribute_hash(doc.attributes, attrs))
 
-        if attrs['instance']
-          grafana = @report.grafana(attrs['instance'])
+        # query reporter environment
+        result = ['== Reporter']
+        query = QueryValueQuery.new(grafana, variables: vars.merge({'transpose' => 'true'}))
+        query.datasource = ReporterEnvironmentDatasource.new(nil)
+        result += query.execute.split("\n")
 
-          vars += ['== Grafana Instance',
-                   '|===',
-                   "| Instance name | #{attrs['instance']}",
-                   "| Version | #{grafana.version}",
-                   "| Organization | #{grafana.organization['name']} (ID: #{grafana.organization['id']})",
-                   "| Access permissions | #{grafana.test_connection}",
-                   '|===',
-                   '',
-                   '== Accessible Dashboards',
-                   '|===',
-                   '| Dashboard ID | Dashboard name | # Panels']
-          grafana.dashboard_ids.each do |id|
-            vars << "| #{id} | #{grafana.dashboard(id).title} | #{grafana.dashboard(id).panels.length}"
-          end
-          vars << '|==='
-        end
+        # query grafana environment
+        result += ['',
+                 '== Grafana Instance']
+        query = QueryValueQuery.new(grafana, variables: vars.merge({'transpose' => 'true'}))
+        query.raw_query = {grafana: grafana, mode: 'general'}
+        query.datasource = GrafanaEnvironmentDatasource.new(nil)
+        result += query.execute.split("\n")
 
-        vars += ['== Accessible Variables',
-                '|===']
+        result += ['',
+                 '== Accessible Dashboards']
+        query = QueryValueQuery.new(grafana, variables: vars)
+        query.raw_query = {grafana: grafana, mode: 'dashboards'}
+        query.datasource = GrafanaEnvironmentDatasource.new(nil)
+        result += query.execute.split("\n")
+
+        result += ['',
+                 '== Accessible Variables',
+                 '|===']
         doc.attributes.sort.each do |k, v|
-          vars << "| `+{#{k}}+` | #{v}"
+          result << "| `+{#{k}}+` | #{v}"
         end
-        vars << '|==='
+        result << '|==='
 
-        reader.unshift_lines vars
+        reader.unshift_lines result
       end
 
       # @see ProcessorMixin#build_demo_entry

@@ -17,14 +17,7 @@ describe ShowEnvironmentIncludeProcessor do
     expect(@report.logger).not_to receive(:error)
     result = Asciidoctor.convert('include::grafana_environment[]', to_file: false)
     expect(result).not_to include('GrafanaReporterError')
-    expect(result).not_to include('Accessible Dashboards')
-    expect(result).to include('doctype-article')
-  end
-
-  it 'can show extended information for grafana instance' do
-    expect(@report.logger).not_to receive(:error)
-    result = Asciidoctor.convert('include::grafana_environment[instance="default"]', to_file: false)
-    expect(result).not_to include('GrafanaReporterError')
     expect(result).to include('Accessible Dashboards')
+    expect(result).to include('doctype-article')
   end
 end
