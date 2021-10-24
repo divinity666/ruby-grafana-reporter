@@ -50,6 +50,7 @@ module Grafana
       @logger.debug("Requesting #{uri} with '#{@options[:body]}' and timeout '#{timeout}'")
       response = @http.request(request)
       @logger.debug("Received response #{response}")
+      @logger.debug("HTTP response body: #{response.body}") unless response.code =~ /^2.*/
 
       response
     end
