@@ -26,7 +26,13 @@ module GrafanaReporter
         @progress_reporter = Thread.new {}
 
         @status = :running
-        accept_requests_loop
+        begin
+          accept_requests_loop
+        rescue SystemExit, Interrupt
+          @logger.info("Server shutting down.")
+          stop!
+          retry
+        end
         @status = :stopped
       end
 
@@ -56,8 +62,6 @@ module GrafanaReporter
         loop do
           # step 1) accept incoming connection
           socket = @server.accept
-
-          # TODO: shutdown properly on SIGINT/SIGHUB
 
           # stop webservice properly, if shall be shutdown
           if @status == :stopping
