@@ -35,6 +35,11 @@ module Grafana
       @model['uid']
     end
 
+    # @return [String] dashboard title
+    def title
+      @model['title']
+    end
+
     # @return [Panel] panel for the specified ID
     def panel(id)
       panels = @panels.select { |item| item.field('id') == id.to_i }
@@ -53,7 +58,7 @@ module Grafana
       list = @model['templating']['list']
       return unless list.is_a? Array
 
-      list.each { |item| @variables << Variable.new(item) }
+      list.each { |item| @variables << Variable.new(item, self) }
     end
 
     # read panels

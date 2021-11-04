@@ -143,6 +143,8 @@ module GrafanaReporter
       notify(:on_before_create)
       @start_time = Time.new
       logger.info("Report started at #{@start_time}")
+      logger.info("You are running ruby-grafana-reporter version #{GRAFANA_REPORTER_VERSION.join('.')}.")
+      logger.info("A newer version is released. Check out https://github.com/divinity666/ruby-grafana-reporter/releases/latest") unless @config.latest_version_check_ok?
       build
     rescue MissingTemplateError => e
       @logger.error(e.message)

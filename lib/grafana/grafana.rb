@@ -25,6 +25,30 @@ module Grafana
       initialize_datasources unless @base_uri.empty?
     end
 
+    # @return [Hash] Information about the current organization
+    def organization
+      return @organization if @organization
+
+      response = prepare_request({ relative_url: '/api/org/' }).execute
+      if response.is_a?(Net::HTTPOK)
+        @organization = JSON.parse(response.body)
+      end
+
+      @organization
+    end
+
+    # @return [String] grafana version
+    def version
+      return @version if @version
+
+      response = prepare_request({ relative_url: '/api/health' }).execute
+      if response.is_a?(Net::HTTPOK)
+        @version = JSON.parse(response.body)['version']
+      end
+
+      @version
+    end
+
     # Used to test a connection to the grafana instance.
     #
     # Running this function also determines, if the API configured here has Admin or NON-Admin privileges,
@@ -50,7 +74,7 @@ module Grafana
     # @return [Datasource] Datasource for the specified datasource name
     def datasource_by_name(datasource_name)
       datasource_name = 'default' if datasource_name.to_s.empty?
-      # TODO: add support for grafana builtin datasource types
+      # TODO: PRIO add support for grafana builtin datasource types
       return UnsupportedDatasource.new(nil) if datasource_name.to_s =~ /-- (?:Mixed|Dashboard|Grafana) --/
       raise DatasourceDoesNotExistError.new('name', datasource_name) unless @datasources[datasource_name]
 

@@ -26,7 +26,13 @@ module GrafanaReporter
         @progress_reporter = Thread.new {}
 
         @status = :running
-        accept_requests_loop
+        begin
+          accept_requests_loop
+        rescue SystemExit, Interrupt
+          @logger.info("Server shutting down.")
+          stop!
+          retry
+        end
         @status = :stopped
       end
 
@@ -56,8 +62,6 @@ module GrafanaReporter
         loop do
           # step 1) accept incoming connection
           socket = @server.accept
-
-          # TODO: shutdown properly on SIGINT/SIGHUB
 
           # stop webservice properly, if shall be shutdown
           if @status == :stopping
@@ -252,7 +256,7 @@ module GrafanaReporter
             <% end.join('') %>
             <tbody>
           </table>
-          <p style="font-size: small; color:grey">You are running ruby-grafana-reporter version <%= GRAFANA_REPORTER_VERSION.join('.') %>.</p>
+          <p style="font-size: small; color:grey">You are running ruby-grafana-reporter version <%= GRAFANA_REPORTER_VERSION.join('.') %>.<%= @config.latest_version_check_ok? ? '' : ' Check out the latest version <a href="https://github.com/divinity666/ruby-grafana-reporter/releases/latest">here</a>.' %></p>
           </body>
           </html>
         HTML_TEMPLATE

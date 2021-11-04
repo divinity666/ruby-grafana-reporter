@@ -1118,6 +1118,16 @@
     "templating": {
       "list": [
         {
+          "description": null,
+          "error": null,
+          "hide": 2,
+          "label": null,
+          "name": "constantvariable",
+          "query": "test,bla",
+          "skipUrlSync": false,
+          "type": "constant"
+        },
+        {
           "allValue": null,
           "current": {
             "selected": false,
@@ -1235,6 +1245,32 @@
           "queryValue": "",
           "skipUrlSync": false,
           "type": "custom"
+        },
+        {
+          "allValue": null,
+          "current": {
+            "tags": [],
+            "text": "All",
+            "value": "$__all"
+          },
+          "datasource": "demo",
+          "definition": "SELECT 2 UNION ALL SELECT 3",
+          "hide": 0,
+          "includeAll": true,
+          "label": null,
+          "multi": false,
+          "name": "queryvariable",
+          "options": [],
+          "query": "SELECT 2 UNION ALL SELECT 3",
+          "refresh": 1,
+          "regex": "",
+          "skipUrlSync": false,
+          "sort": 0,
+          "tagValuesQuery": "",
+          "tags": [],
+          "tagsQuery": "",
+          "type": "query",
+          "useTags": false
         },
         {
           "allValue": null,

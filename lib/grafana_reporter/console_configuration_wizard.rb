@@ -6,7 +6,6 @@ module GrafanaReporter
   class ConsoleConfigurationWizard
     # Provides a command line configuration wizard for setting up the necessary configuration
     # file.
-    # TODO: refactor class
     def start_wizard(config_file, console_config)
       action = overwrite_or_use_config_file(config_file)
       return if action == 'abort'
@@ -73,6 +72,9 @@ module GrafanaReporter
 #{grafana}
 
 grafana-reporter:
+# Specifies how often the reporter shall check for newer versions [number of days].
+# You may set check-for-updates to 0 to disable
+  check-for-updates: 1
   report-class: GrafanaReporter::Asciidoctor::Report
   templates-folder: #{templates}
   reports-folder: #{reports}

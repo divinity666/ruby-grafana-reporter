@@ -49,6 +49,8 @@ module Grafana
     def preformat_response(response_body)
       results = {}
       results.default = []
+      results[:header] = []
+      results[:content] = []
 
       JSON.parse(response_body)['results'].each_value do |query_result|
         if query_result.key?('error')

@@ -37,7 +37,8 @@ module GrafanaReporter
                                     row_divider: @variables['row_divider'],
                                     column_divider: @variables['column_divider'],
                                     table_formatter: @variables['table_formatter'],
-                                    include_headline: @variables['include_headline'])
+                                    include_headline: @variables['include_headline'],
+                                    transpose: @variables['transpose'])
     end
   end
 end

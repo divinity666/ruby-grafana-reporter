@@ -12,11 +12,15 @@ describe Dashboard do
   end
 
   it 'contains variables' do
-    expect(dashboard.variables.length).to eq(4)
+    expect(dashboard.variables.length).to eq(6)
     expect(dashboard.variables.select { |item| item.name == 'test' }.first.name).to eq('test')
     variable = dashboard.variables.select { |item| item.name == 'test' }.first
 
     expect(dashboard.from_time).to eq('now-24h')
     expect(dashboard.to_time).to be_nil
+  end
+
+  it 'can return title' do
+    expect(dashboard.title).to eq("Todayd")
   end
 end

@@ -19,8 +19,14 @@ module GrafanaReporter
       modify_results
 
       case @variables['result_type'].raw_value
+      when 'object'
+
       when /(?:panel_table|sql_table)/
-        @result = format_table_output(@result, row_divider: @variables['row_divider'], column_divider: @variables['column_divider'], table_formatter: @variables['table_formatter'], include_headline: @variables['include_headline'])
+        @result = format_table_output(@result, row_divider: @variables['row_divider'],
+                                               column_divider: @variables['column_divider'],
+                                               table_formatter: @variables['table_formatter'],
+                                               include_headline: @variables['include_headline'],
+                                               transpose: @variables['transpose'])
 
       when /(?:panel_value|sql_value)/
         tmp = @result[:content] || []

@@ -55,12 +55,6 @@ module GrafanaReporter
       results = {}
 
       dashboard.panels.shuffle.each do |panel|
-        begin
-          next if panel.datasource.is_a?(Grafana::UnsupportedDatasource)
-        rescue Grafana::DatasourceDoesNotExistError
-          next
-        end
-
         query_classes.each do |query_class|
           unless query_class.public_instance_methods.include?(:build_demo_entry)
             results[query_class] = "Method 'build_demo_entry' not implemented for #{query_class.name}"
@@ -77,6 +71,9 @@ module GrafanaReporter
             # currently not allowed
           rescue StandardError => e
             puts "#{e.message}\n#{e.backtrace.join("\n")}"
+          rescue NotImplementedError
+            # Ignore these errors, as it only means, that a class does not implement
+            # the demo entry
           end
         end
       end

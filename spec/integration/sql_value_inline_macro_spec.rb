@@ -20,6 +20,10 @@ describe SqlValueInlineMacro do
       expect(Asciidoctor.convert("grafana_sql_value:#{STUBS[:datasource_sql]}[sql=\"SELECT 1\"]", to_file: false)).to include('1')
     end
 
+    it 'can handle errors' do
+      expect(Asciidoctor.convert("grafana_sql_value:#{STUBS[:datasource_sql]}[sql=\"SELECT error\"]", to_file: false)).to include('db query error')
+    end
+
     it 'can translate times' do
       @report.logger.level = ::Logger::Severity::DEBUG
       expect(@report.logger).to receive(:debug).exactly(3).times.with(any_args)

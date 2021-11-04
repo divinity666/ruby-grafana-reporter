@@ -44,5 +44,14 @@ describe Grafana do
     it 'has NON-Admin rights' do
       expect(subject.test_connection).to eq('NON-Admin')
     end
+
+    it 'can return organization information' do
+      expect(subject.organization['id']).to eq(STUBS[:org_id])
+      expect(subject.organization['name']).to eq(STUBS[:org_name])
+    end
+
+    it 'can return grafana version' do
+      expect(subject.version).to eq(STUBS[:version])
+    end
   end
 end

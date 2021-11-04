@@ -7,8 +7,8 @@ module GrafanaReporter
     # Implements the hook
     #   grafana_panel_image::<panel_id>[<options>]
     #
-    # Stores the queried panel as a temporary image file and returns an asciidoctor link
-    # to be included in the report.
+    # Stores the queried panel as a temporary image file and returns a relative asciidoctor link
+    # to the storage location, which can then be included in the report.
     #
     # == Used document parameters
     # +grafana_default_instance+ - name of grafana instance, 'default' if not specified
@@ -20,8 +20,6 @@ module GrafanaReporter
     # +to+ - 'to' time for the sql query
     #
     # == Supported options
-    # +field+ - property to query for, e.g. +description+ or +title+ (*mandatory*)
-    #
     # +instance+ - name of grafana instance, 'default' if not specified
     #
     # +dashboard+ - uid of grafana dashboard to use

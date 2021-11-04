@@ -44,6 +44,7 @@ module GrafanaReporter
       else
         raise GrafanaReporterError, "Internal error in AbstractQuery: given object is of type #{grafana_obj.class.name}, which is not supported"
       end
+      @logger = @grafana ? @grafana.logger : ::Logger.new($stderr, level: :info)
       @variables = {}
       @variables['from'] = Grafana::Variable.new(nil)
       @variables['to'] = Grafana::Variable.new(nil)
@@ -79,7 +80,7 @@ module GrafanaReporter
       raise DatasourceNotSupportedError.new(@datasource, self) if @datasource.is_a?(Grafana::UnsupportedDatasource)
 
       begin
-        @result = @datasource.request(from: from, to: to, raw_query: raw_query, variables: grafana_variables,
+        @result = @datasource.request(from: from, to: to, raw_query: raw_query, variables: @variables,
                                       prepared_request: @grafana.prepare_request, timeout: timeout)
       rescue ::Grafana::GrafanaError
         # grafana errors will be directly passed through
@@ -143,6 +144,8 @@ module GrafanaReporter
     #
     # Multiple columns may be filtered. Therefore the column titles have to be named in the
     # {Grafana::Variable#raw_value} and have to be separated by +,+ (comma).
+    #
+    # Commas can be used in a format string, but need to be escaped by using +_,+.
     # @param result [Hash] preformatted sql hash, (see {Grafana::AbstractDatasource#request})
     # @param filter_columns_variable [Grafana::Variable] column names, which shall be removed in the query result
     # @return [Hash] filtered query result
@@ -150,8 +153,8 @@ module GrafanaReporter
       return result unless filter_columns_variable
 
       filter_columns = filter_columns_variable.raw_value
-      filter_columns.split(',').each do |filter_column|
-        pos = result[:header].index(filter_column)
+      filter_columns.split(/(?<!_),/).each do |filter_column|
+        pos = result[:header].index(filter_column.gsub("_,", ","))
 
         unless pos.nil?
           result[:header].delete_at(pos)
@@ -167,23 +170,33 @@ module GrafanaReporter
     # The formatting will be applied separately for every column. Therefore the column formats have to be named
     # in the {Grafana::Variable#raw_value} and have to be separated by +,+ (comma). If no value is specified for
     # a column, no change will happen.
+    #
+    # It is also possible to format milliseconds as dates by specifying date formats, e.g. +date:iso+. It is
+    # possible to use any date format according
+    # {https://grafana.com/docs/grafana/latest/variables/variable-types/global-variables/#from-and-to}
+    #
+    # Commas can be used in a format string, but need to be escaped by using +_,+.
     # @param result [Hash] preformatted sql hash, (see {Grafana::AbstractDatasource#request})
     # @param formats [Grafana::Variable] formats, which shall be applied to the columns in the query result
     # @return [Hash] formatted query result
     def format_columns(result, formats)
       return result unless formats
 
-      formats.text.split(',').each_index do |i|
-        format = formats.text.split(',')[i]
+      formats.text.split(/(?<!_),/).each_index do |i|
+        format = formats.text.split(/(?<!_),/)[i].gsub("_,", ",")
         next if format.empty?
 
         result[:content].map do |row|
           next unless row.length > i
 
           begin
-            row[i] = format % row[i] if row[i]
+            if format =~ /^date:/
+              row[i] = ::Grafana::Variable.format_as_date(row[i], format.sub(/^date:/, '')) if row[i]
+            else
+              row[i] = format % row[i] if row[i]
+            end
           rescue StandardError => e
-            @grafana.logger.error(e.message)
+            @logger.error(e.message)
             row[i] = e.message
           end
         end
@@ -248,7 +261,7 @@ module GrafanaReporter
                   begin
                     row[i] = row[i].to_s.gsub(/#{k}/, v) if row[i].to_s =~ /#{k}/
                   rescue StandardError => e
-                    @grafana.logger.error(e.message)
+                    @logger.error(e.message)
                     row[i] = e.message
                   end
 
@@ -273,7 +286,7 @@ module GrafanaReporter
                                  end
                       end
                     rescue StandardError => e
-                      @grafana.logger.error(e.message)
+                      @logger.error(e.message)
                       row[i] = e.message
                     end
                   end
@@ -298,17 +311,19 @@ module GrafanaReporter
     # @option opts [Grafana::Variable] :column_divider requested row divider for the result table, only to be used with table_formatter `adoc_deprecated`
     # @option opts [Grafana::Variable] :include_headline specifies if table should contain headline, defaults to false
     # @option opts [Grafana::Variable] :table_formatter specifies which formatter shall be used, defaults to 'csv'
+    # @option opts [Grafana::Variable] :transposed specifies whether the result table is transposed
     # @return [String] table in custom output format
     def format_table_output(result, opts)
       opts = { include_headline: Grafana::Variable.new('false'),
                table_formatter: Grafana::Variable.new('csv'),
                row_divider: Grafana::Variable.new('| '),
-               column_divider: Grafana::Variable.new(' | ') }.merge(opts.delete_if {|_k, v| v.nil? })
+               column_divider: Grafana::Variable.new(' | '),
+               transpose: Grafana::Variable.new('false') }.merge(opts.delete_if {|_k, v| v.nil? })
 
       if opts[:table_formatter].raw_value == 'adoc_deprecated'
-        @grafana.logger.warn("You are using deprecated 'table_formatter' named 'adoc_deprecated', which will be "\
-                             "removed in a future version. Start using 'adoc_plain' or register your own "\
-                             "implementation of AbstractTableFormatStrategy.")
+        @logger.warn("You are using deprecated 'table_formatter' named 'adoc_deprecated', which will be "\
+                     "removed in a future version. Start using 'adoc_plain' or register your own "\
+                     "implementation of AbstractTableFormatStrategy.")
         return result[:content].map do |row|
           opts[:row_divider].raw_value + row.map do |item|
             item.to_s.gsub('|', '\\|')
@@ -316,7 +331,7 @@ module GrafanaReporter
         end.join("\n")
       end
 
-      AbstractTableFormatStrategy.get(opts[:table_formatter].raw_value).format(result, opts[:include_headline].raw_value.downcase == 'true')
+      AbstractTableFormatStrategy.get(opts[:table_formatter].raw_value).format(result, opts[:include_headline].raw_value.downcase == 'true', opts[:transpose].raw_value.downcase == 'true')
     end
 
     # Used to translate the relative date strings used by grafana, e.g. +now-5d/w+ to the
@@ -334,7 +349,7 @@ module GrafanaReporter
     # @param timezone [Grafana::Variable] timezone to use, if not system timezone
     # @return [String] translated date as timestamp string
     def translate_date(orig_date, report_time, is_to_time, timezone = nil)
-      @grafana.logger.warn("#translate_date has been called without 'report_time' - using current time as fallback.") unless report_time
+      @logger.warn("#translate_date has been called without 'report_time' - using current time as fallback.") unless report_time
       report_time ||= ::Grafana::Variable.new(Time.now.to_s)
       orig_date = orig_date.raw_value if orig_date.is_a?(Grafana::Variable)
 
@@ -405,20 +420,13 @@ module GrafanaReporter
     def datasource_response_valid?
       return false if @result.nil?
       return false unless @result.is_a?(Hash)
-      # TODO: compare how empty valid responses look like in grafana
-      return true if @result.empty?
+      return false if @result.empty?
       return false unless @result.key?(:header)
       return false unless @result.key?(:content)
       return false unless @result[:header].is_a?(Array)
       return false unless @result[:content].is_a?(Array)
 
       true
-    end
-
-    # @return [Hash<String, Variable>] all grafana variables stored in this query, i.e. the variable name
-    #  is prefixed with +var-+
-    def grafana_variables
-      @variables.select { |k, _v| k =~ /^var-.+/ }
     end
 
     def delta_date(date, delta_count, time_letter)

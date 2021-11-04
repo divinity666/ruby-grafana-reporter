@@ -59,6 +59,12 @@ describe Variable do
       expect(subject.text).to eq('resolved')
     end
 
+    it 'can handle type "constant" variables' do
+      obj = Dashboard.new(JSON.parse(File.read('./spec/tests/demo_dashboard.json'))['dashboard'], Grafana::Grafana.new('')).variables.select { |item| item.name == 'constantvariable' }.first
+      expect(obj.text).to eq('test,bla')
+      expect(obj.raw_value).to eq('test,bla')
+    end
+
     context 'date' do
       subject { dashboard.variables.select { |item| item.name == 'timestamp' }.first }
 
@@ -122,6 +128,10 @@ describe Variable do
       expect(subject.value_formatted('other')).to eq("{1,2,,,$,/,\",',.,a,|,\\}")
     end
 
+    it "raises error if date format is specified for multiselect field" do
+      expect { subject.value_formatted('date:iso') }.to raise_error(GrafanaError)
+    end
+
     it "handles selection 'All' properly" do
       obj = Dashboard.new(JSON.parse(File.read('./spec/tests/demo_dashboard.json'))['dashboard'], Grafana::Grafana.new('')).variables.select { |item| item.name == 'testmulti' }.first
       obj.raw_value = '$__all'
@@ -135,6 +145,12 @@ describe Variable do
     it 'contains proper values' do
       expect(subject.multi?).to be_falsey
       expect(subject.raw_value).to eq('10')
+    end
+
+    it 'can handle type "query" variables' do
+      obj = Dashboard.new(JSON.parse(File.read('./spec/tests/demo_dashboard.json'))['dashboard'], Grafana::Grafana.new(STUBS[:url], STUBS[:key_admin])).variables.select { |item| item.name == 'queryvariable' }.first
+      expect(obj.raw_value).to eq('$__all')
+      expect(obj.value_formatted).to eq('\'2\',\'3\'')
     end
 
     it 'contains name' do

@@ -12,6 +12,11 @@ describe AbstractQuery do
     expect { AbstractQuery.new(Grafana::Variable.new('test')) }.to raise_error(GrafanaReporterError)
   end
 
+  it 'can log properly without given grafana object' do
+    expect_any_instance_of(Logger).to receive(:warn).exactly(:once)
+    subject.translate_date('now', nil, true)
+  end
+
   context 'translate date' do
     it 'can translate now' do
       expect(subject.translate_date('now', Variable.new('2020-07-28T20:58:03.005+0200'), false)).to eq('1595962683000')

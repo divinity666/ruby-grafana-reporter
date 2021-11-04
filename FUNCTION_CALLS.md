@@ -62,19 +62,23 @@ See also: https://grafana.com/docs/grafana/latest/http_api/alerting/#get-alerts
 | Option | Description
 | -- | -- 
 | `column_divider="<divider>"` | Replace the default column divider with another one, when used in conjunction with `table_formatter` set to `adoc_deprecated`. Defaults to ` \| ` for being interpreted as a asciidoctor column. DEPRECATED: switch to `table_formatter` named `adoc_plain`, or implement a custom table formatter.
+| `columns="<column_name_1>,<columns_name_2>,..."` | Specifies columns that shall be returned. Valid columns are `id`, `dashboardId`, `dashboardUId`, `dashboardSlug`, `panelId`, `name`, `state`, `newStateDate`, `evalDate`, `evalData` and `executionError`.
 | `dashboard="<dashboard_uid>"` | Specifies the dashboard to be used. If `grafana_default_dashboard` is specified in the report template, this value can be overridden with this option. If this option, or the global option `grafana_default_dashboard` is set, the resulting alerts will be limited to this dashboard. To show all alerts in this case, specify `dashboard=""` as option
-| `filter_columns="<column_name_1>,<column_name_2>,..."` | Removes specified columns from result. Execution is applied in the following order `format`, `replace_values`, `filter_columns`, `transpose`.
-| `format="<format_col1>,<format_col2>,..."` | Specify format in which the results shall be returned, e.g. `%.2f` for only two digit decimals of a float. Several columns are separated by `,`. Execution is applied in the following order `format`, `replace_values`, `filter_columns`, `transpose`.
+| `filter_columns="<column_name_1>,<column_name_2>,..."` | Removes specified columns from result. Execution of related functions is applied in the following order `format`, `replace_values`, `filter_columns`, `transpose`.
+| `format="<format_col1>,<format_col2>,..."` | Specify format in which the results in a specific column shall be returned, e.g. `%.2f` for only two digit decimals of a float. Several column formats are separated by `,`, i.e. `%.2f,%.3f` would apply `%.2f` to the first column and `%.3f` to the second column. All other columns would not be formatted. Execution of related functions is applied in the following order `format`, `replace_values`, `filter_columns`, `transpose`.
+See also: https://ruby-doc.org/core/Kernel.html#method-i-sprintf
 | `from="<timestamp>"` | can be used to override default `from` time
 | `from_timezone="<timezone>"` | can be used to override system timezone for `from` time and will also override `grafana_default_from_timezone` option
 | `instance="<instance_name>"` | can be used to override global grafana instance, set in the report with `grafana_default_instance`. If nothing is set, the configured grafana instance with name `default` will be used.
-| `replace_values="<replace_1>:<with_1>,<replace_2>:<with_2>,..."` | Specify result values which shall be replaced, e.g. `2:OK` will replace query values `2` with value `OK`. Replacing several values is possible by separating by `,`. Matches with regular expressions are also supported, but must be full matches, i.e. have to start with `^` and end with `$`, e.g. `^[012]$:OK`. Number replacements can also be performed, e.g. `<8.2` or `<>3`. Execution is applied in the following order `format`, `replace_values`, `filter_columns`, `transpose`.
-| `row_divider="<divider>"` | Replace the default row divider with another one, when used in conjunction with `table_formatter` set to `adoc_deprecated`. . Defaults to `\| ` for being interpreted as a asciidoctor row. DEPRECATED: switch to `table_formatter` named `adoc_plain`, or implement a custom table formatter.
+| `panel="<panel_id>"` | If specified, the resulting alerts are filtered for this panel. This option will only work, if a `dashboard` or `grafana_default_dashboard` is set.
+| `replace_values="<replace_1>:<with_1>,<replace_2>:<with_2>,..."` | Specify result values which shall be replaced, e.g. `2:OK` will replace query values `2` with value `OK`. Replacing several values is possible by separating by `,`. Matches with regular expressions are also supported, but must be full matches, i.e. have to start with `^` and end with `$`, e.g. `^[012]$:OK`. Number replacements can also be performed, e.g. `<8.2` or `<>3`. Execution of related functions is applied in the following order `format`, `replace_values`, `filter_columns`, `transpose`.
+See also: https://ruby-doc.org/core/Regexp.html#class-Regexp-label-Character+Classes
+| `row_divider="<divider>"` | Replace the default row divider with another one, when used in conjunction with `table_formatter` set to `adoc_deprecated`. Defaults to `\| ` for being interpreted as a asciidoctor row. DEPRECATED: switch to `table_formatter` named `adoc_plain`, or implement a custom table formatter.
 | `table_formatter="<formatter>"` | Specify a table formatter fitting for your expected target format. It defaults to `adoc_plain` for asciidoctor templates and to `csv` for all other templates, e.g. ERB.
 | `timeout="<timeout_in_seconds>"` | Set a timeout for the current query. If not overridden with `grafana_default_timeout` in the report template, this defaults to 60 seconds.
 | `to="<timestamp>"` | can be used to override default `to` time
 | `to_timezone="<timezone>"` | can be used to override system timezone for `to` time and will also override `grafana_default_to_timezone` option
-| `transpose="true"` | Transposes the query result, i.e. columns become rows and rows become columnns. Execution is applied in the following order `format`, `replace_values`, `filter_columns`, `transpose`.
+| `transpose="true"` | Transposes the query result, i.e. columns become rows and rows become columnns. Execution of related functions is applied in the following order `format`, `replace_values`, `filter_columns`, `transpose`.
 
 ### `grafana_annotations`
 Usage: `include::grafana_annotations[columns="<column_name_1>,<column_name_2>,...",options]`
@@ -86,19 +90,23 @@ See also: https://grafana.com/docs/grafana/latest/http_api/annotations/#find-ann
 | Option | Description
 | -- | -- 
 | `column_divider="<divider>"` | Replace the default column divider with another one, when used in conjunction with `table_formatter` set to `adoc_deprecated`. Defaults to ` \| ` for being interpreted as a asciidoctor column. DEPRECATED: switch to `table_formatter` named `adoc_plain`, or implement a custom table formatter.
+| `columns="<column_name_1>,<columns_name_2>,..."` | Specified the columns that shall be returned. Valid columns are `id`, `alertId`, `dashboardId`, `panelId`, `userId`, `userName`, `newState`, `prevState`, `time`, `timeEnd`, `text`, `metric` and `type`.
 | `dashboard="<dashboard_uid>"` | Specifies the dashboard to be used. If `grafana_default_dashboard` is specified in the report template, this value can be overridden with this option. If this option, or the global option `grafana_default_dashboard` is set, the resulting alerts will be limited to this dashboard. To show all alerts in this case, specify `dashboard=""` as option
-| `filter_columns="<column_name_1>,<column_name_2>,..."` | Removes specified columns from result. Execution is applied in the following order `format`, `replace_values`, `filter_columns`, `transpose`.
-| `format="<format_col1>,<format_col2>,..."` | Specify format in which the results shall be returned, e.g. `%.2f` for only two digit decimals of a float. Several columns are separated by `,`. Execution is applied in the following order `format`, `replace_values`, `filter_columns`, `transpose`.
+| `filter_columns="<column_name_1>,<column_name_2>,..."` | Removes specified columns from result. Execution of related functions is applied in the following order `format`, `replace_values`, `filter_columns`, `transpose`.
+| `format="<format_col1>,<format_col2>,..."` | Specify format in which the results in a specific column shall be returned, e.g. `%.2f` for only two digit decimals of a float. Several column formats are separated by `,`, i.e. `%.2f,%.3f` would apply `%.2f` to the first column and `%.3f` to the second column. All other columns would not be formatted. Execution of related functions is applied in the following order `format`, `replace_values`, `filter_columns`, `transpose`.
+See also: https://ruby-doc.org/core/Kernel.html#method-i-sprintf
 | `from="<timestamp>"` | can be used to override default `from` time
 | `from_timezone="<timezone>"` | can be used to override system timezone for `from` time and will also override `grafana_default_from_timezone` option
 | `instance="<instance_name>"` | can be used to override global grafana instance, set in the report with `grafana_default_instance`. If nothing is set, the configured grafana instance with name `default` will be used.
-| `replace_values="<replace_1>:<with_1>,<replace_2>:<with_2>,..."` | Specify result values which shall be replaced, e.g. `2:OK` will replace query values `2` with value `OK`. Replacing several values is possible by separating by `,`. Matches with regular expressions are also supported, but must be full matches, i.e. have to start with `^` and end with `$`, e.g. `^[012]$:OK`. Number replacements can also be performed, e.g. `<8.2` or `<>3`. Execution is applied in the following order `format`, `replace_values`, `filter_columns`, `transpose`.
-| `row_divider="<divider>"` | Replace the default row divider with another one, when used in conjunction with `table_formatter` set to `adoc_deprecated`. . Defaults to `\| ` for being interpreted as a asciidoctor row. DEPRECATED: switch to `table_formatter` named `adoc_plain`, or implement a custom table formatter.
+| `panel="<panel_id>"` | If specified, the resulting alerts are filtered for this panel. This option will only work, if a `dashboard` or `grafana_default_dashboard` is set.
+| `replace_values="<replace_1>:<with_1>,<replace_2>:<with_2>,..."` | Specify result values which shall be replaced, e.g. `2:OK` will replace query values `2` with value `OK`. Replacing several values is possible by separating by `,`. Matches with regular expressions are also supported, but must be full matches, i.e. have to start with `^` and end with `$`, e.g. `^[012]$:OK`. Number replacements can also be performed, e.g. `<8.2` or `<>3`. Execution of related functions is applied in the following order `format`, `replace_values`, `filter_columns`, `transpose`.
+See also: https://ruby-doc.org/core/Regexp.html#class-Regexp-label-Character+Classes
+| `row_divider="<divider>"` | Replace the default row divider with another one, when used in conjunction with `table_formatter` set to `adoc_deprecated`. Defaults to `\| ` for being interpreted as a asciidoctor row. DEPRECATED: switch to `table_formatter` named `adoc_plain`, or implement a custom table formatter.
 | `table_formatter="<formatter>"` | Specify a table formatter fitting for your expected target format. It defaults to `adoc_plain` for asciidoctor templates and to `csv` for all other templates, e.g. ERB.
 | `timeout="<timeout_in_seconds>"` | Set a timeout for the current query. If not overridden with `grafana_default_timeout` in the report template, this defaults to 60 seconds.
 | `to="<timestamp>"` | can be used to override default `to` time
 | `to_timezone="<timezone>"` | can be used to override system timezone for `to` time and will also override `grafana_default_to_timezone` option
-| `transpose="true"` | Transposes the query result, i.e. columns become rows and rows become columnns. Execution is applied in the following order `format`, `replace_values`, `filter_columns`, `transpose`.
+| `transpose="true"` | Transposes the query result, i.e. columns become rows and rows become columnns. Execution of related functions is applied in the following order `format`, `replace_values`, `filter_columns`, `transpose`.
 
 ### `grafana_environment`
 Usage: `include::grafana_environment[]`
@@ -121,6 +129,10 @@ Includes a panel image as an image in the document. Can be called for inline-ima
 | `from="<timestamp>"` | can be used to override default `from` time
 | `from_timezone="<timezone>"` | can be used to override system timezone for `from` time and will also override `grafana_default_from_timezone` option
 | `instance="<instance_name>"` | can be used to override global grafana instance, set in the report with `grafana_default_instance`. If nothing is set, the configured grafana instance with name `default` will be used.
+| `render-height="<height>"` | can be used to override default `height` in which the panel shall be rendered
+| `render-theme="<theme>"` | can be used to override default `theme` in which the panel shall be rendered (light by default)
+| `render-timeout="<timeout>"` | can be used to override default `timeout` in which the panel shall be rendered (60 seconds by default)
+| `render-width="<width>"` | can be used to override default `width` in which the panel shall be rendered
 | `timeout="<timeout_in_seconds>"` | Set a timeout for the current query. If not overridden with `grafana_default_timeout` in the report template, this defaults to 60 seconds.
 | `to="<timestamp>"` | can be used to override default `to` time
 | `to_timezone="<timezone>"` | can be used to override system timezone for `to` time and will also override `grafana_default_to_timezone` option
@@ -148,18 +160,21 @@ See also: https://grafana.com/docs/grafana/latest/variables/syntax/
 | -- | -- 
 | `column_divider="<divider>"` | Replace the default column divider with another one, when used in conjunction with `table_formatter` set to `adoc_deprecated`. Defaults to ` \| ` for being interpreted as a asciidoctor column. DEPRECATED: switch to `table_formatter` named `adoc_plain`, or implement a custom table formatter.
 | `dashboard="<dashboard_uid>"` | Specifies the dashboard to be used. If `grafana_default_dashboard` is specified in the report template, this value can be overridden with this option.
-| `filter_columns="<column_name_1>,<column_name_2>,..."` | Removes specified columns from result. Execution is applied in the following order `format`, `replace_values`, `filter_columns`, `transpose`.
-| `format="<format_col1>,<format_col2>,..."` | Specify format in which the results shall be returned, e.g. `%.2f` for only two digit decimals of a float. Several columns are separated by `,`. Execution is applied in the following order `format`, `replace_values`, `filter_columns`, `transpose`.
+| `filter_columns="<column_name_1>,<column_name_2>,..."` | Removes specified columns from result. Execution of related functions is applied in the following order `format`, `replace_values`, `filter_columns`, `transpose`.
+| `format="<format_col1>,<format_col2>,..."` | Specify format in which the results in a specific column shall be returned, e.g. `%.2f` for only two digit decimals of a float. Several column formats are separated by `,`, i.e. `%.2f,%.3f` would apply `%.2f` to the first column and `%.3f` to the second column. All other columns would not be formatted. Execution of related functions is applied in the following order `format`, `replace_values`, `filter_columns`, `transpose`.
+See also: https://ruby-doc.org/core/Kernel.html#method-i-sprintf
 | `from="<timestamp>"` | can be used to override default `from` time
 | `from_timezone="<timezone>"` | can be used to override system timezone for `from` time and will also override `grafana_default_from_timezone` option
 | `instance="<instance_name>"` | can be used to override global grafana instance, set in the report with `grafana_default_instance`. If nothing is set, the configured grafana instance with name `default` will be used.
-| `replace_values="<replace_1>:<with_1>,<replace_2>:<with_2>,..."` | Specify result values which shall be replaced, e.g. `2:OK` will replace query values `2` with value `OK`. Replacing several values is possible by separating by `,`. Matches with regular expressions are also supported, but must be full matches, i.e. have to start with `^` and end with `$`, e.g. `^[012]$:OK`. Number replacements can also be performed, e.g. `<8.2` or `<>3`. Execution is applied in the following order `format`, `replace_values`, `filter_columns`, `transpose`.
-| `row_divider="<divider>"` | Replace the default row divider with another one, when used in conjunction with `table_formatter` set to `adoc_deprecated`. . Defaults to `\| ` for being interpreted as a asciidoctor row. DEPRECATED: switch to `table_formatter` named `adoc_plain`, or implement a custom table formatter.
+| `query="<query_letter>"` | +<query_letter>+ needs to point to the grafana query which shall be evaluated, e.g. +A+ or +B+.
+| `replace_values="<replace_1>:<with_1>,<replace_2>:<with_2>,..."` | Specify result values which shall be replaced, e.g. `2:OK` will replace query values `2` with value `OK`. Replacing several values is possible by separating by `,`. Matches with regular expressions are also supported, but must be full matches, i.e. have to start with `^` and end with `$`, e.g. `^[012]$:OK`. Number replacements can also be performed, e.g. `<8.2` or `<>3`. Execution of related functions is applied in the following order `format`, `replace_values`, `filter_columns`, `transpose`.
+See also: https://ruby-doc.org/core/Regexp.html#class-Regexp-label-Character+Classes
+| `row_divider="<divider>"` | Replace the default row divider with another one, when used in conjunction with `table_formatter` set to `adoc_deprecated`. Defaults to `\| ` for being interpreted as a asciidoctor row. DEPRECATED: switch to `table_formatter` named `adoc_plain`, or implement a custom table formatter.
 | `table_formatter="<formatter>"` | Specify a table formatter fitting for your expected target format. It defaults to `adoc_plain` for asciidoctor templates and to `csv` for all other templates, e.g. ERB.
 | `timeout="<timeout_in_seconds>"` | Set a timeout for the current query. If not overridden with `grafana_default_timeout` in the report template, this defaults to 60 seconds.
 | `to="<timestamp>"` | can be used to override default `to` time
 | `to_timezone="<timezone>"` | can be used to override system timezone for `to` time and will also override `grafana_default_to_timezone` option
-| `transpose="true"` | Transposes the query result, i.e. columns become rows and rows become columnns. Execution is applied in the following order `format`, `replace_values`, `filter_columns`, `transpose`.
+| `transpose="true"` | Transposes the query result, i.e. columns become rows and rows become columnns. Execution of related functions is applied in the following order `format`, `replace_values`, `filter_columns`, `transpose`.
 
 ### `grafana_panel_query_value`
 Usage: `grafana_panel_query_value:<panel_id>[query="<query_letter>",options]`
@@ -171,12 +186,15 @@ See also: https://grafana.com/docs/grafana/latest/variables/syntax/
 | Option | Description
 | -- | -- 
 | `dashboard="<dashboard_uid>"` | Specifies the dashboard to be used. If `grafana_default_dashboard` is specified in the report template, this value can be overridden with this option.
-| `filter_columns="<column_name_1>,<column_name_2>,..."` | Removes specified columns from result. Execution is applied in the following order `format`, `replace_values`, `filter_columns`, `transpose`.
-| `format="<format_col1>,<format_col2>,..."` | Specify format in which the results shall be returned, e.g. `%.2f` for only two digit decimals of a float. Several columns are separated by `,`. Execution is applied in the following order `format`, `replace_values`, `filter_columns`, `transpose`.
+| `filter_columns="<column_name_1>,<column_name_2>,..."` | Removes specified columns from result. Execution of related functions is applied in the following order `format`, `replace_values`, `filter_columns`, `transpose`.
+| `format="<format_col1>,<format_col2>,..."` | Specify format in which the results in a specific column shall be returned, e.g. `%.2f` for only two digit decimals of a float. Several column formats are separated by `,`, i.e. `%.2f,%.3f` would apply `%.2f` to the first column and `%.3f` to the second column. All other columns would not be formatted. Execution of related functions is applied in the following order `format`, `replace_values`, `filter_columns`, `transpose`.
+See also: https://ruby-doc.org/core/Kernel.html#method-i-sprintf
 | `from="<timestamp>"` | can be used to override default `from` time
 | `from_timezone="<timezone>"` | can be used to override system timezone for `from` time and will also override `grafana_default_from_timezone` option
 | `instance="<instance_name>"` | can be used to override global grafana instance, set in the report with `grafana_default_instance`. If nothing is set, the configured grafana instance with name `default` will be used.
-| `replace_values="<replace_1>:<with_1>,<replace_2>:<with_2>,..."` | Specify result values which shall be replaced, e.g. `2:OK` will replace query values `2` with value `OK`. Replacing several values is possible by separating by `,`. Matches with regular expressions are also supported, but must be full matches, i.e. have to start with `^` and end with `$`, e.g. `^[012]$:OK`. Number replacements can also be performed, e.g. `<8.2` or `<>3`. Execution is applied in the following order `format`, `replace_values`, `filter_columns`, `transpose`.
+| `query="<query_letter>"` | +<query_letter>+ needs to point to the grafana query which shall be evaluated, e.g. +A+ or +B+.
+| `replace_values="<replace_1>:<with_1>,<replace_2>:<with_2>,..."` | Specify result values which shall be replaced, e.g. `2:OK` will replace query values `2` with value `OK`. Replacing several values is possible by separating by `,`. Matches with regular expressions are also supported, but must be full matches, i.e. have to start with `^` and end with `$`, e.g. `^[012]$:OK`. Number replacements can also be performed, e.g. `<8.2` or `<>3`. Execution of related functions is applied in the following order `format`, `replace_values`, `filter_columns`, `transpose`.
+See also: https://ruby-doc.org/core/Regexp.html#class-Regexp-label-Character+Classes
 | `timeout="<timeout_in_seconds>"` | Set a timeout for the current query. If not overridden with `grafana_default_timeout` in the report template, this defaults to 60 seconds.
 | `to="<timestamp>"` | can be used to override default `to` time
 | `to_timezone="<timezone>"` | can be used to override system timezone for `to` time and will also override `grafana_default_to_timezone` option
@@ -191,18 +209,20 @@ See also: https://grafana.com/docs/grafana/latest/variables/syntax/
 | Option | Description
 | -- | -- 
 | `column_divider="<divider>"` | Replace the default column divider with another one, when used in conjunction with `table_formatter` set to `adoc_deprecated`. Defaults to ` \| ` for being interpreted as a asciidoctor column. DEPRECATED: switch to `table_formatter` named `adoc_plain`, or implement a custom table formatter.
-| `filter_columns="<column_name_1>,<column_name_2>,..."` | Removes specified columns from result. Execution is applied in the following order `format`, `replace_values`, `filter_columns`, `transpose`.
-| `format="<format_col1>,<format_col2>,..."` | Specify format in which the results shall be returned, e.g. `%.2f` for only two digit decimals of a float. Several columns are separated by `,`. Execution is applied in the following order `format`, `replace_values`, `filter_columns`, `transpose`.
+| `filter_columns="<column_name_1>,<column_name_2>,..."` | Removes specified columns from result. Execution of related functions is applied in the following order `format`, `replace_values`, `filter_columns`, `transpose`.
+| `format="<format_col1>,<format_col2>,..."` | Specify format in which the results in a specific column shall be returned, e.g. `%.2f` for only two digit decimals of a float. Several column formats are separated by `,`, i.e. `%.2f,%.3f` would apply `%.2f` to the first column and `%.3f` to the second column. All other columns would not be formatted. Execution of related functions is applied in the following order `format`, `replace_values`, `filter_columns`, `transpose`.
+See also: https://ruby-doc.org/core/Kernel.html#method-i-sprintf
 | `from="<timestamp>"` | can be used to override default `from` time
 | `from_timezone="<timezone>"` | can be used to override system timezone for `from` time and will also override `grafana_default_from_timezone` option
 | `instance="<instance_name>"` | can be used to override global grafana instance, set in the report with `grafana_default_instance`. If nothing is set, the configured grafana instance with name `default` will be used.
-| `replace_values="<replace_1>:<with_1>,<replace_2>:<with_2>,..."` | Specify result values which shall be replaced, e.g. `2:OK` will replace query values `2` with value `OK`. Replacing several values is possible by separating by `,`. Matches with regular expressions are also supported, but must be full matches, i.e. have to start with `^` and end with `$`, e.g. `^[012]$:OK`. Number replacements can also be performed, e.g. `<8.2` or `<>3`. Execution is applied in the following order `format`, `replace_values`, `filter_columns`, `transpose`.
-| `row_divider="<divider>"` | Replace the default row divider with another one, when used in conjunction with `table_formatter` set to `adoc_deprecated`. . Defaults to `\| ` for being interpreted as a asciidoctor row. DEPRECATED: switch to `table_formatter` named `adoc_plain`, or implement a custom table formatter.
+| `replace_values="<replace_1>:<with_1>,<replace_2>:<with_2>,..."` | Specify result values which shall be replaced, e.g. `2:OK` will replace query values `2` with value `OK`. Replacing several values is possible by separating by `,`. Matches with regular expressions are also supported, but must be full matches, i.e. have to start with `^` and end with `$`, e.g. `^[012]$:OK`. Number replacements can also be performed, e.g. `<8.2` or `<>3`. Execution of related functions is applied in the following order `format`, `replace_values`, `filter_columns`, `transpose`.
+See also: https://ruby-doc.org/core/Regexp.html#class-Regexp-label-Character+Classes
+| `row_divider="<divider>"` | Replace the default row divider with another one, when used in conjunction with `table_formatter` set to `adoc_deprecated`. Defaults to `\| ` for being interpreted as a asciidoctor row. DEPRECATED: switch to `table_formatter` named `adoc_plain`, or implement a custom table formatter.
 | `table_formatter="<formatter>"` | Specify a table formatter fitting for your expected target format. It defaults to `adoc_plain` for asciidoctor templates and to `csv` for all other templates, e.g. ERB.
 | `timeout="<timeout_in_seconds>"` | Set a timeout for the current query. If not overridden with `grafana_default_timeout` in the report template, this defaults to 60 seconds.
 | `to="<timestamp>"` | can be used to override default `to` time
 | `to_timezone="<timezone>"` | can be used to override system timezone for `to` time and will also override `grafana_default_to_timezone` option
-| `transpose="true"` | Transposes the query result, i.e. columns become rows and rows become columnns. Execution is applied in the following order `format`, `replace_values`, `filter_columns`, `transpose`.
+| `transpose="true"` | Transposes the query result, i.e. columns become rows and rows become columnns. Execution of related functions is applied in the following order `format`, `replace_values`, `filter_columns`, `transpose`.
 
 ### `grafana_sql_value`
 Usage: `grafana_sql_value:<datasource_id>[sql="<sql_query>",options]`
@@ -213,12 +233,14 @@ See also: https://grafana.com/docs/grafana/latest/variables/syntax/
 
 | Option | Description
 | -- | -- 
-| `filter_columns="<column_name_1>,<column_name_2>,..."` | Removes specified columns from result. Execution is applied in the following order `format`, `replace_values`, `filter_columns`, `transpose`.
-| `format="<format_col1>,<format_col2>,..."` | Specify format in which the results shall be returned, e.g. `%.2f` for only two digit decimals of a float. Several columns are separated by `,`. Execution is applied in the following order `format`, `replace_values`, `filter_columns`, `transpose`.
+| `filter_columns="<column_name_1>,<column_name_2>,..."` | Removes specified columns from result. Execution of related functions is applied in the following order `format`, `replace_values`, `filter_columns`, `transpose`.
+| `format="<format_col1>,<format_col2>,..."` | Specify format in which the results in a specific column shall be returned, e.g. `%.2f` for only two digit decimals of a float. Several column formats are separated by `,`, i.e. `%.2f,%.3f` would apply `%.2f` to the first column and `%.3f` to the second column. All other columns would not be formatted. Execution of related functions is applied in the following order `format`, `replace_values`, `filter_columns`, `transpose`.
+See also: https://ruby-doc.org/core/Kernel.html#method-i-sprintf
 | `from="<timestamp>"` | can be used to override default `from` time
 | `from_timezone="<timezone>"` | can be used to override system timezone for `from` time and will also override `grafana_default_from_timezone` option
 | `instance="<instance_name>"` | can be used to override global grafana instance, set in the report with `grafana_default_instance`. If nothing is set, the configured grafana instance with name `default` will be used.
-| `replace_values="<replace_1>:<with_1>,<replace_2>:<with_2>,..."` | Specify result values which shall be replaced, e.g. `2:OK` will replace query values `2` with value `OK`. Replacing several values is possible by separating by `,`. Matches with regular expressions are also supported, but must be full matches, i.e. have to start with `^` and end with `$`, e.g. `^[012]$:OK`. Number replacements can also be performed, e.g. `<8.2` or `<>3`. Execution is applied in the following order `format`, `replace_values`, `filter_columns`, `transpose`.
+| `replace_values="<replace_1>:<with_1>,<replace_2>:<with_2>,..."` | Specify result values which shall be replaced, e.g. `2:OK` will replace query values `2` with value `OK`. Replacing several values is possible by separating by `,`. Matches with regular expressions are also supported, but must be full matches, i.e. have to start with `^` and end with `$`, e.g. `^[012]$:OK`. Number replacements can also be performed, e.g. `<8.2` or `<>3`. Execution of related functions is applied in the following order `format`, `replace_values`, `filter_columns`, `transpose`.
+See also: https://ruby-doc.org/core/Regexp.html#class-Regexp-label-Character+Classes
 | `timeout="<timeout_in_seconds>"` | Set a timeout for the current query. If not overridden with `grafana_default_timeout` in the report template, this defaults to 60 seconds.
 | `to="<timestamp>"` | can be used to override default `to` time
 | `to_timezone="<timezone>"` | can be used to override system timezone for `to` time and will also override `grafana_default_to_timezone` option

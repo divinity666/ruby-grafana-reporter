@@ -13,6 +13,9 @@ module GrafanaReporter
     #
     # == Used document parameters
     # All, to be listed as the available environment.
+    #
+    # == Supported options
+    # +instance+ - grafana instance name, if extended information about the grafana instance shall be printed
     class ShowEnvironmentIncludeProcessor < ::Asciidoctor::Extensions::IncludeProcessor
       include ProcessorMixin
 
@@ -22,19 +25,47 @@ module GrafanaReporter
       end
 
       # :nodoc:
-      def process(doc, reader, _target, _attrs)
+      def process(doc, reader, _target, attrs)
         # return if @report.cancel
         @report.next_step
+        instance = attrs['instance'] || doc.attr('grafana_default_instance') || 'default'
+        attrs['result_type'] = 'sql_table'
         @report.logger.debug('Processing ShowEnvironmentIncludeProcessor')
+        grafana = @report.grafana(instance)
 
-        vars = ['== Accessible Variables',
-                '|===']
+        vars = { 'table_formatter' => 'adoc_plain', 'include_headline' => 'true'}
+        vars = vars.merge(build_attribute_hash(doc.attributes, attrs))
+
+        # query reporter environment
+        result = ['== Reporter', '|===']
+        query = QueryValueQuery.new(grafana, variables: vars.merge({'transpose' => 'true'}))
+        query.datasource = ::GrafanaReporter::ReporterEnvironmentDatasource.new(nil)
+        result += query.execute.split("\n")
+
+        # query grafana environment
+        result += ['|===', '',
+                   '== Grafana Instance', '|===']
+        query = QueryValueQuery.new(grafana, variables: vars.merge({'transpose' => 'true'}))
+        query.raw_query = {grafana: grafana, mode: 'general'}
+        query.datasource = ::Grafana::GrafanaEnvironmentDatasource.new(nil)
+        result += query.execute.split("\n")
+
+        result += ['|===', '',
+                   '== Accessible Dashboards', '|===']
+        query = QueryValueQuery.new(grafana, variables: vars)
+        query.raw_query = {grafana: grafana, mode: 'dashboards'}
+        query.datasource = Grafana::GrafanaEnvironmentDatasource.new(nil)
+        result += query.execute.split("\n")
+
+        result += ['|===', '',
+                   '== Accessible Variables',
+                   '|===']
         doc.attributes.sort.each do |k, v|
-          vars << "| `+{#{k}}+` | #{v}"
+          result << "| `+{#{k}}+` | #{v}"
         end
-        vars << '|==='
+        result << '|==='
 
-        reader.unshift_lines vars
+        reader.unshift_lines result
       end
 
       # @see ProcessorMixin#build_demo_entry

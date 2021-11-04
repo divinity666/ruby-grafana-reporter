@@ -7,6 +7,9 @@ STUBS = {
   url: 'http://localhost',
   key_admin: 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx',
   key_viewer: 'viewerxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx',
+  org_id: 1,
+  org_name: 'Main',
+  version: '6.5.3',
   dashboard: 'IDBRfjSmz',
   panel_ds_unknown: { id: '15' },
   panel_sql: { id: '11', letter: 'A', title: 'Temperaturen' },
@@ -30,6 +33,23 @@ default_header = {
 
 RSpec.configure do |config|
   config.before(:each) do
+    stub_request(:get, "https://github.com/divinity666/ruby-grafana-reporter/releases/latest")
+    .to_return(status: 302, body: "relocated", headers: {'location' => "https://github.com/divinity666/ruby-grafana-reporter/releases/tag/v#{GRAFANA_REPORTER_VERSION.join('.')}"})
+
+    stub_request(:get, "http://localhost/api/org/").with(
+      headers: default_header.merge({
+        'Authorization' => /^Bearer (?:#{STUBS[:key_admin]}|#{STUBS[:key_viewer]})$/,
+      })
+    )
+    .to_return(status: 200, body: "{\"id\":#{STUBS[:org_id]},\"name\":\"#{STUBS[:org_name]}\"}", headers: {})
+
+    stub_request(:get, "http://localhost/api/health").with(
+      headers: default_header.merge({
+        'Authorization' => /^Bearer (?:#{STUBS[:key_admin]}|#{STUBS[:key_viewer]})$/,
+      })
+    )
+    .to_return(status: 200, body: "{\"commit\":\"05025c5\",\"database\":\"ok\",\"version\":\"#{STUBS[:version]}\"}", headers: {})
+
     stub_request(:get, "http://localhost/api/search").with(
       headers: default_header.merge({
         'Authorization' => /^Bearer (?:#{STUBS[:key_admin]}|#{STUBS[:key_viewer]})$/,
@@ -75,7 +95,7 @@ RSpec.configure do |config|
 
     stub_request(:get, %r{(?:http|https)://localhost/api/dashboards/uid/#{STUBS[:dashboard]}}).with(
       headers: default_header.merge({
-        'Authorization' => "Bearer #{STUBS[:key_admin]}"
+        'Authorization' => /Bearer (?:#{STUBS[:key_admin]}|#{STUBS[:key_viewer]})/
       })
     )
     .to_return(status: 200, body: File.read('./spec/tests/demo_dashboard.json'), headers: {})
@@ -100,12 +120,28 @@ RSpec.configure do |config|
     .to_return(status: 404, body: '{"message":"Dashboard not found"}', headers: {})
 
     stub_request(:post, 'http://localhost/api/tsdb/query').with(
+      body: /.*SELECT error.*/,
+      headers: default_header.merge({
+        'Authorization' => "Bearer #{STUBS[:key_admin]}"
+      })
+    )
+    .to_return(status: 200, body: '{"results":{"A":{"refId":"A","error":"db query error: query failed - please inspect Grafana server log for details"}}}', headers: {})
+
+    stub_request(:post, 'http://localhost/api/tsdb/query').with(
       body: /.*SELECT 1[^\d]*/,
       headers: default_header.merge({
         'Authorization' => "Bearer #{STUBS[:key_admin]}"
       })
     )
     .to_return(status: 200, body: '{"results":{"A":{"refId":"A","meta":{"rowCount":1,"sql":"SELECT 1"},"series":null,"tables":[{"columns":[{"text":"1"}],"rows":[[1]]}],"dataframes":null}}}', headers: {})
+
+    stub_request(:post, 'http://localhost/api/tsdb/query').with(
+      body: /.*SELECT 2[^\d]*/,
+      headers: default_header.merge({
+        'Authorization' => "Bearer #{STUBS[:key_admin]}"
+      })
+    )
+    .to_return(status: 200, body: '{"results":{"A":{"refId":"A","meta":{"rowCount":2,"sql":"SELECT 2 UNION ALL SELECT 3"},"series":null,"tables":[{"columns":[{"text":"1"}],"rows":[[2],[3]],"type":"table","refId":"A","meta":{"rowCount":2,"sql":"SELECT 1 UNION ALL SELECT 2"}}],"dataframes":null}}}', headers: {})
 
     stub_request(:post, 'http://localhost/api/tsdb/query').with(
       body: /.*SELECT 1 as value WHERE value = 0*/,

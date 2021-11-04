@@ -128,6 +128,9 @@ module Grafana
         repeat_count += 1
 
         variables.each do |name, variable|
+          # do not replace with non grafana variables
+          next unless name =~ /^var-/
+
           # only set ticks if value is string
           var_name = name.gsub(/^var-/, '')
           next unless var_name =~ /^\w+$/

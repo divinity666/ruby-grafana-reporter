@@ -23,12 +23,52 @@ module GrafanaReporter
       raise NotImplementedError
     end
 
-    # @abstract
-    # @param column [Array] datasource table result
+    # Used to format a given content array to the desired output format. The default
+    # implementation applies the {#format_rules} to create a custom string export. If
+    # this is not sufficient for a desired table format, you may simply overwrite this
+    # function to have full freedom about the desired output.
+    # @param content [Hash] datasource table result
     # @param include_headline [Boolean] true, if headline should be included in result
+    # @param transposed [Boolean] true, if result array is in transposed format
     # @return [String] formatted in table format
-    def format(content, include_headline)
-      raise NotImplementedError
+    def format(content, include_headline, transposed)
+      result = content[:content]
+
+      # add the headline at the correct position to the content array
+      if include_headline
+        if transposed
+          result.each_index do |i|
+            result[i] = [content[:header][i]] + result[i]
+          end
+        else
+          result = result.unshift(content[:header])
+        end
+      end
+
+      # translate the content to a table
+      result.map do |row|
+        format_rules[:row_start] + row.map do |item|
+          value = item.to_s
+          if format_rules[:replace_string_or_regex]
+            value = value.gsub(format_rules[:replace_string_or_regex], format_rules[:replacement])
+          end
+
+          format_rules[:cell_start] + value + format_rules[:cell_end]
+        end.join(format_rules[:between_cells])
+      end.join(format_rules[:row_end])
+    end
+
+    # Formatting rules, which are applied to build the table output format.
+    def format_rules
+      {
+        row_start: '',
+        row_end: '',
+        cell_start: '',
+        between_cells: '',
+        cell_end: '',
+        replace_string_or_regex: nil,
+        replacement: ''
+      }
     end
   end
 end
