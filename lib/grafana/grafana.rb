@@ -112,7 +112,6 @@ module Grafana
       return @dashboards[dashboard_uid] unless @dashboards[dashboard_uid].nil?
 
       response = prepare_request({ relative_url: "/api/dashboards/uid/#{dashboard_uid}" }).execute
-      # TODO: add error for a forbidden connection
       raise DashboardDoesNotExistError, dashboard_uid unless response.is_a?(Net::HTTPOK)
 
       # cache dashboard for reuse
