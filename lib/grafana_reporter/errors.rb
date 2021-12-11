@@ -27,7 +27,7 @@ module GrafanaReporter
   # Raised if the return value of a datasource request does not match the expected return hash.
   class DatasourceRequestInvalidReturnValueError < GrafanaReporterError
     def initialize(datasource, message)
-      super("The datasource request to '#{datasource.name}' (#{datasource.class})"\
+      super("The datasource request to '#{datasource.name}' (#{datasource.class}) "\
             "returned an invalid value: '#{message}'")
     end
   end
