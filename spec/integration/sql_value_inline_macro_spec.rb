@@ -71,14 +71,19 @@ describe SqlValueInlineMacro do
     end
   end
 
-  # TODO: due to wrong handling of inline macro attributes of asciidoctor, the following tests cannot succeed, refer to https://github.com/asciidoctor/asciidoctor/issues/4072
-  xcontext 'prometheus' do
+  context 'prometheus whereas closing square bracket is escaped' do
     it 'sorts multiple query results by time' do
-      expect(Asciidoctor.convert("grafana_sql_value:#{STUBS[:datasource_prometheus]}[sql=\"sum by(mode)(irate(node_cpu_seconds_total{job=\\\"node\\\", instance=~\\\"$node:.*\\\", mode!=\\\"idle\\\"}[5m])) > 0\",from=\"0\",to=\"0\"]", to_file: false)).to include('1617728730')
+      @report.logger.level = ::Logger::Severity::DEBUG
+      allow(@report.logger).to receive(:debug)
+      expect(@report.logger).to receive(:debug).with(/Translating SQL/)
+      expect(Asciidoctor.convert("grafana_sql_value:#{STUBS[:datasource_prometheus]}[sql=\"sum by(mode)(irate(node_cpu_seconds_total{job=\\\"node\\\", instance=~\\\"$node:.*\\\", mode!=\\\"idle\\\"}[5m\\])) > 0\",from=\"0\",to=\"0\"]", to_file: false)).to include('1617728730')
     end
 
     it 'leaves sorting as is for single query results' do
-      expect(Asciidoctor.convert("grafana_sql_value:#{STUBS[:datasource_prometheus]}[sql=\"sum by(mode)(irate(node_cpu_seconds_total{job=\\\"node\\\", instance=~\\\"$node:.*\\\", mode=\\\"iowait\\\"}[5m])) > 0\",from=\"0\",to=\"0\"]", to_file: false)).to include('1617728760')
+      @report.logger.level = ::Logger::Severity::DEBUG
+      allow(@report.logger).to receive(:debug)
+      expect(@report.logger).to receive(:debug).with(/Translating SQL/)
+      expect(Asciidoctor.convert("grafana_sql_value:#{STUBS[:datasource_prometheus]}[sql=\"sum by(mode)(irate(node_cpu_seconds_total{job=\\\"node\\\", instance=~\\\"$node:.*\\\", mode=\\\"iowait\\\"}[5m\\])) > 0\",from=\"0\",to=\"0\"]", to_file: false)).to include('1617728760')
     end
   end
 end
