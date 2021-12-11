@@ -85,5 +85,9 @@ describe SqlValueInlineMacro do
       expect(@report.logger).to receive(:debug).with(/Translating SQL/)
       expect(Asciidoctor.convert("grafana_sql_value:#{STUBS[:datasource_prometheus]}[sql=\"sum by(mode)(irate(node_cpu_seconds_total{job=\\\"node\\\", instance=~\\\"$node:.*\\\", mode=\\\"iowait\\\"}[5m\\])) > 0\",from=\"0\",to=\"0\"]", to_file: false)).to include('1617728760')
     end
+
+    it 'handles wrong requests properly' do
+      expect(Asciidoctor.convert("grafana_sql_value:#{STUBS[:datasource_prometheus]}[sql=\"ille gal\",from=\"0\",to=\"0\"]", to_file: false)).to include('1:6: parse error: unexpected identifier "gal"')
+    end
   end
 end

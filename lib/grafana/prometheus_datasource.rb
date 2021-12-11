@@ -45,7 +45,14 @@ module Grafana
 
     # @see AbstractDatasource#preformat_response
     def preformat_response(response_body)
-      json = JSON.parse(response_body)['data']['result']
+      json = JSON.parse(response_body)
+
+      # handle response with error result
+      unless json['error'].nil?
+        return { header: ['error'], content: [[ json['error'] ]] }
+      end
+
+      json = json['data']['result']
 
       headers = ['time']
       content = {}
