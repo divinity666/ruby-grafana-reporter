@@ -72,11 +72,18 @@ describe SqlValueInlineMacro do
   end
 
   context 'prometheus whereas closing square bracket is escaped' do
+    it 'can run instant queries' do
+      @report.logger.level = ::Logger::Severity::DEBUG
+      allow(@report.logger).to receive(:debug)
+      expect(@report.logger).to receive(:debug).with(/Requesting.*\/query\?\w/)
+      expect(Asciidoctor.convert("grafana_sql_value:#{STUBS[:datasource_prometheus]}[sql=\"prometheus_build_info{}\",from=\"0\",to=\"1\",instant=\"true\"]", to_file: false)).to include('1')
+    end
+
     it 'sorts multiple query results by time' do
       @report.logger.level = ::Logger::Severity::DEBUG
       allow(@report.logger).to receive(:debug)
       expect(@report.logger).to receive(:debug).with(/Translating SQL/)
-      expect(Asciidoctor.convert("grafana_sql_value:#{STUBS[:datasource_prometheus]}[sql=\"sum by(mode)(irate(node_cpu_seconds_total{job=\\\"node\\\", instance=~\\\"$node:.*\\\", mode!=\\\"idle\\\"}[5m\\])) > 0\",from=\"0\",to=\"0\"]", to_file: false)).to include('1617728730')
+      expect(Asciidoctor.convert("grafana_sql_value:#{STUBS[:datasource_prometheus]}[sql=\"sum by(mode)(irate(node_cpu_seconds_total{job=\\\"node\\\", instance=~\\\"$node:.*\\\", mode!=\\\"idle\\\"}[5m\\])) > 0\",from=\"0\",to=\"0\",step=\"10\"]", to_file: false)).to include('1617728730')
     end
 
     it 'leaves sorting as is for single query results' do
