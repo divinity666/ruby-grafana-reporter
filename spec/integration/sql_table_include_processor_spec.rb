@@ -84,5 +84,9 @@ describe SqlTableIncludeProcessor do
     it 'leaves sorting as is for single query results' do
       expect(Asciidoctor.convert("include::grafana_sql_table:#{STUBS[:datasource_prometheus]}[sql=\"sum by(mode)(irate(node_cpu_seconds_total{job=\\\"node\\\", instance=~\\\"$node:.*\\\", mode=\\\"iowait\\\"}[5m])) > 0\",from=\"0\",to=\"0\"]", to_file: false)).to include('<p>| 1617728760')
     end
+
+    it 'can return vector instant query results as columns' do
+      expect(Asciidoctor.convert("include::grafana_sql_table:#{STUBS[:datasource_prometheus]}[sql=\"prometheus_build_info{}\",from=\"0\",to=\"1\",instant=\"true\",filter_columns=\"time\"]", to_file: false)).to include('| 15 | prometheus_build_info | HEAD | go1.16.4 | demo.robustperception.io:9090 | prometheus | db7f0bcec27bd8aeebad6b08ac849516efa9ae02 | 2.27.1')
+    end
   end
 end

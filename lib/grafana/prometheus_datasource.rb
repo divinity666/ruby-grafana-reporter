@@ -64,16 +64,28 @@ module Grafana
         return { header: ['error'], content: [[ json['error'] ]] }
       end
 
+      result_type = json['data']['resultType']
       json = json['data']['result']
 
       headers = ['time']
       content = {}
 
+      # handle vector queries
+      if result_type == 'vector'
+        return {
+          header: (headers << 'value') + json.first['metric'].keys,
+          content: [ [json.first['value'][0], json.first['value'][1]] + json.first['metric'].values ]
+        }
+      end
+
+      # handle scalar queries
+      if result_type =~ /^(?:scalar|string)$/
+        return { header: headers << result_type, content: [[json[0], json[1]]] }
+      end
+
       # keep sorting, if json has only one target item, otherwise merge results and return
       # as a time sorted array
-      # TODO properly set headlines
       if json.length == 1
-        return { header: headers << json.first['metric'].to_s, content: [[json.first['value'][1], json.first['value'][0]]] } if json.first.has_key?('value') # this happens for the special case of calls to '/query' endpoint
         return { header: headers << json.first['metric']['mode'], content: json.first['values'] }
       end
 

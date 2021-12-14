@@ -239,7 +239,23 @@ RSpec.configure do |config|
         'Authorization' => "Bearer #{STUBS[:key_admin]}"
       })
     )
-    .to_return(status: 200, body: '{ "status": "success", "data": { "resultType": "vector", "result": [ { "metric": { "__name__": "prometheus_build_info", "branch": "HEAD", "goversion": "go1.16.4", "instance": "demo.robustperception.io:9090", "job": "prometheus", "revision": "db7f0bcec27bd8aeebad6b08ac849516efa9ae02", "version": "2.27.1" }, "value": [ 1639345182, "1" ] } ] } }', headers: {})
+    .to_return(status: 200, body: '{ "status": "success", "data": { "resultType": "vector", "result": [ { "metric": { "__name__": "prometheus_build_info", "branch": "HEAD", "goversion": "go1.16.4", "instance": "demo.robustperception.io:9090", "job": "prometheus", "revision": "db7f0bcec27bd8aeebad6b08ac849516efa9ae02", "version": "2.27.1" }, "value": [ 1639345182, "15" ] } ] } }', headers: {})
+
+    stub_request(:get, 'http://localhost/api/datasources/proxy/4/api/v1/query').with(
+      query: {"query": "\"test\"",'time': 0},
+      headers: default_header.merge({
+        'Authorization' => "Bearer #{STUBS[:key_admin]}"
+      })
+    )
+    .to_return(status: 200, body: '{ "status": "success", "data": { "resultType": "string", "result": [1639345182,"test"] } }', headers: {})
+
+    stub_request(:get, 'http://localhost/api/datasources/proxy/4/api/v1/query').with(
+      query: {"query": "1+11",'time': 0},
+      headers: default_header.merge({
+        'Authorization' => "Bearer #{STUBS[:key_admin]}"
+      })
+    )
+    .to_return(status: 200, body: '{ "status": "success", "data": { "resultType": "scalar", "result": [1639345182, 12] } }', headers: {})
 
     # Influx
     stub_request(:get, 'http://localhost/api/datasources/proxy/6/query?db=site&q=SELECT%20non_negative_derivative%28mean%28%22value%22%29%2C%2010s%29%20%2A1000000000%20FROM%20%22logins.count%22%20WHERE%20time%20%3E%3D%200ms%20and%20time%20%3C%3D%200ms%20GROUP%20BY%20time%280s%29%2C%20%22hostname%22%20fill%28null%29&epoch=ms').with(
