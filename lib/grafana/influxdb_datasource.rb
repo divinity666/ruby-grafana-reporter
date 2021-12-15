@@ -23,13 +23,13 @@ module Grafana
       # replace $timeFilter variable
       query = query.gsub(/\$timeFilter(?=\W|$)/, "time >= #{query_description[:from]}ms and time <= #{query_description[:to]}ms")
 
-      step = query_description[:variables].delete('step') || ((query_description[:to].to_i - query_description[:from].to_i) / 1000).to_i
-      step = step.raw_value if step.is_a?(Variable)
+      interval = query_description[:variables].delete('interval') || ((query_description[:to].to_i - query_description[:from].to_i) / 1000).to_i
+      interval = interval.raw_value if interval.is_a?(Variable)
 
       # replace grafana variables $__interval and $__interval_ms in query
       # TODO: check where calculation and replacement of interval variable should take place
-      query = query.gsub(/\$(?:__)?interval(?=\W|$)/, "#{step.is_a?(String) ? step : "#{(step / 1000).to_i}s"}")
-      query = query.gsub(/\$(?:__)?interval_ms(?=\W|$)/, "#{step}")
+      query = query.gsub(/\$(?:__)?interval(?=\W|$)/, "#{interval.is_a?(String) ? interval : "#{(interval / 1000).to_i}s"}")
+      query = query.gsub(/\$(?:__)?interval_ms(?=\W|$)/, "#{interval}")
 
       url = "/api/datasources/proxy/#{id}/query?db=#{@model['database']}&q=#{ERB::Util.url_encode(query)}&epoch=ms"
 

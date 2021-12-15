@@ -20,8 +20,8 @@ module Grafana
       instant = query_description[:variables].delete('instant') || query_hash[:instant] || false
       instant = instant.raw_value if instant.is_a?(Variable)
       instant = instant.to_s.downcase == 'true'
-      step = query_description[:variables].delete('step') || query_hash[:step] || 15
-      step = step.raw_value if step.is_a?(Variable)
+      interval = query_description[:variables].delete('interval') || query_hash[:interval] || 15
+      interval = interval.raw_value if interval.is_a?(Variable)
       query = query_hash[:query] || query_description[:raw_query]
 
       url = if instant
@@ -31,7 +31,7 @@ module Grafana
         "/api/datasources/proxy/#{id}/api/v1/query_range?start=#{query_description[:from]}"\
         "&end=#{query_description[:to]}"\
         "&query=#{CGI.escape(replace_variables(query, query_description[:variables]))}"\
-        "&step=#{step}"
+        "&step=#{interval}"
       end
 
       webrequest = query_description[:prepared_request]
@@ -45,7 +45,7 @@ module Grafana
     # @see AbstractDatasource#raw_query_from_panel_model
     def raw_query_from_panel_model(panel_query_target)
       { query: panel_query_target['expr'], instant: panel_query_target['instant'],
-        step: panel_query_target['step'] }
+        interval: panel_query_target['step'] }
     end
 
     # @see AbstractDatasource#default_variable_format

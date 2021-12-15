@@ -54,21 +54,21 @@ describe SqlTableIncludeProcessor do
       expect(Asciidoctor.convert("include::grafana_sql_table:#{STUBS[:datasource_influx]}[sql=\"SELECT non_negative_derivative(mean(\\\"value\\\"), 10s) *1000000000 FROM \\\"logins.count\\\" WHERE time >= 0ms AND \\\"hostname\\\" = \\\"10.1.0.100.1\\\" GROUP BY time(10s) fill(null)\"]", to_file: false)).to include("<p>\| 1621781130000 \| 2834482201.7361364\n\|")
     end
 
-    it 'can replace interval variable with given step' do
+    it 'can replace interval variable with given interval' do
       @report.logger.level = ::Logger::Severity::DEBUG
       allow(@report.logger).to receive(:debug)
       expect(@report.logger).to receive(:debug).with(/GROUP%20BY%20time%281m%29/)
-      Asciidoctor.convert("include::grafana_sql_table:#{STUBS[:datasource_influx]}[sql=\"SELECT non_negative_derivative(mean(\\\"value\\\"), 10s) *1000000000 FROM \\\"logins.count\\\" WHERE time >= 0ms AND \\\"hostname\\\" = \\\"10.1.0.100.1\\\" GROUP BY time($__interval) fill(null)\",step=\"1m\",from=\"now-10h\",to=\"now\"]", to_file: false)
+      Asciidoctor.convert("include::grafana_sql_table:#{STUBS[:datasource_influx]}[sql=\"SELECT non_negative_derivative(mean(\\\"value\\\"), 10s) *1000000000 FROM \\\"logins.count\\\" WHERE time >= 0ms AND \\\"hostname\\\" = \\\"10.1.0.100.1\\\" GROUP BY time($__interval) fill(null)\",interval=\"1m\",from=\"now-10h\",to=\"now\"]", to_file: false)
     end
 
-    it 'can replace interval variable with default step' do
+    it 'can replace interval variable with default interval' do
       @report.logger.level = ::Logger::Severity::DEBUG
       allow(@report.logger).to receive(:debug)
       expect(@report.logger).to receive(:debug).with(/GROUP%20BY%20time%2835s%29/)
       Asciidoctor.convert("include::grafana_sql_table:#{STUBS[:datasource_influx]}[sql=\"SELECT non_negative_derivative(mean(\\\"value\\\"), 10s) *1000000000 FROM \\\"logins.count\\\" WHERE time >= 0ms AND \\\"hostname\\\" = \\\"10.1.0.100.1\\\" GROUP BY time($__interval) fill(null)\",from=\"now-10h\",to=\"now\"]", to_file: false)
     end
 
-    it 'can replace interval variable with default step in ms' do
+    it 'can replace interval variable with default interval in ms' do
       @report.logger.level = ::Logger::Severity::DEBUG
       allow(@report.logger).to receive(:debug)
       expect(@report.logger).to receive(:debug).with(/GROUP%20BY%20time%2835999%29/)
@@ -78,7 +78,7 @@ describe SqlTableIncludeProcessor do
 
   context 'prometheus' do
     it 'sorts multiple query results by time' do
-      expect(Asciidoctor.convert("include::grafana_sql_table:#{STUBS[:datasource_prometheus]}[sql=\"sum by(mode)(irate(node_cpu_seconds_total{job=\\\"node\\\", instance=~\\\"$node:.*\\\", mode!=\\\"idle\\\"}[5m])) > 0\",from=\"0\",to=\"0\",step=\"10\"]", to_file: false)).to include('<p>| 1617728730')
+      expect(Asciidoctor.convert("include::grafana_sql_table:#{STUBS[:datasource_prometheus]}[sql=\"sum by(mode)(irate(node_cpu_seconds_total{job=\\\"node\\\", instance=~\\\"$node:.*\\\", mode!=\\\"idle\\\"}[5m])) > 0\",from=\"0\",to=\"0\",interval=\"10\"]", to_file: false)).to include('<p>| 1617728730')
     end
 
     it 'leaves sorting as is for single query results' do

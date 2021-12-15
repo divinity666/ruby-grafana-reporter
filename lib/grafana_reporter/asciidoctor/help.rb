@@ -257,11 +257,11 @@ end}
                 Set a timeout for the current query. If not overridden with `grafana_default_timeout` in the report template,
                 this defaults to 60 seconds.
 
-            step:
-              call: step="<step_size>"
+            interval:
+              call: interval="<intervaL>"
               description: >-
-                Used to set the step size for timescale datasources, whereas the value is used without further conversion
-                directly in the datasource specific step parameter.
+                Used to set the interval size for timescale datasources, whereas the value is used without further
+                conversion directly in the datasource specific interval parameter.
                 Prometheus default: 15 (passed as `step` parameter)
                 Influx default: similar to grafana default, i.e. `(to_time - from_time) / 1000`
                 (replaces `interval_ms` and `interval` variables in query)
@@ -419,7 +419,7 @@ end}
               from_timezone:
               to_timezone:
               instant:
-              step:
+              interval:
 
           grafana_panel_query_value:
             call: 'grafana_panel_query_value:<panel_id>[query="<query_letter>",options]'
@@ -443,7 +443,7 @@ end}
               from_timezone:
               to_timezone:
               instant:
-              step:
+              interval:
 
           grafana_sql_table:
             call: 'include::grafana_sql_table:<datasource_id>[sql="<sql_query>",options]'
@@ -466,7 +466,7 @@ end}
               from_timezone:
               to_timezone:
               instant:
-              step:
+              interval:
 
           grafana_sql_value:
             call: 'grafana_sql_value:<datasource_id>[sql="<sql_query>",options]'
@@ -489,7 +489,7 @@ end}
               from_timezone:
               to_timezone:
               instant:
-              step:
+              interval:
         YAML_HELP
       end
     end
