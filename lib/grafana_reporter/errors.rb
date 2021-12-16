@@ -65,7 +65,7 @@ module GrafanaReporter
   # Details about how to fix that are provided in the message.
   class ConfigurationDoesNotMatchSchemaError < ConfigurationError
     def initialize(item, verb, expected, currently)
-      super("Configuration file does not match schema definition. Expected '#{item}' to #{verb} '#{expected}',"\
+      super("Configuration file does not match schema definition. Expected '#{item}' to #{verb} '#{expected}', "\
             "but was '#{currently}'.")
     end
   end
