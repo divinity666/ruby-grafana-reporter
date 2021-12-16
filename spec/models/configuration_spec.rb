@@ -102,10 +102,18 @@ describe Configuration do
 
     it 'validates required fields' do
       subject.config = {
-                            'grafana' => { 'default' => { 'host' => 'test' } },
+                            'grafana' => { 'default' => { 'host' => 'http://localhost' } },
                             'grafana-reporter' => { 'report-class' => 'GrafanaReporter::Asciidoctor::Report' }
                           }
       expect { subject.validate }.not_to raise_error
+    end
+
+    it 'raises error on invalid host naming scheme' do
+      subject.config = {
+                            'grafana' => { 'default' => { 'host' => 'localhost' } },
+                            'grafana-reporter' => { 'report-class' => 'GrafanaReporter::Asciidoctor::Report' }
+                          }
+      expect { subject.validate }.to raise_error(ConfigurationDoesNotMatchSchemaError)
     end
 
     it 'raises error if not supported data type is used' do
@@ -126,7 +134,7 @@ describe Configuration do
 
     it 'raises error if folder does not exist' do
       subject.config = {
-                            'grafana' => { 'default' => { 'host' => 'test' } },
+                            'grafana' => { 'default' => { 'host' => 'http://localhost' } },
                             'grafana-reporter' => { 'report-class' => 'GrafanaReporter::Asciidoctor::Report', 'reports-folder' => 'ewfhenwf8' }
                           }
       expect { subject.validate }.to raise_error(FolderDoesNotExistError)
@@ -134,7 +142,7 @@ describe Configuration do
 
     it 'warns if not evaluated configurations exist' do
       subject.config = {
-                            'grafana' => { 'default' => { 'host' => 'test' } },
+                            'grafana' => { 'default' => { 'host' => 'http://localhost' } },
                             'grafana-reporter' => { 'report-class' => 'GrafanaReporter::Asciidoctor::Report', 'repots-folder' => 'ewfhenwf8' }
                           }
       expect(subject.logger).to receive(:warn).with("Item 'repots-folder' in configuration is unknown to the reporter and will be ignored")
@@ -143,7 +151,7 @@ describe Configuration do
 
     it 'deprecation warning if report-class is not specified' do
       subject.config = {
-                            'grafana' => { 'default' => { 'host' => 'test' } }
+                            'grafana' => { 'default' => { 'host' => 'http://localhost' } }
                           }
       expect(subject.logger).to receive(:warn).with(/DEPRECATION WARNING.*report-class./)
       subject.validate
