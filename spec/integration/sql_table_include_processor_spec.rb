@@ -53,15 +53,40 @@ describe SqlTableIncludeProcessor do
     it 'leaves sorting as is for single query results' do
       expect(Asciidoctor.convert("include::grafana_sql_table:#{STUBS[:datasource_influx]}[sql=\"SELECT non_negative_derivative(mean(\\\"value\\\"), 10s) *1000000000 FROM \\\"logins.count\\\" WHERE time >= 0ms AND \\\"hostname\\\" = \\\"10.1.0.100.1\\\" GROUP BY time(10s) fill(null)\"]", to_file: false)).to include("<p>\| 1621781130000 \| 2834482201.7361364\n\|")
     end
+
+    it 'can replace interval variable with given interval' do
+      @report.logger.level = ::Logger::Severity::DEBUG
+      allow(@report.logger).to receive(:debug)
+      expect(@report.logger).to receive(:debug).with(/GROUP%20BY%20time%281m%29/)
+      Asciidoctor.convert("include::grafana_sql_table:#{STUBS[:datasource_influx]}[sql=\"SELECT non_negative_derivative(mean(\\\"value\\\"), 10s) *1000000000 FROM \\\"logins.count\\\" WHERE time >= 0ms AND \\\"hostname\\\" = \\\"10.1.0.100.1\\\" GROUP BY time($__interval) fill(null)\",interval=\"1m\",from=\"now-10h\",to=\"now\"]", to_file: false)
+    end
+
+    it 'can replace interval variable with default interval' do
+      @report.logger.level = ::Logger::Severity::DEBUG
+      allow(@report.logger).to receive(:debug)
+      expect(@report.logger).to receive(:debug).with(/GROUP%20BY%20time%2835s%29/)
+      Asciidoctor.convert("include::grafana_sql_table:#{STUBS[:datasource_influx]}[sql=\"SELECT non_negative_derivative(mean(\\\"value\\\"), 10s) *1000000000 FROM \\\"logins.count\\\" WHERE time >= 0ms AND \\\"hostname\\\" = \\\"10.1.0.100.1\\\" GROUP BY time($__interval) fill(null)\",from=\"now-10h\",to=\"now\"]", to_file: false)
+    end
+
+    it 'can replace interval variable with default interval in ms' do
+      @report.logger.level = ::Logger::Severity::DEBUG
+      allow(@report.logger).to receive(:debug)
+      expect(@report.logger).to receive(:debug).with(/GROUP%20BY%20time%2835999%29/)
+      Asciidoctor.convert("include::grafana_sql_table:#{STUBS[:datasource_influx]}[sql=\"SELECT non_negative_derivative(mean(\\\"value\\\"), 10s) *1000000000 FROM \\\"logins.count\\\" WHERE time >= 0ms AND \\\"hostname\\\" = \\\"10.1.0.100.1\\\" GROUP BY time($__interval_ms) fill(null)\",from=\"now-10h\",to=\"now\"]", to_file: false)
+    end
   end
 
   context 'prometheus' do
     it 'sorts multiple query results by time' do
-      expect(Asciidoctor.convert("include::grafana_sql_table:#{STUBS[:datasource_prometheus]}[sql=\"sum by(mode)(irate(node_cpu_seconds_total{job=\\\"node\\\", instance=~\\\"$node:.*\\\", mode!=\\\"idle\\\"}[5m])) > 0\",from=\"0\",to=\"0\"]", to_file: false)).to include('<p>| 1617728730')
+      expect(Asciidoctor.convert("include::grafana_sql_table:#{STUBS[:datasource_prometheus]}[sql=\"sum by(mode)(irate(node_cpu_seconds_total{job=\\\"node\\\", instance=~\\\"$node:.*\\\", mode!=\\\"idle\\\"}[5m])) > 0\",from=\"0\",to=\"0\",interval=\"10\"]", to_file: false)).to include('<p>| 1617728730')
     end
 
     it 'leaves sorting as is for single query results' do
       expect(Asciidoctor.convert("include::grafana_sql_table:#{STUBS[:datasource_prometheus]}[sql=\"sum by(mode)(irate(node_cpu_seconds_total{job=\\\"node\\\", instance=~\\\"$node:.*\\\", mode=\\\"iowait\\\"}[5m])) > 0\",from=\"0\",to=\"0\"]", to_file: false)).to include('<p>| 1617728760')
+    end
+
+    it 'can return vector instant query results as columns' do
+      expect(Asciidoctor.convert("include::grafana_sql_table:#{STUBS[:datasource_prometheus]}[sql=\"prometheus_build_info{}\",from=\"0\",to=\"1\",instant=\"true\",filter_columns=\"time\"]", to_file: false)).to include('| 15 | prometheus_build_info | HEAD | go1.16.4 | demo.robustperception.io:9090 | prometheus | db7f0bcec27bd8aeebad6b08ac849516efa9ae02 | 2.27.1')
     end
   end
 end

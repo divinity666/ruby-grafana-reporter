@@ -16,12 +16,12 @@ Gem::Specification.new do |s|
   s.version     = GRAFANA_REPORTER_VERSION.join('.')
   s.date        = GRAFANA_REPORTER_RELEASE_DATE
   s.summary     = 'Reporter Service for Grafana'
-  s.description = 'Build reports based on grafana dashboards in asciidoctor syntax. Runs '\
-                  'as webservice for easy integration with grafana, or as a standalone, '\
+  s.description = 'Build reports based on grafana dashboards in asciidoctor or ERB syntax. '\
+                  'Runs as webservice for easy integration with grafana, or as a standalone, '\
                   'command line utility.'
                   ''\
                   'By default the reports will be converted to PDF documents, whereas other '\
-                  'target formats can be used as well.'
+                  'target formats are supported as well.'
   s.author      = 'Christian Kohlmeyer'
   s.email       = 'kohly@gmx.de'
   s.files       = folders.collect { |folder| Dir[File.join(__dir__, 'lib', *folder, '*.rb')].sort }.flatten << 'LICENSE' << 'README.md'

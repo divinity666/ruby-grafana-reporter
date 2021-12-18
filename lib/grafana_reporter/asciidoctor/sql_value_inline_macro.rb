@@ -44,15 +44,24 @@ module GrafanaReporter
         @report.next_step
         instance = attrs['instance'] || parent.document.attr('grafana_default_instance') || 'default'
         attrs['result_type'] = 'sql_value'
+        sql = attrs['sql']
         @report.logger.debug("Processing SqlValueInlineMacro (instance: #{instance}, datasource: #{target},"\
-                             " sql: #{attrs['sql']})")
+                             " sql: #{sql})")
+
+        # translate sql statement to fix asciidoctor issue
+        # refer https://github.com/asciidoctor/asciidoctor/issues/4072#issuecomment-991305715
+        sql_translated = CGI::unescapeHTML(sql) if sql
+        if sql != sql_translated
+          @report.logger.debug("Translating SQL query to fix asciidoctor issue: #{sql_translated}")
+          sql = sql_translated
+        end
 
         begin
           # catch properly if datasource could not be identified
           query = QueryValueQuery.new(@report.grafana(instance),
                                       variables: build_attribute_hash(parent.document.attributes, attrs))
           query.datasource = @report.grafana(instance).datasource_by_id(target)
-          query.raw_query = attrs['sql']
+          query.raw_query = sql
 
           create_inline(parent, :quoted, query.execute)
         rescue Grafana::GrafanaError => e

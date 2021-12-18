@@ -14,13 +14,25 @@ module Grafana
     def request(query_description)
       raise MissingSqlQueryError if query_description[:raw_query].nil?
 
-      # TODO: properly allow endpoint to be set - also check raw_query method
-      end_point = @endpoint ? @endpoint : "query_range"
+      query_hash = query_description[:raw_query].is_a?(Hash) ? query_description[:raw_query] : {}
 
-      # TODO: set query option 'step' on request
-      url = "/api/datasources/proxy/#{id}/api/v1/#{end_point}?"\
-            "start=#{query_description[:from]}&end=#{query_description[:to]}"\
-            "&query=#{replace_variables(query_description[:raw_query], query_description[:variables])}"
+      # read instant value and convert instant value to boolean value
+      instant = query_description[:variables].delete('instant') || query_hash[:instant] || false
+      instant = instant.raw_value if instant.is_a?(Variable)
+      instant = instant.to_s.downcase == 'true'
+      interval = query_description[:variables].delete('interval') || query_hash[:interval] || 15
+      interval = interval.raw_value if interval.is_a?(Variable)
+      query = query_hash[:query] || query_description[:raw_query]
+
+      url = if instant
+        "/api/datasources/proxy/#{id}/api/v1/query?time=#{query_description[:to]}&query="\
+        "#{CGI.escape(replace_variables(query, query_description[:variables]))}"
+      else
+        "/api/datasources/proxy/#{id}/api/v1/query_range?start=#{query_description[:from]}"\
+        "&end=#{query_description[:to]}"\
+        "&query=#{CGI.escape(replace_variables(query, query_description[:variables]))}"\
+        "&step=#{interval}"
+      end
 
       webrequest = query_description[:prepared_request]
       webrequest.relative_url = url
@@ -32,8 +44,8 @@ module Grafana
 
     # @see AbstractDatasource#raw_query_from_panel_model
     def raw_query_from_panel_model(panel_query_target)
-      @endpoint = panel_query_target['format'] == 'time_series' && (panel_query_target['instant'] == false || !panel_query_target['instant']) ? 'query_range' : 'query'
-      panel_query_target['expr']
+      { query: panel_query_target['expr'], instant: panel_query_target['instant'],
+        interval: panel_query_target['step'] }
     end
 
     # @see AbstractDatasource#default_variable_format
@@ -45,16 +57,35 @@ module Grafana
 
     # @see AbstractDatasource#preformat_response
     def preformat_response(response_body)
-      json = JSON.parse(response_body)['data']['result']
+      json = JSON.parse(response_body)
+
+      # handle response with error result
+      unless json['error'].nil?
+        return { header: ['error'], content: [[ json['error'] ]] }
+      end
+
+      result_type = json['data']['resultType']
+      json = json['data']['result']
 
       headers = ['time']
       content = {}
 
+      # handle vector queries
+      if result_type == 'vector'
+        return {
+          header: (headers << 'value') + json.first['metric'].keys,
+          content: [ [json.first['value'][0], json.first['value'][1]] + json.first['metric'].values ]
+        }
+      end
+
+      # handle scalar queries
+      if result_type =~ /^(?:scalar|string)$/
+        return { header: headers << result_type, content: [[json[0], json[1]]] }
+      end
+
       # keep sorting, if json has only one target item, otherwise merge results and return
       # as a time sorted array
-      # TODO properly set headlines
       if json.length == 1
-        return { header: headers << json.first['metric'].to_s, content: [[json.first['value'][1], json.first['value'][0]]] } if json.first.has_key?('value') # this happens for the special case of calls to '/query' endpoint
         return { header: headers << json.first['metric']['mode'], content: json.first['values'] }
       end
 

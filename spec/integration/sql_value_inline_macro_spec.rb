@@ -71,14 +71,34 @@ describe SqlValueInlineMacro do
     end
   end
 
-  # TODO: due to wrong handling of inline macro attributes of asciidoctor, the following tests cannot succeed, refer to https://github.com/asciidoctor/asciidoctor/issues/4072
-  xcontext 'prometheus' do
+  context 'prometheus whereas closing square bracket is escaped' do
+    it 'can run instant vector queries' do
+      @report.logger.level = ::Logger::Severity::DEBUG
+      allow(@report.logger).to receive(:debug)
+      expect(@report.logger).to receive(:debug).with(/Requesting.*\/query\?\w/)
+      expect(Asciidoctor.convert("grafana_sql_value:#{STUBS[:datasource_prometheus]}[sql=\"prometheus_build_info{}\",from=\"0\",to=\"1\",instant=\"true\",filter_columns=\"time\"]", to_file: false)).to include('15')
+    end
+
+    it 'can run instant scalar queries' do
+      expect(Asciidoctor.convert("grafana_sql_value:#{STUBS[:datasource_prometheus]}[sql=\"1+11\",to=\"0\",instant=\"true\",filter_columns=\"time\"]", to_file: false)).to include('12')
+    end
+
     it 'sorts multiple query results by time' do
-      expect(Asciidoctor.convert("grafana_sql_value:#{STUBS[:datasource_prometheus]}[sql=\"sum by(mode)(irate(node_cpu_seconds_total{job=\\\"node\\\", instance=~\\\"$node:.*\\\", mode!=\\\"idle\\\"}[5m])) > 0\",from=\"0\",to=\"0\"]", to_file: false)).to include('1617728730')
+      @report.logger.level = ::Logger::Severity::DEBUG
+      allow(@report.logger).to receive(:debug)
+      expect(@report.logger).to receive(:debug).with(/Translating SQL/)
+      expect(Asciidoctor.convert("grafana_sql_value:#{STUBS[:datasource_prometheus]}[sql=\"sum by(mode)(irate(node_cpu_seconds_total{job=\\\"node\\\", instance=~\\\"$node:.*\\\", mode!=\\\"idle\\\"}[5m\\])) > 0\",from=\"0\",to=\"0\",interval=\"10\"]", to_file: false)).to include('1617728730')
     end
 
     it 'leaves sorting as is for single query results' do
-      expect(Asciidoctor.convert("grafana_sql_value:#{STUBS[:datasource_prometheus]}[sql=\"sum by(mode)(irate(node_cpu_seconds_total{job=\\\"node\\\", instance=~\\\"$node:.*\\\", mode=\\\"iowait\\\"}[5m])) > 0\",from=\"0\",to=\"0\"]", to_file: false)).to include('1617728760')
+      @report.logger.level = ::Logger::Severity::DEBUG
+      allow(@report.logger).to receive(:debug)
+      expect(@report.logger).to receive(:debug).with(/Translating SQL/)
+      expect(Asciidoctor.convert("grafana_sql_value:#{STUBS[:datasource_prometheus]}[sql=\"sum by(mode)(irate(node_cpu_seconds_total{job=\\\"node\\\", instance=~\\\"$node:.*\\\", mode=\\\"iowait\\\"}[5m\\])) > 0\",from=\"0\",to=\"0\"]", to_file: false)).to include('1617728760')
+    end
+
+    it 'handles wrong requests properly' do
+      expect(Asciidoctor.convert("grafana_sql_value:#{STUBS[:datasource_prometheus]}[sql=\"ille gal\",from=\"0\",to=\"0\"]", to_file: false)).to include('1:6: parse error: unexpected identifier "gal"')
     end
   end
 end

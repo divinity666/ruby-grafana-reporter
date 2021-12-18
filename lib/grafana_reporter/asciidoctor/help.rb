@@ -22,12 +22,13 @@ module GrafanaReporter
       private
 
       def github_options
-        { headline_separator: '#', code_begin: '`', code_end: '`', table_begin: "\n", head_postfix_col: '| -- ' }
+        { headline_separator: '#', code_begin: '`', code_end: '`', table_begin: "\n", head_postfix_col: '| -- ',
+          table_linebreak: "<br />"}
       end
 
       def asciidoctor_options
         { headline_separator: '=', code_begin: '`+', code_end: '+`', table_begin: "\n[%autowidth.stretch, "\
-          "options=\"header\"]\n|===\n", table_end: "\n|===" }
+          "options=\"header\"]\n|===\n", table_end: "\n|===", table_linebreak: "\n\n" }
       end
 
       def help_text(opts)
@@ -82,7 +83,7 @@ Usage: #{opts[:code_begin]}#{v[:call]}#{opts[:code_end]}
 #{v[:description]}#{"\n\nSee also: #{v[:see]}" if v[:see]}#{unless v[:options].empty?
 %(
 #{opts[:table_begin]}| Option | Description#{"\n#{opts[:head_postfix_col] * 2}" if opts[:head_postfix_col]}
-#{v[:options].sort.map { |_opt_k, opt_v| "| #{opts[:code_begin]}#{opt_v[:call]}#{opts[:code_end]} | #{opt_v[:description].gsub('|', '\|')}#{"\nSee also: #{opt_v[:see]}" if opt_v[:see]}" }.join("\n") }#{opts[:table_end]})
+#{v[:options].sort.map { |_opt_k, opt_v| "| #{opts[:code_begin]}#{opt_v[:call]}#{opts[:code_end]} | #{opt_v[:description].gsub('|', '\|')}#{"#{opts[:table_linebreak]}See also: #{opt_v[:see]}" if opt_v[:see]}" }.join("\n") }#{opts[:table_end]})
 end}
 )
         end
@@ -256,6 +257,20 @@ end}
                 Set a timeout for the current query. If not overridden with `grafana_default_timeout` in the report template,
                 this defaults to 60 seconds.
 
+            interval:
+              call: interval="<intervaL>"
+              description: >-
+                Used to set the interval size for timescale datasources, whereas the value is used without further
+                conversion directly in the datasource specific interval parameter.
+                Prometheus default: 15 (passed as `step` parameter)
+                Influx default: similar to grafana default, i.e. `(to_time - from_time) / 1000`
+                (replaces `interval_ms` and `interval` variables in query)
+
+            instant:
+              call: instant="true"
+              description: >-
+                Optional parameter for Prometheus `instant` queries. Ignored for other datasources than Prometheus.
+
           # ----------------------------------
           # FUNCTION DOCUMENTATION STARTS HERE
           # ----------------------------------
@@ -403,6 +418,8 @@ end}
               transpose:
               from_timezone:
               to_timezone:
+              instant:
+              interval:
 
           grafana_panel_query_value:
             call: 'grafana_panel_query_value:<panel_id>[query="<query_letter>",options]'
@@ -425,6 +442,8 @@ end}
               to:
               from_timezone:
               to_timezone:
+              instant:
+              interval:
 
           grafana_sql_table:
             call: 'include::grafana_sql_table:<datasource_id>[sql="<sql_query>",options]'
@@ -446,12 +465,18 @@ end}
               transpose:
               from_timezone:
               to_timezone:
+              instant:
+              interval:
 
           grafana_sql_value:
             call: 'grafana_sql_value:<datasource_id>[sql="<sql_query>",options]'
             description: >-
               Returns the value in the first column and the first row of the given query.
               Grafana variables will be replaced in the SQL statement.
+
+              Please note that asciidoctor might fail, if you use square brackets in your
+              sql statement. To overcome this issue, you'll need to escape the closing
+              square brackets, i.e. +]+ needs to be replaced with +\\]+.
             see: https://grafana.com/docs/grafana/latest/variables/syntax/
             standard_options:
               filter_columns:
@@ -463,6 +488,8 @@ end}
               to:
               from_timezone:
               to_timezone:
+              instant:
+              interval:
         YAML_HELP
       end
     end

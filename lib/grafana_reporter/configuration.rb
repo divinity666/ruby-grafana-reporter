@@ -263,13 +263,13 @@ module GrafanaReporter
       cur_pos
     end
 
-    def validate_schema(schema, subject)
+    def validate_schema(schema, subject, pattern = nil)
       return nil if subject.nil?
 
       schema.each do |key, config|
-        type, min_occurence, next_level = config
+        type, min_occurence, pattern, next_level = config
 
-        validate_schema(next_level, subject[key]) if next_level
+        validate_schema(next_level, subject[key], pattern) if next_level
 
         if key.nil?
           # apply to all on this level
@@ -289,9 +289,13 @@ module GrafanaReporter
         elsif subject.is_a?(Hash)
           if !subject.key?(key) && min_occurence.positive?
             raise ConfigurationDoesNotMatchSchemaError.new(key, 'occur', min_occurence, 0)
-          end
-          if !subject[key].is_a?(type) && subject.key?(key)
+          elsif !subject[key].is_a?(type) && subject.key?(key)
             raise ConfigurationDoesNotMatchSchemaError.new(key, 'be a', type, subject[key].class)
+          elsif pattern
+            # validate for regex
+            unless subject[key].to_s =~ pattern
+              raise ConfigurationDoesNotMatchSchemaError.new(key, 'match pattern', pattern.inspect, subject[key].to_s)
+            end
           end
 
         else
@@ -312,35 +316,35 @@ module GrafanaReporter
       {
         'grafana' =>
          [
-           Hash, 1,
+           Hash, 1, nil,
            {
              nil =>
               [
-                Hash, 1,
+                Hash, 1, nil,
                 {
-                  'host' => [String, 1],
-                  'api_key' => [String, 0]
+                  'host' => [String, 1, %r{^http(s)?://.+}],
+                  'api_key' => [String, 0, %r{^(?:[\w]+[=]*)?$}]
                 }
               ]
            }
          ],
-        'default-document-attributes' => [Hash, explicit ? 1 : 0],
-        'to_file' => [String, 0],
+        'default-document-attributes' => [Hash, explicit ? 1 : 0, nil],
+        'to_file' => [String, 0, nil],
         'grafana-reporter' =>
         [
-          Hash, 1,
+          Hash, 1, nil,
           {
-            'check-for-updates' => [Integer, 0],
-            'debug-level' => [String, 0],
-            'run-mode' => [String, 0],
-            'test-instance' => [String, 0],
-            'templates-folder' => [String, explicit ? 1 : 0],
-            'report-class' => [String, 1],
-            'reports-folder' => [String, explicit ? 1 : 0],
-            'report-retention' => [Integer, explicit ? 1 : 0],
-            'ssl-cert' => [String, 0],
-            'webservice-port' => [Integer, explicit ? 1 : 0],
-            'callbacks' => [Hash, 0, { nil => [String, 1] }]
+            'check-for-updates' => [Integer, 0, /^[0-9]*$/],
+            'debug-level' => [String, 0, /^(?:DEBUG|INFO|WARN|ERROR|FATAL|UNKNOWN)?$/],
+            'run-mode' => [String, 0, /^(?:test|single-render|webservice)?$/],
+            'test-instance' => [String, 0, nil],
+            'templates-folder' => [String, explicit ? 1 : 0, nil],
+            'report-class' => [String, 1, nil],
+            'reports-folder' => [String, explicit ? 1 : 0, nil],
+            'report-retention' => [Integer, explicit ? 1 : 0, nil],
+            'ssl-cert' => [String, 0, nil],
+            'webservice-port' => [Integer, explicit ? 1 : 0, nil],
+            'callbacks' => [Hash, 0, nil, { nil => [String, 1, nil] }]
           }
         ]
       }
