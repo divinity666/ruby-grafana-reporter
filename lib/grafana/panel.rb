@@ -28,7 +28,11 @@ module Grafana
 
     # @return [Datasource] datasource object specified for the current panel
     def datasource
-      dashboard.grafana.datasource_by_name(@model['datasource'])
+      if @model['datasource'].is_a?(Hash)
+        dashboard.grafana.datasource_by_uid(@model['datasource']['uid'])
+      else
+        dashboard.grafana.datasource_by_name(@model['datasource'])
+      end
     end
 
     # @return [String] query string for the requested query letter

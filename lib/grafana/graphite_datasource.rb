@@ -47,6 +47,9 @@ module Grafana
     def preformat_response(response_body)
       json = JSON.parse(response_body)
 
+      raise UnsupportedQueryResponseReceivedError, response_body if json.first['target'].nil?
+      raise UnsupportedQueryResponseReceivedError, response_body if json.first['datapoints'].nil?
+
       header = ['time']
       content = {}
 

@@ -71,4 +71,11 @@ module Grafana
       super("The datasource query provided, does not look like a grafana datasource target (received: #{query}).")
     end
   end
+
+  # Raised if a datasource query returned with an unsupported result
+  class UnsupportedQueryResponseReceivedError < GrafanaError
+    def initialize(response)
+      super("The datasource request returned with an unsupported response format (received: #{response}).")
+    end
+  end
 end

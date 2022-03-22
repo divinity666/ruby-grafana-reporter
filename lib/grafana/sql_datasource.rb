@@ -57,12 +57,16 @@ module Grafana
           results[:header] = results[:header] + ['SQL Error']
           results[:content] = [[query_result['error']]]
 
-        elsif query_result['tables']
-          query_result['tables'].each do |table|
-            results[:header] = results[:header] + table['columns'].map { |header| header['text'] }
-            results[:content] = table['rows']
+        elsif query_result.key?('tables')
+          if query_result['tables']
+            query_result['tables'].each do |table|
+              results[:header] = results[:header] + table['columns'].map { |header| header['text'] }
+              results[:content] = table['rows']
+            end
           end
 
+        else
+          raise UnsupportedQueryResponseReceivedError, response_body
         end
       end
 
