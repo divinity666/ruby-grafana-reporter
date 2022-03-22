@@ -57,15 +57,44 @@ module Grafana
 
     # @see AbstractDatasource#preformat_response
     def preformat_response(response_body)
-      json = JSON.parse(response_body)
+      json = {}
+      begin
+        json = JSON.parse(response_body)
+      rescue
+        raise UnsupportedQueryResponseReceivedError, response_body
+      end
 
       # handle response with error result
       unless json['error'].nil?
         return { header: ['error'], content: [[ json['error'] ]] }
       end
 
+      # handle dataframes
+      if json['results']
+        data = json['results'].values.first
+        raise UnsupportedQueryResponseReceivedError, response_body if data.nil?
+        raise UnsupportedQueryResponseReceivedError, response_body if data['frames'].nil?
+        # TODO: check how multiple frames have to be handled
+
+        data = data['frames']
+        headers = []
+        data.first['schema']['fields'].each do |headline|
+          header = headline['config']['displayNameFromDS'].nil? ? headline['name'] : headline['config']['displayNameFromDS']
+          headers << header
+        end
+        content = data.first['data']['values'][0].zip(data.first['data']['values'][1])
+        return { header: headers, content: content }
+      end
+
+      # handle former result formats
+      raise UnsupportedQueryResponseReceivedError, response_body if json['data'].nil?
+      raise UnsupportedQueryResponseReceivedError, response_body if json['data']['resultType'].nil?
+      raise UnsupportedQueryResponseReceivedError, response_body if json['data']['result'].nil?
+
       result_type = json['data']['resultType']
       json = json['data']['result']
+
+      raise UnsupportedQueryResponseReceivedError, response_body if not result_type =~ /^(?:scalar|string|vector|matrix)$/
 
       headers = ['time']
       content = {}

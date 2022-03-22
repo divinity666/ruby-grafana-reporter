@@ -130,7 +130,12 @@ module Grafana
     # @see AbstractDatasource#preformat_response
     def preformat_response(response_body)
       # TODO: how to handle multiple query results?
-      json = JSON.parse(response_body)['results'].first['series']
+      json = JSON.parse(response_body)
+      raise UnsupportedQueryResponseReceivedError, response_body if json['results'].nil?
+      raise UnsupportedQueryResponseReceivedError, response_body if json['results'].first.nil?
+      raise UnsupportedQueryResponseReceivedError, response_body if json['results'].first['series'].nil?
+
+      json = json['results'].first['series']
       return {} if json.nil?
 
       header = ['time']

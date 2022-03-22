@@ -143,4 +143,14 @@ describe PanelQueryTableIncludeProcessor do
       expect(Asciidoctor.convert("include::grafana_panel_query_table:#{STUBS[:panel_influx][:id]}[query=\"#{STUBS[:panel_influx][:letter]}\",dashboard=\"#{STUBS[:dashboard]}\",from=\"0\",to=\"0\"]", to_file: false)).to include("<p>\| 1621781110000 \| 4410823132.66179 \| 3918217168.1713953 \| 696149370.0246137 \| 308698357.77230036 \|  \| 2069259154.5448523 \| 1037231406.781757 \| 2008807302.9000952 \| 454762299.1667595 \| 1096524688.048703\n\|")
     end
   end
+
+  context 'dataframe format' do
+    it 'can handle requests with dataframe JSON format' do
+      @report.logger.level = ::Logger::Severity::DEBUG
+      allow(@report.logger).to receive(:debug)
+      expect(@report.logger).to receive(:debug).with(/^Requesting .*&step/)
+      expect(@report.logger).not_to receive(:error)
+      expect(Asciidoctor.convert("include::grafana_panel_query_table:#{STUBS[:panel_prometheus_new_format][:id]}[query=\"#{STUBS[:panel_prometheus_new_format][:letter]}\",dashboard=\"#{STUBS[:dashboard]}\",from=\"0\",to=\"0\"]", to_file: false)).to match(/<p>\| 1647951570000 \| 78262272\n\|/)
+    end
+  end
 end

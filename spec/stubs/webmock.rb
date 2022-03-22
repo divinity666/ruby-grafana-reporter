@@ -15,6 +15,7 @@ STUBS = {
   panel_sql: { id: '11', letter: 'A', title: 'Temperaturen' },
   panel_graphite: { id: '12', letter: 'A' },
   panel_prometheus: { id: '13', letter: 'A' },
+  panel_prometheus_new_format: { id: '17', letter: 'A' },
   panel_influx: { id: '14', letter: 'A' },
   panel_broken_image: { id: '13' },
   panel_does_not_exist: { id: '99'},
@@ -209,6 +210,14 @@ RSpec.configure do |config|
     .to_return(status: 200, body: File.read('./spec/tests/sample_graphite_single_response.json'), headers: {})
 
     # Prometheus
+    stub_request(:get, 'http://localhost/api/datasources/proxy/4/api/v1/query_range').with(
+      query: {"query": "node_memory_Buffers_bytes{job=\"node\", instance=~\"$node:.*\"}", 'start': 0, 'end': 0, 'step':10},
+      headers: default_header.merge({
+        'Authorization' => "Bearer #{STUBS[:key_admin]}"
+      })
+    )
+    .to_return(status: 200, body: File.read('./spec/tests/sample_prometheus_response_dataframes.json'), headers: {})
+
     stub_request(:get, 'http://localhost/api/datasources/proxy/4/api/v1/query_range').with(
       query: {"query": "sum by(mode)(irate(node_cpu_seconds_total{job=\"node\", instance=~\"$node:.*\", mode!=\"idle\"}[5m])) > 0", 'start': 0, 'end': 0, 'step':10},
       headers: default_header.merge({

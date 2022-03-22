@@ -81,6 +81,17 @@ module Grafana
       @datasources[datasource_name]
     end
 
+    # Returns the datasource, which has been queried by the datasource uid.
+    #
+    # @param datasource_uid [String] unique id of the searched datasource
+    # @return [Datasource] Datasource for the specified datasource unique id
+    def datasource_by_uid(datasource_uid)
+      datasource = @datasources.select { |_name, ds| ds.uid == datasource_uid }.values.first
+      raise DatasourceDoesNotExistError.new('uid', datasource_uid) unless datasource
+
+      datasource
+    end
+
     # Returns the datasource, which has been queried by the datasource id.
     #
     # @param datasource_id [Integer] id of the searched datasource

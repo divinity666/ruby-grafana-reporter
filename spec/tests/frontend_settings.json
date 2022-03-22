@@ -222,6 +222,7 @@
     },
     "Prometheus": {
       "id": 4,
+      "uid": "000000008",
       "meta": {
         "type": "datasource",
         "name": "Prometheus",

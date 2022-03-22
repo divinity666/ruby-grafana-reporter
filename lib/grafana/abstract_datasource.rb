@@ -57,6 +57,11 @@ module Grafana
       @model['name']
     end
 
+    # @return [String] unique ID of the datasource
+    def uid
+      @model['uid']
+    end
+
     # @return [Integer] ID of the datasource
     def id
       @model['id'].to_i
