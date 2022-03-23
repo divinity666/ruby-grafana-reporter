@@ -89,7 +89,7 @@ module GrafanaReporter
         # grafana errors will be directly passed through
         raise
       rescue StandardError => e
-        raise DatasourceRequestInternalError.new(@datasource, e.message)
+        raise DatasourceRequestInternalError.new(@datasource, "#{e.message}\n#{e.backtrace.join("\n")}")
       end
 
       raise DatasourceRequestInvalidReturnValueError.new(@datasource, @result) unless datasource_response_valid?
