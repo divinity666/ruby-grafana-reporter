@@ -16,6 +16,7 @@ STUBS = {
   panel_graphite: { id: '12', letter: 'A' },
   panel_prometheus: { id: '13', letter: 'A' },
   panel_prometheus_new_format: { id: '17', letter: 'A' },
+  panel_prometheus_new_format_variable_datasource: { id: '18', letter: 'A' },
   panel_influx: { id: '14', letter: 'A' },
   panel_broken_image: { id: '13' },
   panel_does_not_exist: { id: '99'},

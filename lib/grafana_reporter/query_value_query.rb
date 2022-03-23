@@ -5,7 +5,10 @@ module GrafanaReporter
   class QueryValueQuery < AbstractQuery
     # @see Grafana::AbstractQuery#pre_process
     def pre_process
-      @datasource = @panel.datasource if @panel
+      if @panel
+        @panel.resolve_variable_datasource(@variables)
+        @datasource = @panel.datasource
+      end
 
       @variables['result_type'] ||= Variable.new('')
     end

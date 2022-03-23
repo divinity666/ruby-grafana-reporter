@@ -113,6 +113,47 @@ module Grafana
       raise NotImplementedError
     end
 
+    # Replaces the grafana variables in the given string with their replacement value.
+    #
+    # @param string [String] string in which the variables shall be replaced
+    # @param variables [Hash<String,Variable>] Hash containing the variables, which shall be replaced in the
+    #  given string
+    # @param overwrite_default_format [String] {Variable#value_formatted} value, if a custom default format should be used, otherwise {#default_variable_format} is used as default, which may be overwritten
+    # @return [String] string in which all variables are properly replaced
+    def replace_variables(string, variables, overwrite_default_format = nil)
+      res = string
+      repeat = true
+      repeat_count = 0
+
+      # TODO: find a proper way to replace variables recursively instead of over and over again
+      # TODO: add tests for recursive replacement of variable
+      while repeat && (repeat_count < 3)
+        repeat = false
+        repeat_count += 1
+
+        variables.each do |name, variable|
+          # do not replace with non grafana variables
+          next unless name =~ /^var-/
+
+          # only set ticks if value is string
+          var_name = name.gsub(/^var-/, '')
+          next unless var_name =~ /^\w+$/
+
+          res = res.gsub(/(?:\$\{#{var_name}(?::(?<format>\w+))?\}|\$#{var_name}(?!\w))/) do
+            format = overwrite_default_format
+            format = default_variable_format if overwrite_default_format.nil?
+            if $LAST_MATCH_INFO
+              format = $LAST_MATCH_INFO[:format] if $LAST_MATCH_INFO[:format]
+            end
+            variable.value_formatted(format)
+          end
+        end
+        repeat = true if res.include?('$')
+      end
+
+      res
+    end
+
     private
 
     # Provides a general method to handle the given query response as general Grafana Dataframe format.
@@ -137,45 +178,6 @@ module Grafana
 
     rescue
       raise UnsupportedQueryResponseReceivedError, response_body
-    end
-
-    # Replaces the grafana variables in the given string with their replacement value.
-    #
-    # @param string [String] string in which the variables shall be replaced
-    # @param variables [Hash<String,Variable>] Hash containing the variables, which shall be replaced in the
-    #  given string
-    # @return [String] string in which all variables are properly replaced
-    def replace_variables(string, variables = {})
-      res = string
-      repeat = true
-      repeat_count = 0
-
-      # TODO: find a proper way to replace variables recursively instead of over and over again
-      # TODO: add tests for recursive replacement of variable
-      while repeat && (repeat_count < 3)
-        repeat = false
-        repeat_count += 1
-
-        variables.each do |name, variable|
-          # do not replace with non grafana variables
-          next unless name =~ /^var-/
-
-          # only set ticks if value is string
-          var_name = name.gsub(/^var-/, '')
-          next unless var_name =~ /^\w+$/
-
-          res = res.gsub(/(?:\$\{#{var_name}(?::(?<format>\w+))?\}|\$#{var_name}(?!\w))/) do
-            format = default_variable_format
-            if $LAST_MATCH_INFO
-              format = $LAST_MATCH_INFO[:format] if $LAST_MATCH_INFO[:format]
-            end
-            variable.value_formatted(format)
-          end
-        end
-        repeat = true if res.include?('$')
-      end
-
-      res
     end
   end
 end

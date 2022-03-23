@@ -152,5 +152,14 @@ describe PanelQueryTableIncludeProcessor do
       expect(@report.logger).not_to receive(:error)
       expect(Asciidoctor.convert("include::grafana_panel_query_table:#{STUBS[:panel_prometheus_new_format][:id]}[query=\"#{STUBS[:panel_prometheus_new_format][:letter]}\",dashboard=\"#{STUBS[:dashboard]}\",from=\"0\",to=\"0\"]", to_file: false)).to match(/<p>\| 1647951570000 \| 78262272\n\|/)
     end
+
+    it 'can handle datasources as variables' do
+      @report.logger.level = ::Logger::Severity::DEBUG
+      allow(@report.logger).to receive(:debug)
+      expect(@report.logger).to receive(:debug).with(/^Requesting .*&step/)
+      expect(@report.logger).not_to receive(:error)
+      expect(Asciidoctor.convert("include::grafana_panel_query_table:#{STUBS[:panel_prometheus_new_format_variable_datasource][:id]}[query=\"#{STUBS[:panel_prometheus_new_format_variable_datasource][:letter]}\",dashboard=\"#{STUBS[:dashboard]}\",var-DS_PROMETHEUS=\"000000008\"from=\"0\",to=\"0\"]", to_file: false)).to match(/<p>\| 1647951570000 \| 78262272\n\|/)
+    end
   end
+
 end
