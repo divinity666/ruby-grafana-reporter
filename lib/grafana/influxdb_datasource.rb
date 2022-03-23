@@ -127,8 +127,13 @@ module Grafana
       "#{res} #{parts.join(', ')}"
     end
 
-    # @see AbstractDatasource#preformat_response
     def preformat_response(response_body)
+      begin
+        return preformat_dataframe_response(response_body)
+      rescue
+        # TODO: show an info, that the response if not a dataframe
+      end
+
       # TODO: how to handle multiple query results?
       json = JSON.parse(response_body)
       raise UnsupportedQueryResponseReceivedError, response_body if json['results'].nil?

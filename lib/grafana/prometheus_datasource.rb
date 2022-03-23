@@ -55,8 +55,13 @@ module Grafana
 
     private
 
-    # @see AbstractDatasource#preformat_response
     def preformat_response(response_body)
+      begin
+        return preformat_dataframe_response(response_body)
+      rescue
+        # TODO: show an info, that the response if not a dataframe
+      end
+
       json = {}
       begin
         json = JSON.parse(response_body)
@@ -67,23 +72,6 @@ module Grafana
       # handle response with error result
       unless json['error'].nil?
         return { header: ['error'], content: [[ json['error'] ]] }
-      end
-
-      # handle dataframes
-      if json['results']
-        data = json['results'].values.first
-        raise UnsupportedQueryResponseReceivedError, response_body if data.nil?
-        raise UnsupportedQueryResponseReceivedError, response_body if data['frames'].nil?
-        # TODO: check how multiple frames have to be handled
-
-        data = data['frames']
-        headers = []
-        data.first['schema']['fields'].each do |headline|
-          header = headline['config']['displayNameFromDS'].nil? ? headline['name'] : headline['config']['displayNameFromDS']
-          headers << header
-        end
-        content = data.first['data']['values'][0].zip(data.first['data']['values'][1])
-        return { header: headers, content: content }
       end
 
       # handle former result formats

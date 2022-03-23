@@ -115,6 +115,30 @@ module Grafana
 
     private
 
+    # Provides a general method to handle the given query response as general Grafana Dataframe format.
+    #
+    # This method throws {UnsupportedQueryResponseReceivedError} if the given query response is not a
+    # properly formattes dataframe
+    #
+    # @param response_body [String] raw response body
+    def preformat_dataframe_response(response_body)
+      json = JSON.parse(response_body)
+      data = json['results'].values.first
+
+      # TODO: check how multiple frames have to be handled
+      data = data['frames']
+      headers = []
+      data.first['schema']['fields'].each do |headline|
+        header = headline['config']['displayNameFromDS'].nil? ? headline['name'] : headline['config']['displayNameFromDS']
+        headers << header
+      end
+      content = data.first['data']['values'][0].zip(data.first['data']['values'][1])
+      return { header: headers, content: content }
+
+    rescue
+      raise UnsupportedQueryResponseReceivedError, response_body
+    end
+
     # Replaces the grafana variables in the given string with their replacement value.
     #
     # @param string [String] string in which the variables shall be replaced
