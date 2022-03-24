@@ -47,6 +47,12 @@ module Grafana
     private
 
     def preformat_response(response_body)
+      begin
+        return preformat_dataframe_response(response_body)
+      rescue
+        # TODO: show an info, that the response if not a dataframe
+      end
+
       results = {}
       results.default = []
       results[:header] = []
@@ -64,13 +70,13 @@ module Grafana
               results[:content] = table['rows']
             end
           end
-
-        else
-          raise UnsupportedQueryResponseReceivedError, response_body
         end
       end
 
-      results
+      return results
+
+    rescue
+      raise UnsupportedQueryResponseReceivedError, response_body
     end
   end
 end

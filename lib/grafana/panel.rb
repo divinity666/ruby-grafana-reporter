@@ -12,6 +12,11 @@ module Grafana
     def initialize(model, dashboard)
       @model = model
       @dashboard = dashboard
+
+      @datasource_uid_or_name = @model['datasource']
+      if @model['datasource'].is_a?(Hash)
+        @datasource_uid_or_name = @model['datasource']['uid']
+      end
     end
 
     # @return [String] content of the requested field or +''+ if not found
@@ -26,12 +31,21 @@ module Grafana
       @model['id']
     end
 
+    # This method should always be called before the +datasource+ method of a
+    # panel is invoked, to ensure that the variable names in the datasource
+    # field are resolved.
+    #
+    # @param variables [Hash] variables hash, which should be use to resolve variable datasource
+    def resolve_variable_datasource(variables)
+      @datasource_uid_or_name = AbstractDatasource.new(nil).replace_variables(@datasource_uid_or_name, variables, 'raw')
+    end
+
     # @return [Datasource] datasource object specified for the current panel
     def datasource
-      if @model['datasource'].is_a?(Hash)
-        dashboard.grafana.datasource_by_uid(@model['datasource']['uid'])
+      if datasource_kind_is_uid?
+        dashboard.grafana.datasource_by_uid(@datasource_uid_or_name)
       else
-        dashboard.grafana.datasource_by_name(@model['datasource'])
+        dashboard.grafana.datasource_by_name(@datasource_uid_or_name)
       end
     end
 
@@ -46,6 +60,15 @@ module Grafana
     # @return [String] relative rendering URL for the panel, to create an image out of it
     def render_url
       "/render/d-solo/#{@dashboard.id}?panelId=#{@model['id']}"
+    end
+
+    private
+
+    def datasource_kind_is_uid?
+      if @model['datasource'].is_a?(Hash)
+        return true
+      end
+      false
     end
   end
 end

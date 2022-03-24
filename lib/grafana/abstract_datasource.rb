@@ -113,15 +113,14 @@ module Grafana
       raise NotImplementedError
     end
 
-    private
-
     # Replaces the grafana variables in the given string with their replacement value.
     #
     # @param string [String] string in which the variables shall be replaced
     # @param variables [Hash<String,Variable>] Hash containing the variables, which shall be replaced in the
     #  given string
+    # @param overwrite_default_format [String] {Variable#value_formatted} value, if a custom default format should be used, otherwise {#default_variable_format} is used as default, which may be overwritten
     # @return [String] string in which all variables are properly replaced
-    def replace_variables(string, variables = {})
+    def replace_variables(string, variables, overwrite_default_format = nil)
       res = string
       repeat = true
       repeat_count = 0
@@ -141,7 +140,8 @@ module Grafana
           next unless var_name =~ /^\w+$/
 
           res = res.gsub(/(?:\$\{#{var_name}(?::(?<format>\w+))?\}|\$#{var_name}(?!\w))/) do
-            format = default_variable_format
+            format = overwrite_default_format
+            format = default_variable_format if overwrite_default_format.nil?
             if $LAST_MATCH_INFO
               format = $LAST_MATCH_INFO[:format] if $LAST_MATCH_INFO[:format]
             end
@@ -152,6 +152,32 @@ module Grafana
       end
 
       res
+    end
+
+    private
+
+    # Provides a general method to handle the given query response as general Grafana Dataframe format.
+    #
+    # This method throws {UnsupportedQueryResponseReceivedError} if the given query response is not a
+    # properly formattes dataframe
+    #
+    # @param response_body [String] raw response body
+    def preformat_dataframe_response(response_body)
+      json = JSON.parse(response_body)
+      data = json['results'].values.first
+
+      # TODO: check how multiple frames have to be handled
+      data = data['frames']
+      headers = []
+      data.first['schema']['fields'].each do |headline|
+        header = headline['config']['displayNameFromDS'].nil? ? headline['name'] : headline['config']['displayNameFromDS']
+        headers << header
+      end
+      content = data.first['data']['values'][0].zip(data.first['data']['values'][1])
+      return { header: headers, content: content }
+
+    rescue
+      raise UnsupportedQueryResponseReceivedError, response_body
     end
   end
 end

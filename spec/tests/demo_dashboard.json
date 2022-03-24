@@ -683,6 +683,126 @@
         "hiddenSeries": false
       },
       {
+        "id": 18,
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 0,
+          "y": 11
+        },
+        "type": "graph",
+        "title": "Memory usage",
+        "datasource": {
+          "uid": "${DS_PROMETHEUS}",
+          "type": "prometheus"
+        },
+        "thresholds": [],
+        "pluginVersion": "8.4.3-54429",
+        "links": [],
+        "legend": {
+          "alignAsTable": true,
+          "avg": true,
+          "current": true,
+          "max": true,
+          "min": true,
+          "show": true,
+          "total": false,
+          "values": true
+        },
+        "aliasColors": {
+          "buffers": "#705DA0",
+          "free": "#7EB26D"
+        },
+        "bars": false,
+        "dashLength": 10,
+        "dashes": false,
+        "editable": true,
+        "error": false,
+        "fill": 7,
+        "grid": {},
+        "isNew": true,
+        "lines": true,
+        "linewidth": 2,
+        "nullPointMode": "null",
+        "percentage": false,
+        "pointradius": 5,
+        "points": false,
+        "renderer": "flot",
+        "seriesOverrides": [
+          {
+            "alias": "free",
+            "fill": 1,
+            "fillBelowTo": "used",
+            "lines": false,
+            "zindex": 2
+          },
+          {
+            "alias": "used",
+            "zindex": 1
+          }
+        ],
+        "spaceLength": 10,
+        "stack": true,
+        "steppedLine": false,
+        "targets": [
+          {
+            "expr": "node_memory_Buffers_bytes{job=\"node\", instance=~\"$node:.*\"}",
+            "legendFormat": "buffers",
+            "interval": "",
+            "exemplar": true,
+            "format": "time_series",
+            "intervalFactor": 2,
+            "refId": "A",
+            "step": 10,
+            "datasource": {
+              "type": "prometheus",
+              "uid": "${DS_PROMETHEUS}"
+            }
+          }
+        ],
+        "timeFrom": null,
+        "timeRegions": [],
+        "timeShift": null,
+        "tooltip": {
+          "msResolution": false,
+          "shared": true,
+          "sort": 0,
+          "value_type": "individual"
+        },
+        "xaxis": {
+          "buckets": null,
+          "mode": "time",
+          "name": null,
+          "show": true,
+          "values": []
+        },
+        "yaxes": [
+          {
+            "format": "bytes",
+            "logBase": 1,
+            "max": null,
+            "min": null,
+            "show": true
+          },
+          {
+            "format": "short",
+            "logBase": 1,
+            "max": null,
+            "min": null,
+            "show": true
+          }
+        ],
+        "yaxis": {
+          "align": false,
+          "alignLevel": null
+        },
+        "options": {
+          "alertThreshold": true
+        },
+        "fillGradient": 0,
+        "hiddenSeries": false
+      },
+      {
         "collapsed": true,
         "datasource": null,
         "gridPos": {
