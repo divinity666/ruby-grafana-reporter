@@ -51,10 +51,6 @@ module Grafana
       end
 
       json = JSON.parse(response_body)
-
-      raise UnsupportedQueryResponseReceivedError, response_body if json.first['target'].nil?
-      raise UnsupportedQueryResponseReceivedError, response_body if json.first['datapoints'].nil?
-
       header = ['time']
       content = {}
 
@@ -74,7 +70,10 @@ module Grafana
         end
       end
 
-      { header: header, content: content.to_a.map(&:flatten).sort { |a, b| a[0] <=> b[0] } }
+      return { header: header, content: content.to_a.map(&:flatten).sort { |a, b| a[0] <=> b[0] } }
+
+    rescue
+      raise UnsupportedQueryResponseReceivedError, response_body
     end
   end
 end

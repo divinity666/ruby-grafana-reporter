@@ -136,10 +136,6 @@ module Grafana
 
       # TODO: how to handle multiple query results?
       json = JSON.parse(response_body)
-      raise UnsupportedQueryResponseReceivedError, response_body if json['results'].nil?
-      raise UnsupportedQueryResponseReceivedError, response_body if json['results'].first.nil?
-      raise UnsupportedQueryResponseReceivedError, response_body if json['results'].first['series'].nil?
-
       json = json['results'].first['series']
       return {} if json.nil?
 
@@ -162,7 +158,10 @@ module Grafana
         end
       end
 
-      { header: header, content: content.to_a.map(&:flatten).sort { |a, b| a[0] <=> b[0] } }
+      return { header: header, content: content.to_a.map(&:flatten).sort { |a, b| a[0] <=> b[0] } }
+
+    rescue
+      raise UnsupportedQueryResponseReceivedError, response_body
     end
   end
 end

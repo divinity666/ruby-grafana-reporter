@@ -56,18 +56,14 @@ module Grafana
     private
 
     def preformat_response(response_body)
+      # TODO: show raw response body to debug case https://github.com/divinity666/ruby-grafana-reporter/issues/24
       begin
         return preformat_dataframe_response(response_body)
       rescue
         # TODO: show an info, that the response if not a dataframe
       end
 
-      json = {}
-      begin
-        json = JSON.parse(response_body)
-      rescue
-        raise UnsupportedQueryResponseReceivedError, response_body
-      end
+      json = JSON.parse(response_body)
 
       # handle response with error result
       unless json['error'].nil?
@@ -75,14 +71,8 @@ module Grafana
       end
 
       # handle former result formats
-      raise UnsupportedQueryResponseReceivedError, response_body if json['data'].nil?
-      raise UnsupportedQueryResponseReceivedError, response_body if json['data']['resultType'].nil?
-      raise UnsupportedQueryResponseReceivedError, response_body if json['data']['result'].nil?
-
       result_type = json['data']['resultType']
       json = json['data']['result']
-
-      raise UnsupportedQueryResponseReceivedError, response_body if not result_type =~ /^(?:scalar|string|vector|matrix)$/
 
       headers = ['time']
       content = {}
@@ -118,7 +108,10 @@ module Grafana
         end
       end
 
-      { header: headers, content: content.to_a.map(&:flatten).sort { |a, b| a[0] <=> b[0] } }
+      return { header: headers, content: content.to_a.map(&:flatten).sort { |a, b| a[0] <=> b[0] } }
+
+    rescue
+      raise UnsupportedQueryResponseReceivedError, response_body
     end
   end
 end

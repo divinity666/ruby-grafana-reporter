@@ -70,13 +70,13 @@ module Grafana
               results[:content] = table['rows']
             end
           end
-
-        else
-          raise UnsupportedQueryResponseReceivedError, response_body
         end
       end
 
-      results
+      return results
+
+    rescue
+      raise UnsupportedQueryResponseReceivedError, response_body
     end
   end
 end
