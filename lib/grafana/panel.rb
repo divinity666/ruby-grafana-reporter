@@ -37,7 +37,7 @@ module Grafana
     #
     # @param variables [Hash] variables hash, which should be use to resolve variable datasource
     def resolve_variable_datasource(variables)
-      @datasource_uid_or_name = AbstractDatasource.new(nil).replace_variables(@datasource_uid_or_name, variables, 'raw')
+      @datasource_uid_or_name = AbstractDatasource.new(nil).replace_variables(@datasource_uid_or_name, variables, 'raw') if @datasource_uid_or_name.is_a?(String)
     end
 
     # @return [Datasource] datasource object specified for the current panel
