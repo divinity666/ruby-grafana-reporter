@@ -8,7 +8,7 @@ assignees: ''
 ---
 
 **Describe the issue**
-A clear and concise description of what the issue is.
+A clear and concise description of what the issue is (please provide all logs with `-d DEBUG`).
 What was the expected behaviour?
 
 **Application call**
@@ -32,6 +32,7 @@ What was the expected behaviour?
 
 **Environment (please complete the following information):**
  - OS [e.g. Windows 10]: 
+ - Grafana version [e.g. 6.3.4]: 
  - Environment [e.g. source, gem, docker or windows-exe]: 
- - ruby Version, if source or gem environment [e.g. 2.3.7]: 
- - reporter Version [e.g. 0.3.0]:
+ - Ruby Version, if source or gem environment [e.g. 2.3.7]: 
+ - Reporter version [e.g. 0.3.0]: 
