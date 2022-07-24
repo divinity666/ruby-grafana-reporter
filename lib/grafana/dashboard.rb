@@ -58,7 +58,14 @@ module Grafana
       list = @model['templating']['list']
       return unless list.is_a? Array
 
-      list.each { |item| @variables << Variable.new(item, self) }
+      list.each do |item|
+        begin
+          @variables << Variable.new(item, self)
+        rescue => e
+          # TODO: show this message as a warning - needs test cleanup
+          @grafana.logger.debug(e.message)
+        end
+      end
     end
 
     # read panels
