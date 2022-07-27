@@ -156,6 +156,12 @@ module Grafana
       json = JSON.parse(settings.body)
       json['datasources'].select { |_k, v| v['id'].to_i.positive? }.each do |ds_name, ds_value|
         @datasources[ds_name] = AbstractDatasource.build_instance(ds_value)
+
+        # print debug info for https://github.com/divinity666/ruby-grafana-reporter/issues/29
+        if @datasources[ds_name].nil?
+          @logger.error("Datasource with name '#{ds_name}' and configuration: '#{ds_value}' could not be initialized.")
+          @datasources.delete(ds_name)
+        end
       end
       @datasources['default'] = @datasources[json['defaultDatasource']]
     end
