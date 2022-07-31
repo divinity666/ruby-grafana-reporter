@@ -82,6 +82,7 @@ module Grafana
     #   }
     #
     # @param query_description [Hash] query description, which will requested:
+    # @option query_description [String] :grafana_version grafana version, for which the request is to be prepared
     # @option query_description [String] :from +from+ timestamp
     # @option query_description [String] :to +to+ timestamp
     # @option query_description [Integer] :timeout expected timeout for the request

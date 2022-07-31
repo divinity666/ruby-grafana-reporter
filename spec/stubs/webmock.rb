@@ -45,11 +45,7 @@ RSpec.configure do |config|
     )
     .to_return(status: 200, body: "{\"id\":#{STUBS[:org_id]},\"name\":\"#{STUBS[:org_name]}\"}", headers: {})
 
-    stub_request(:get, "http://localhost/api/health").with(
-      headers: default_header.merge({
-        'Authorization' => /^Bearer (?:#{STUBS[:key_admin]}|#{STUBS[:key_viewer]})$/,
-      })
-    )
+    stub_request(:get, %r{(?:http|https)://localhost/api/health})
     .to_return(status: 200, body: "{\"commit\":\"05025c5\",\"database\":\"ok\",\"version\":\"#{STUBS[:version]}\"}", headers: {})
 
     stub_request(:get, "http://localhost/api/search").with(

@@ -13,7 +13,6 @@ module GrafanaReporter
     attr_reader :variables, :result, :panel, :dashboard
 
     def timeout
-      # TODO: PRIO check where value priorities should be evaluated
       return @variables['timeout'].raw_value if @variables['timeout']
       return @variables['grafana_default_timeout'].raw_value if @variables['grafana_default_timeout']
 
@@ -81,7 +80,8 @@ module GrafanaReporter
 
       begin
         @result = @datasource.request(from: from, to: to, raw_query: raw_query, variables: @variables,
-                                      prepared_request: @grafana.prepare_request, timeout: timeout)
+                                      prepared_request: @grafana.prepare_request, timeout: timeout,
+                                      grafana_version: @grafana.version)
       rescue ::Grafana::GrafanaError
         # grafana errors will be directly passed through
         raise
