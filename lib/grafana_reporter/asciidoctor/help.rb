@@ -499,6 +499,29 @@ end}
               to_timezone:
               instant:
               interval:
+
+          grafana_value_as_variable:
+            call: 'include::grafana_value_as_variable[call="<grafana_reporter_call>",variable_name="<your_variable_name>",options]'
+            description: >-
+              Executes the given +<grafana_reporter_call>+ and stored the resulting value
+              in the given +<your_variable_name>+, so that it can be used in asciidoctor
+              at any position with +{<your_variable_name>}+.
+
+              A sample call could look like this: +include:grafana_value_as_variable[call="grafana_sql_value:1",variable_name="my_variable",sql="SELECT 'looks good'",<any_other_option>]+
+
+              If the function succeeds, it will add this to the asciidoctor file:
+
+              +:my_variable: looks good+
+
+              Please note, that you may add any other option to the call. These will
+              simply be passed 1:1 to the +<grafana_reporter_call>+.
+            options:
+              call:
+                call: call="<grafana_reporter_call>"
+                description: Call to grafana reporter function, for which the result shall be stored as variable. Please note that only functions without +include::+ are supported here.
+              variable_name:
+                call: variable_name="<your_variable_name>"
+                description: Name of the variable, which will get the value assigned.
         YAML_HELP
       end
     end
