@@ -310,6 +310,7 @@ webservice or a rendering process starts.
 This is just a collection of things, I am heading for in future, without a schedule.
 
 * Support grafana internal datasources
+* Support additional templating variable types
 * Solve code TODOs
 * Become [rubocop](https://rubocop.org/) ready
 
