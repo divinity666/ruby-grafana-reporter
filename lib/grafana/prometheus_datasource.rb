@@ -24,21 +24,15 @@ module Grafana
       interval = interval.raw_value if interval.is_a?(Variable)
       query = query_hash[:query] || query_description[:raw_query]
 
-      url = if instant
-        "/api/datasources/proxy/#{id}/api/v1/query?time=#{query_description[:to]}&query="\
-        "#{CGI.escape(replace_variables(query, query_description[:variables]))}"
+      ver = query_description[:grafana_version].split('.').map{|x| x.to_i}
+      request = nil
+      if (ver[0] == 7 and ver[1] < 5) or ver[0] < 7
+        request = prepare_get_request({query_description: query_description, instant: instant, interval: interval, query: query})
       else
-        "/api/datasources/proxy/#{id}/api/v1/query_range?start=#{query_description[:from]}"\
-        "&end=#{query_description[:to]}"\
-        "&query=#{CGI.escape(replace_variables(query, query_description[:variables]))}"\
-        "&step=#{interval}"
+        request = prepare_post_request({query_description: query_description, instant: instant, interval: interval, query: query})
       end
 
-      webrequest = query_description[:prepared_request]
-      webrequest.relative_url = url
-      webrequest.options.merge!({ request: Net::HTTP::Get })
-
-      result = webrequest.execute(query_description[:timeout])
+      result = request.execute(query_description[:timeout])
       preformat_response(result.body)
     end
 
@@ -54,13 +48,67 @@ module Grafana
     end
 
     private
+    def prepare_get_request(hash)
+      url = if hash[:instant]
+        "/api/datasources/proxy/#{id}/api/v1/query?time=#{hash[:query_description][:to]}&query="\
+        "#{CGI.escape(replace_variables(hash[:query], hash[:query_description][:variables]))}"
+      else
+        "/api/datasources/proxy/#{id}/api/v1/query_range?start=#{hash[:query_description][:from]}"\
+        "&end=#{hash[:query_description][:to]}"\
+        "&query=#{CGI.escape(replace_variables(hash[:query], hash[:query_description][:variables]))}"\
+        "&step=#{hash[:interval]}"
+      end
+
+      webrequest = hash[:query_description][:prepared_request]
+      webrequest.relative_url = url
+      webrequest.options.merge!({ request: Net::HTTP::Get })
+
+      webrequest
+    end
+
+    def prepare_post_request(hash)
+      webrequest = hash[:query_description][:prepared_request]
+      webrequest.relative_url = '/api/ds/query'
+
+      params = {
+        from: hash[:query_description][:from],
+        to: hash[:query_description][:to],
+        queries: [{
+          datasource: { type: type, uid: uid },
+          datasourceId: id,
+          exemplar: false,
+          expr: hash[:query],
+          format: 'time_series',
+          interval: '',
+          # intervalFactor: ### 2,
+          # intervalMs: ### 15000,
+          # legendFormat: '', ### {{job}}
+          # maxDataPoints: 999,
+          metric: '',
+          queryType: 'timeSeriesQuery',
+          refId: 'A',
+          # requestId: '14A',
+          # utcOffsetSec: 7200,
+          step: hash[:interval]
+        }],
+        range: {
+          #from: ### "2022-07-31T16:19:26.198Z",
+          #to: ### "2022-07-31T16:19:26.198Z",
+          raw: { from: hash[:query_description][:variables]['from'].raw_value, to: hash[:query_description][:variables]['to'].raw_value }
+        }
+      }
+
+      webrequest.options.merge!({ request: Net::HTTP::Post, body: params.to_json })
+
+      webrequest
+    end
 
     def preformat_response(response_body)
       # TODO: show raw response body to debug case https://github.com/divinity666/ruby-grafana-reporter/issues/24
       begin
         return preformat_dataframe_response(response_body)
       rescue
-        # TODO: show an info, that the response if not a dataframe
+        # TODO: show an info, that the response is not a dataframe
       end
 
       json = JSON.parse(response_body)

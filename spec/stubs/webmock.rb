@@ -45,11 +45,7 @@ RSpec.configure do |config|
     )
     .to_return(status: 200, body: "{\"id\":#{STUBS[:org_id]},\"name\":\"#{STUBS[:org_name]}\"}", headers: {})
 
-    stub_request(:get, "http://localhost/api/health").with(
-      headers: default_header.merge({
-        'Authorization' => /^Bearer (?:#{STUBS[:key_admin]}|#{STUBS[:key_viewer]})$/,
-      })
-    )
+    stub_request(:get, %r{(?:http|https)://localhost/api/health})
     .to_return(status: 200, body: "{\"commit\":\"05025c5\",\"database\":\"ok\",\"version\":\"#{STUBS[:version]}\"}", headers: {})
 
     stub_request(:get, "http://localhost/api/search").with(
@@ -218,6 +214,19 @@ RSpec.configure do |config|
       })
     )
     .to_return(status: 200, body: File.read('./spec/tests/sample_prometheus_response_dataframes.json'), headers: {})
+
+    stub_request(:post, "http://localhost/api/ds/query").
+       with(
+         body: "{\"from\":\"0\",\"to\":\"0\",\"queries\":[{\"datasource\":{\"type\":\"prometheus\",\"uid\":\"000000008\"},\"datasourceId\":4,\"exemplar\":false,\"expr\":\"sum by(mode)(irate(node_cpu_seconds_total{job=\\\"node\\\", instance=~\\\"$node:.*\\\", mode!=\\\"idle\\\"}[5m])) > 0\",\"format\":\"time_series\",\"interval\":\"\",\"metric\":\"\",\"queryType\":\"timeSeriesQuery\",\"refId\":\"A\",\"step\":10}],\"range\":{\"raw\":{\"from\":\"0\",\"to\":\"0\"}}}",
+         headers: {
+           'Accept'=>'application/json',
+           'Accept-Encoding'=>'gzip;q=1.0,deflate;q=0.6,identity;q=0.3',
+           'Authorization'=>'Bearer xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx',
+           'Content-Type'=>'application/json',
+           'User-Agent'=>'Ruby'
+       }
+     )
+     .to_return(status: 200, body: File.read('./spec/tests/sample_prometheus_response.json'), headers: {})
 
     stub_request(:get, 'http://localhost/api/datasources/proxy/4/api/v1/query_range').with(
       query: {"query": "sum by(mode)(irate(node_cpu_seconds_total{job=\"node\", instance=~\"$node:.*\", mode!=\"idle\"}[5m])) > 0", 'start': 0, 'end': 0, 'step':10},

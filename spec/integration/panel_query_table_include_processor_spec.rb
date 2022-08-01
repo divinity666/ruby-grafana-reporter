@@ -30,7 +30,7 @@ describe PanelQueryTableIncludeProcessor do
 
     it 'can translate times' do
       @report.logger.level = ::Logger::Severity::DEBUG
-      expect(@report.logger).to receive(:debug).exactly(5).times.with(any_args)
+      expect(@report.logger).to receive(:debug).exactly(8).times.with(any_args)
       expect(@report.logger).to receive(:debug).with(/"from":"#{Time.utc(Time.new.year,1,1).to_i * 1000}".*"to":"#{(Time.utc(Time.new.year + 1,1,1) - 1).to_i * 1000}"/)
       expect(@report.logger).to receive(:debug).with(/Received response/)
       expect(Asciidoctor.convert("include::grafana_panel_query_table:#{STUBS[:panel_sql][:id]}[query=\"#{STUBS[:panel_sql][:letter]}\",from_timezone=\"UTC\",to_timezone=\"UTC\",dashboard=\"#{STUBS[:dashboard]}\",from=\"now/y\",to=\"now/y\"]", to_file: false)).not_to include('GrafanaReporterError')
@@ -128,10 +128,23 @@ describe PanelQueryTableIncludeProcessor do
   end
 
   context 'prometheus' do
+    after(:each) do
+      @report.grafana("default").instance_eval("@version = '#{STUBS[:version]}'")
+    end
+
     it 'can handle prometheus requests' do
       @report.logger.level = ::Logger::Severity::DEBUG
       allow(@report.logger).to receive(:debug)
       expect(@report.logger).to receive(:debug).with(/^Requesting .*&step/)
+      expect(@report.logger).not_to receive(:error)
+      expect(Asciidoctor.convert("include::grafana_panel_query_table:#{STUBS[:panel_prometheus][:id]}[query=\"#{STUBS[:panel_prometheus][:letter]}\",dashboard=\"#{STUBS[:dashboard]}\",from=\"0\",to=\"0\"]", to_file: false)).to match(/<p>\| 1617728730 \|  \|  \|  \| 0.011986814503580401 \| 0.6412945761450544\n\|/)
+    end
+
+    it 'can handle new prometheus requests since grafana 7.5.x' do
+      @report.grafana("default").instance_eval("@version = '7.5.3'")
+
+      @report.logger.level = ::Logger::Severity::DEBUG
+      allow(@report.logger).to receive(:debug)
       expect(@report.logger).not_to receive(:error)
       expect(Asciidoctor.convert("include::grafana_panel_query_table:#{STUBS[:panel_prometheus][:id]}[query=\"#{STUBS[:panel_prometheus][:letter]}\",dashboard=\"#{STUBS[:dashboard]}\",from=\"0\",to=\"0\"]", to_file: false)).to match(/<p>\| 1617728730 \|  \|  \|  \| 0.011986814503580401 \| 0.6412945761450544\n\|/)
     end
