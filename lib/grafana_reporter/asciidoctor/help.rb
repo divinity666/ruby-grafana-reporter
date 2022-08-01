@@ -201,7 +201,7 @@ end}
                 two digit decimals of a float. Several column formats are separated by `,`, i.e. `%.2f,%.3f` would
                 apply `%.2f` to the first column and `%.3f` to the second column. All other columns would not be
                 formatted. You may also format time in milliseconds to a time format by specifying e.g. `date:iso`.
-                Commas in format strings are supported, but have to be escaped by useing `_,`.
+                Commas in format strings are supported, but have to be escaped by using `_,`.
                 Execution of related functions is applied in the following order `format`,
                 `replace_values`, `filter_columns`, `transpose`.
               see: 'https://ruby-doc.org/core/Kernel.html#method-i-sprintf'
@@ -217,11 +217,16 @@ end}
                 `replace_values`, `filter_columns`, `transpose`.
               see: https://ruby-doc.org/core/Regexp.html#class-Regexp-label-Character+Classes
 
+            include_headline:
+              call: include_headline="true"
+              description: >-
+                Adds the headline of the columns as first row of the resulting table.
+
             filter_columns:
               call: filter_columns="<column_name_1>,<column_name_2>,..."
               description: >-
                 Removes specified columns from result.  Commas in format strings are supported, but have to be
-                escaped by useing `_,`. Execution of related functions is applied in the following order
+                escaped by using `_,`. Execution of related functions is applied in the following order
                 `format`, `replace_values`, `filter_columns`, `transpose`.
 
             transpose:
@@ -313,6 +318,7 @@ end}
               filter_columns:
               format:
               from:
+              include_headline:
               instance:
               replace_values:
               row_divider:
@@ -348,6 +354,7 @@ end}
               filter_columns:
               format:
               from:
+              include_headline:
               instance:
               replace_values:
               row_divider:
@@ -409,6 +416,7 @@ end}
               filter_columns:
               format:
               from:
+              include_headline:
               instance:
               replace_values:
               row_divider:
@@ -456,6 +464,7 @@ end}
               filter_columns:
               format:
               from:
+              include_headline:
               instance:
               replace_values:
               row_divider:
