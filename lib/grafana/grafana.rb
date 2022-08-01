@@ -86,7 +86,15 @@ module Grafana
     # @param datasource_uid [String] unique id of the searched datasource
     # @return [Datasource] Datasource for the specified datasource unique id
     def datasource_by_uid(datasource_uid)
-      datasource = @datasources.select { |_name, ds| ds.uid == datasource_uid }.values.first
+      datasource = @datasources.select do |ds_name, ds|
+        if (ds.nil?)
+          # print debug info for https://github.com/divinity666/ruby-grafana-reporter/issues/29
+          @logger.warn("Datasource with name #{ds_name} is nil, which should never happen. Check logs for details.")
+          false
+        else
+          ds.uid == datasource_uid
+        end
+      end.values.first
       raise DatasourceDoesNotExistError.new('uid', datasource_uid) unless datasource
 
       datasource
