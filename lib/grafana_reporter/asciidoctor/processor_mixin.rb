@@ -40,7 +40,7 @@ module GrafanaReporter
           k =~ /^(?:timeout|from|to)$/ ||
           k =~ /filter_columns|format|replace_values_.*|transpose|from_timezone|
                to_timezone|result_type|query|table_formatter|include_headline|
-               column_divider|row_divider|instant|interval/x
+               column_divider|row_divider|instant|interval|verbose_log/x
         end)
 
         result

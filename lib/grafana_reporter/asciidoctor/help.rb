@@ -276,6 +276,12 @@ end}
               description: >-
                 Optional parameter for Prometheus `instant` queries. Ignored for other datasources than Prometheus.
 
+            verbose_log:
+              call: verbose_log="true"
+              description: >-
+                Setting this option will show additional information about the returned query results in the log as
+                DEBUG messages.
+
           # ----------------------------------
           # FUNCTION DOCUMENTATION STARTS HERE
           # ----------------------------------
@@ -428,6 +434,7 @@ end}
               to_timezone:
               instant:
               interval:
+              verbose_log:
 
           grafana_panel_query_value:
             call: 'grafana_panel_query_value:<panel_id>[query="<query_letter>",options]'
@@ -452,6 +459,7 @@ end}
               to_timezone:
               instant:
               interval:
+              verbose_log:
 
           grafana_sql_table:
             call: 'include::grafana_sql_table:<datasource_id>[sql="<sql_query>",options]'
@@ -476,6 +484,7 @@ end}
               to_timezone:
               instant:
               interval:
+              verbose_log:
 
           grafana_sql_value:
             call: 'grafana_sql_value:<datasource_id>[sql="<sql_query>",options]'
@@ -499,6 +508,7 @@ end}
               to_timezone:
               instant:
               interval:
+              verbose_log:
 
           grafana_value_as_variable:
             call: 'include::grafana_value_as_variable[call="<grafana_reporter_call>",variable_name="<your_variable_name>",options]'

@@ -82,6 +82,9 @@ module GrafanaReporter
         @result = @datasource.request(from: from, to: to, raw_query: raw_query, variables: @variables,
                                       prepared_request: @grafana.prepare_request, timeout: timeout,
                                       grafana_version: @grafana.version)
+        if @variables['verbose_log']
+          @logger.debug("Raw result: #{@result}") if @variables['verbose_log'].raw_value.downcase == "true"
+        end
       rescue ::Grafana::GrafanaError
         # grafana errors will be directly passed through
         raise
@@ -95,6 +98,9 @@ module GrafanaReporter
       raise DatasourceRequestInvalidReturnValueError.new(@datasource, @result) unless datasource_response_valid?
 
       post_process
+      if @variables['verbose_log']
+        @logger.debug("Formatted result: #{@result}") if @variables['verbose_log'].raw_value.downcase == "true"
+      end
       @result
     end
 

@@ -24,7 +24,18 @@ describe SqlTableIncludeProcessor do
       expect(@report.logger).to receive(:debug).exactly(5).times.with(any_args)
       expect(@report.logger).to receive(:debug).with(/"from":"#{Time.utc(Time.new.year,1,1).to_i * 1000}".*"to":"#{(Time.utc(Time.new.year + 1,1,1) - 1).to_i * 1000}"/)
       expect(@report.logger).to receive(:debug).with(/Received response/)
+      expect(@report.logger).not_to receive(:debug).with("Raw result: {:header=>[\"1\"], :content=>[[1]]}")
       expect(Asciidoctor.convert("include::grafana_sql_table:#{STUBS[:datasource_sql]}[sql=\"SELECT 1\",from_timezone=\"UTC\",to_timezone=\"UTC\",from=\"now/y\",to=\"now/y\"]", to_file: false)).not_to include('GrafanaReporterError')
+    end
+
+    it 'can print verbose information' do
+      @report.logger.level = ::Logger::Severity::DEBUG
+      expect(@report.logger).to receive(:debug).exactly(5).times.with(any_args)
+      expect(@report.logger).to receive(:debug).with(/"from":"#{Time.utc(Time.new.year,1,1).to_i * 1000}".*"to":"#{(Time.utc(Time.new.year + 1,1,1) - 1).to_i * 1000}"/)
+      expect(@report.logger).to receive(:debug).with(/Received response/)
+      expect(@report.logger).to receive(:debug).with("Raw result: {:header=>[\"1\"], :content=>[[1]]}")
+      expect(@report.logger).to receive(:debug).with("Formatted result: | 1")
+      expect(Asciidoctor.convert("include::grafana_sql_table:#{STUBS[:datasource_sql]}[sql=\"SELECT 1\",from_timezone=\"UTC\",to_timezone=\"UTC\",from=\"now/y\",to=\"now/y\",verbose_log=\"true\"]", to_file: false)).not_to include('GrafanaReporterError')
     end
 
     it 'shows fatal error if sql statement is missing' do
