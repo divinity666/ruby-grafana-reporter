@@ -5,3 +5,27 @@ rvm:
 - 3.0.1
 before_install:
 - export TZ=Europe/Berlin
+deploy:
+  - provider: releases
+    api_key:
+      secure: lUCi8h+Qhp3UFCD3yxCGGb3PYk8krt442ehygHCxz/OVBeu/6LRPgMNpH7mmT99PFyw8au8EElyZ7GjG9pkfObzJYt5NBP+35f4WvWNcM2wSIFqAeCQKgrOHhTsFfCtPNfERi63kiiSeownA+8zrMmqy+Gshzym+JiCGiffepPwvQMtiSJ3pNolx4lsYLKVdTLHWsWCt+YVPX00bg14cKhLGJxF4+LeVEO83U2yLQTauRVDyzwC7xwcKNsLLdftILLtd020hsKx/DwlRjp/dqyJECmI1wHQ2rd0BVz+jw41X08533w1pevlje0SKWoJjsQBGqWqKbsdXGrZ2MlfPWTdFySfok+2DLCsZpbO57/txTuAGCIAjbHGIoMh8e/dYbqVEAAuEgYjcpe8nDL/fT22nH7HZFwALwZeTts002eBmEk6RjADq2OsR1ftYozuWOBVJNo+oFWxgBFODQhcmnDygnRYMCkqbGK/vc7qmMai+QUiB1dbOryLK71qodf1GBO8uG+8WydVjnOHET3p8vlF9dx2EF1m9pHVy26DxMCExDmPe4TKLIK2t1uOziaHFz1FZQSnjwXc8NnJpeMBE24xq34v17QcAZEfRfv5L/59CQ77FB1ZqM91tHBFYPRNfAQpKB+0X7VIhPBD3Z+uY0t+vgOspY4hpPt6Orf3VAB4=
+    file_glob: true
+    file:
+      - "*.gem"
+      - "ruby-grafana-reporter*.rb"
+    on:
+      branch: master
+      tags: true
+      repo: divinity666/ruby-grafana-reporter
+    skip_cleanup: true
+    draft: true
+
+  - provider: rubygems
+    api_key:
+      secure: Vf6r7uC6B57yIqNCRtAWZI7BXzGKwpe5/CsxhL6giNlW0YMJLbvE50GdOveEyOSGwf4PTSWZSSP5ZRdpXYob9JVnUCBi2F+fuRnWxVZvxTrohSunUm7sbHGobrNd+vv01hgsIcgGZtPqquowYZ8y9lpQBfoXnDfMEyRACrvfDFol8Skb8vZxC/+ZPwF7NzC0SQQn+gbSQ49fYYnmqFTMIU1+Aj8CgzfGN//0kqO9U0TSwCfBesXewD/IEiBBOoZgiEP8XFwn+JCvHJnhHo0bS+71xKGZmTfhgN6Sw3IWD6fSX+yrbl0F61ycmIe0f+Hrr1ch7uybOINlakRuVGJ6PtH3fK/1air0k/IoGH+2muhnJFY28tHVJo56pKv4b8I9JrPUygV47PnDNiSTre4EcdETc3yYwgTs+u75NNO6PrW7hX3ySWZX9j5+mtldy8LR0KT9c5QsV9W0xZh4QloCnu0GFbQNgFssrbgKbsF0j+R/sLDjX+XkHGGaBSxhCsqBP0ZcYvhZQfQkaeFZGRx03qzRLFqaSPSmTANsmv4WTL32UpHLghGjg0wPnjegyjj5UgH1iaPse7avFm5YZVm2VW9pPqk/sxNUhWvFwGu3unKJpWwI7e2wGYwiSrZaEppFhAcMvCeiLU29X+2I0T+pXFpNBzuNr59XksjOppUqUcs=
+    gem: ruby-grafana-reporter
+    on:
+      branch: master
+      tags: true
+      repo: divinity666/ruby-grafana-reporter
+    skip_cleanup: true
