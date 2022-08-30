@@ -171,7 +171,13 @@ module Grafana
       data = data['frames']
       headers = []
       data.first['schema']['fields'].each do |headline|
-        header = headline['config']['displayNameFromDS'].nil? ? headline['name'] : headline['config']['displayNameFromDS']
+        use_name_only = true
+        if not headline['config'].nil?
+          if not headline['config']['displayNameFromDS'].nil?
+            use_name_only = false
+          end
+        end
+        header = use_name_only ? headline['name'] : headline['config']['displayNameFromDS']
         headers << header
       end
       content = data.first['data']['values'][0].zip(data.first['data']['values'][1])

@@ -41,7 +41,7 @@ Gem::Specification.new do |s|
   s.bindir = 'bin'
 
   s.add_runtime_dependency 'asciidoctor', '~>2.0'
-  s.add_runtime_dependency 'asciidoctor-pdf', '~>2.2'
+  s.add_runtime_dependency 'asciidoctor-pdf', '~>2.3'
   # the following package includes an interface to zip, which is also needed here
   # make sure that supported zip versions match - look in sub-dependency 'gepub'
   #  s.add_runtime_dependency 'asciidoctor-epub3', '~>1.5.1'

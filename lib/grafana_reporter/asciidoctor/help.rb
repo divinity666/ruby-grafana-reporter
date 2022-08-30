@@ -201,7 +201,7 @@ end}
                 two digit decimals of a float. Several column formats are separated by `,`, i.e. `%.2f,%.3f` would
                 apply `%.2f` to the first column and `%.3f` to the second column. All other columns would not be
                 formatted. You may also format time in milliseconds to a time format by specifying e.g. `date:iso`.
-                Commas in format strings are supported, but have to be escaped by useing `_,`.
+                Commas in format strings are supported, but have to be escaped by using `_,`.
                 Execution of related functions is applied in the following order `format`,
                 `replace_values`, `filter_columns`, `transpose`.
               see: 'https://ruby-doc.org/core/Kernel.html#method-i-sprintf'
@@ -217,11 +217,16 @@ end}
                 `replace_values`, `filter_columns`, `transpose`.
               see: https://ruby-doc.org/core/Regexp.html#class-Regexp-label-Character+Classes
 
+            include_headline:
+              call: include_headline="true"
+              description: >-
+                Adds the headline of the columns as first row of the resulting table.
+
             filter_columns:
               call: filter_columns="<column_name_1>,<column_name_2>,..."
               description: >-
                 Removes specified columns from result.  Commas in format strings are supported, but have to be
-                escaped by useing `_,`. Execution of related functions is applied in the following order
+                escaped by using `_,`. Execution of related functions is applied in the following order
                 `format`, `replace_values`, `filter_columns`, `transpose`.
 
             transpose:
@@ -271,6 +276,12 @@ end}
               description: >-
                 Optional parameter for Prometheus `instant` queries. Ignored for other datasources than Prometheus.
 
+            verbose_log:
+              call: verbose_log="true"
+              description: >-
+                Setting this option will show additional information about the returned query results in the log as
+                DEBUG messages.
+
           # ----------------------------------
           # FUNCTION DOCUMENTATION STARTS HERE
           # ----------------------------------
@@ -313,6 +324,7 @@ end}
               filter_columns:
               format:
               from:
+              include_headline:
               instance:
               replace_values:
               row_divider:
@@ -348,6 +360,7 @@ end}
               filter_columns:
               format:
               from:
+              include_headline:
               instance:
               replace_values:
               row_divider:
@@ -409,6 +422,7 @@ end}
               filter_columns:
               format:
               from:
+              include_headline:
               instance:
               replace_values:
               row_divider:
@@ -420,6 +434,7 @@ end}
               to_timezone:
               instant:
               interval:
+              verbose_log:
 
           grafana_panel_query_value:
             call: 'grafana_panel_query_value:<panel_id>[query="<query_letter>",options]'
@@ -444,6 +459,7 @@ end}
               to_timezone:
               instant:
               interval:
+              verbose_log:
 
           grafana_sql_table:
             call: 'include::grafana_sql_table:<datasource_id>[sql="<sql_query>",options]'
@@ -456,6 +472,7 @@ end}
               filter_columns:
               format:
               from:
+              include_headline:
               instance:
               replace_values:
               row_divider:
@@ -467,6 +484,7 @@ end}
               to_timezone:
               instant:
               interval:
+              verbose_log:
 
           grafana_sql_value:
             call: 'grafana_sql_value:<datasource_id>[sql="<sql_query>",options]'
@@ -490,6 +508,30 @@ end}
               to_timezone:
               instant:
               interval:
+              verbose_log:
+
+          grafana_value_as_variable:
+            call: 'include::grafana_value_as_variable[call="<grafana_reporter_call>",variable_name="<your_variable_name>",options]'
+            description: >-
+              Executes the given +<grafana_reporter_call>+ and stored the resulting value
+              in the given +<your_variable_name>+, so that it can be used in asciidoctor
+              at any position with +{<your_variable_name>}+.
+
+              A sample call could look like this: +include:grafana_value_as_variable[call="grafana_sql_value:1",variable_name="my_variable",sql="SELECT 'looks good'",<any_other_option>]+
+
+              If the function succeeds, it will add this to the asciidoctor file:
+
+              +:my_variable: looks good+
+
+              Please note, that you may add any other option to the call. These will
+              simply be passed 1:1 to the +<grafana_reporter_call>+.
+            options:
+              call:
+                call: call="<grafana_reporter_call>"
+                description: Call to grafana reporter function, for which the result shall be stored as variable. Please note that only functions without +include::+ are supported here.
+              variable_name:
+                call: variable_name="<your_variable_name>"
+                description: Name of the variable, which will get the value assigned.
         YAML_HELP
       end
     end
