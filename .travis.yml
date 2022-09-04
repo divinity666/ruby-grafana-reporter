@@ -7,8 +7,8 @@ before_install:
   - export TZ=Europe/Berlin
 branches:
   only:
-    - dev
-script: bundle exec rake && bundle exec rake build
+    - master
+script: bundle exec rake check && bundle exec rake test && bundle exec rake testsingle && bundle exec rake preparebuild && bundle exec rake buildsingle
 deploy:
   - provider: rubygems
     api_key:
@@ -30,8 +30,8 @@ deploy:
       - "ruby-grafana-reporter*.rb"
     on:
       rvm: 2.7.4
-      branch: dev
-      #tags: true
+      branch: master
+      tags: true
       repo: divinity666/ruby-grafana-reporter
     skip_cleanup: true
     draft: true
