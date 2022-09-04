@@ -5,3 +5,4 @@ git_source(:github) { |_ruby_grafana_reporter| 'https://github.com/divinity666/r
 
 gemspec
 gem 'rake', '~>13.0' if ENV['APPVEYOR']
+gem 'ocra', '~>1.3' if ENV['APPVEYOR'] and ENV['APPVEYOR_BUILD_WORKER_IMAGE'] ~= /^Visual Studio.*/
