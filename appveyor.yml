@@ -1,0 +1,24 @@
+version: 0.6.4-{build}
+
+branches:
+  only:
+  - appveyor
+
+image:
+  - Visual Studio 2019
+  - Ubuntu
+
+install:
+  - set PATH=C:\Ruby27-x64\bin
+  - bundle install
+
+build: off
+
+before_test:
+  - ruby -v
+  - gem -v
+  - bundle -v
+
+test_script:
+  - bundle exec rake
+
