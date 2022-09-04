@@ -1,19 +1,36 @@
 version: 0.6.4-{build}
 
-init:
-  - tzutil /s "W. Europe Standard Time"
-
 branches:
   only:
   - appveyor
 
-image:
-  - Visual Studio 2019
-  - Ubuntu
-
 install:
   - set PATH=C:\Ruby27-x64\bin
   - bundle install
+
+environment:
+  matrix:
+    - job name: Windows
+      appveyor_build_worker_image: Visual Studio 2019
+    - job name: Linux
+      appveyor_build_worker_image: Ubuntu
+
+for:
+  -
+      matrix:
+        only:
+          - job_name: Windows
+
+      init:
+        - tzutil /s "W. Europe Standard Time"
+
+  -
+      matrix:
+        only:
+          - job_name: Linux
+
+      init:
+        - export TZ=Europe/Berlin
 
 build: off
 
