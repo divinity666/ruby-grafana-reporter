@@ -13,10 +13,15 @@ for:
       matrix:
         only:
           - image: Visual Studio 2019
+
       install:
         - tzutil /s "W. Europe Standard Time"
         - set PATH=C:\Ruby27-x64\bin
         - bundle install
+        - bundle exec gem install ocra
+
+      build_script:
+        - bundle exec rake buildexe
 
   -
       matrix:
@@ -27,7 +32,13 @@ for:
         - export TZ=Europe/Berlin
         - bundle install
 
-build: off
+      build_script:
+        - bundle exec rake preparebuild
+
+before_build:
+  - bundle exec rake check
+  - bundle exec rake preparebuild
+  - bundle exec rake buildsingle
 
 before_test:
   - ruby -v
@@ -35,5 +46,5 @@ before_test:
   - bundle -v
 
 test_script:
-  - bundle exec rake
+  - bundle exec rake test
 
