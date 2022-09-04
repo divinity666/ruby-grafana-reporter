@@ -31,7 +31,10 @@ task :build do
   Rake::Task['preparebuild'].invoke
   Rake::Task['testsingle'].invoke
   Rake::Task['buildsingle'].invoke
+  Rake::Task['buildgem'].invoke
+end
 
+task :buildgem do
   # build new versions
   require_relative 'lib/VERSION'
 
@@ -78,6 +81,5 @@ task :clean do
 end
 
 task :test do
-  Rake::Task['check'].invoke if ENV['APPVEYOR']
   sh 'bundle exec rspec spec/test_default.rb'
 end
