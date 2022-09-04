@@ -34,11 +34,6 @@ for:
 
 build: off
 
-before_test:
-  - ruby -v
-  - gem -v
-  - bundle -v
-
 test_script:
   - bundle exec rake
 
