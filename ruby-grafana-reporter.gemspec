@@ -49,6 +49,6 @@ Gem::Specification.new do |s|
 
   s.add_development_dependency 'rspec', '~>3.9'
   s.add_development_dependency 'simplecov', '~>0.16'
-  s.add_development_dependency 'coveralls', '~>0.8' if ENV['TRAVIS']
+  s.add_development_dependency 'coveralls', '~>0.8' if ENV['APPVEYOR']
   s.add_development_dependency 'webmock', '~>3.9'
 end

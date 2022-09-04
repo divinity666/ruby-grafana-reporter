@@ -78,6 +78,6 @@ task :clean do
 end
 
 task :test do
-  Rake::Task['check'].invoke if ENV['TRAVIS']
+  Rake::Task['check'].invoke if ENV['APPVEYOR']
   sh 'bundle exec rspec spec/test_default.rb'
 end
