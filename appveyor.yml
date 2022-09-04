@@ -8,6 +8,9 @@ image:
   - Visual Studio 2019
   - Ubuntu
 
+init:
+  - tzutil /s "W. Europe Standard Time"
+
 install:
   - set PATH=C:\Ruby27-x64\bin
   - bundle install
@@ -17,9 +20,6 @@ for:
       matrix:
         only:
           - image: Visual Studio 2019
-
-      before_test:
-        - tzutil /s "W. Europe Standard Time"
 
   -
       matrix:
