@@ -37,17 +37,19 @@ task :build do
 
   # build single library file for validation
   File.write("spec/tmp_single_file_lib_ruby-grafana-reporter.rb", get_result('lib'))
+  # TODO abort with error, if the test fails
   sh 'bundle exec rspec spec/test_single_file.rb'
   rm "spec/tmp_single_file_lib_ruby-grafana-reporter.rb"
 
+  # TODO update docu in git and in GEM for travis
   # update help documentation
   File.write('FUNCTION_CALLS.md', GrafanaReporter::Asciidoctor::Help.new.github)
 
   # build new versions
   require_relative 'lib/VERSION'
 
-  # build gem
-  sh 'gem build ruby-grafana-reporter.gemspec'
+  # build gem if run locally - in travis the gem is already built, so we skip it there
+  sh 'gem build ruby-grafana-reporter.gemspec' if not env['TRAVIS']
 
   # build single file application
   File.write("ruby-grafana-reporter-#{GRAFANA_REPORTER_VERSION.join('.')}.rb", get_result('bin'))
