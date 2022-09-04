@@ -77,11 +77,9 @@ task :buildexe do
   # Temporary gemfile to be used by OCRA.
   GEMFILE = 'ocra_gemfile'
 
-  p NAME
-
   # Add gems from gemspec.
   ocra_gemfile = File.new(GEMFILE, 'w')
-  File.open("#{NAME}.gemspec",'r') do |file|
+  File.open("ruby-grafana-reporter.gemspec",'r') do |file|
     file.each { |line| ocra_gemfile.write "gem #{$1}\n" if line =~ /spec.add_dependency (.+)/ }
     end
   ocra_gemfile.close
