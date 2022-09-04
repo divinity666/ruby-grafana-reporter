@@ -23,7 +23,7 @@ for:
         - bundle install
 
       build_script:
-        - bundle exec rake buildexe
+        - rake buildexe
 
       #test_script:
         #- bundle exec rake testexe
