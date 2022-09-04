@@ -18,7 +18,7 @@ for:
         - tzutil /s "W. Europe Standard Time"
         - set PATH=C:\Ruby27-x64\bin
         - bundle install
-        - bundle exec gem install ocra
+        - gem install ocra
 
       build_script:
         - bundle exec rake buildexe
