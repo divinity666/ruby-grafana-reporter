@@ -33,12 +33,11 @@ for:
         - bundle install
 
       build_script:
-        - bundle exec rake preparebuild
+        - bundle exec rake buildsingle
 
 before_build:
   - bundle exec rake check
   - bundle exec rake preparebuild
-  - bundle exec rake buildsingle
 
 before_test:
   - ruby -v
