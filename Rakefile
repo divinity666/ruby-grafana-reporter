@@ -79,6 +79,7 @@ task :buildexe do
 
   # Add gems from gemspec.
   ocra_gemfile = File.new(GEMFILE, 'w')
+  ocra_gemfile.write "source 'https://rubygems.org'\n"
   File.open("ruby-grafana-reporter.gemspec",'r') do |file|
     file.each { |line| ocra_gemfile.write "gem #{$1}\n" if line =~ / *s.add(?:_runtime|_development)_dependency (.+)/ }
     end
