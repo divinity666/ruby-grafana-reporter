@@ -22,6 +22,9 @@ for:
       build_script:
         - bundle exec rake buildexe
 
+      test_script:
+        - bundle exec rake testexe
+
   -
       matrix:
         only:
@@ -34,6 +37,10 @@ for:
       build_script:
         - bundle exec rake buildsingle
 
+      test_script:
+        - bundle exec rake test
+        - bundle exec rake testsingle
+
 before_build:
   - bundle exec rake check
   - bundle exec rake preparebuild
@@ -42,7 +49,4 @@ before_test:
   - ruby -v
   - gem -v
   - bundle -v
-
-test_script:
-  - bundle exec rake test
 
