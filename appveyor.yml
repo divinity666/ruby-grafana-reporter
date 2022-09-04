@@ -21,7 +21,7 @@ for:
         only:
           - job_name: Windows
 
-      before_build:
+      before_test:
         - tzutil /s "W. Europe Standard Time"
 
   -
@@ -29,7 +29,7 @@ for:
         only:
           - job_name: Linux
 
-      before_build:
+      before_test:
         - export TZ=Europe/Berlin
 
 build: off
