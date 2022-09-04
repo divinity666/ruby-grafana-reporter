@@ -1,5 +1,8 @@
 version: 0.6.4-{build}
 
+init:
+  - tzutil /s "W. Europe Standard Time"
+
 branches:
   only:
   - appveyor
