@@ -20,7 +20,7 @@ for:
         - bundle install
 
       build_script:
-        - rake buildexe
+        - bundle exec rake buildexe
 
   -
       matrix:
