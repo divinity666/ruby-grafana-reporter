@@ -12,5 +12,5 @@ else
     file.each { |line| eval("gem #{$1}") if line =~ / *s.add(?:_runtime|_development)_dependency (.+)/ }
   end
 end
-gem 'rake', '~>13.0' if ENV['APPVEYOR']
+gem 'rake', '~>13.0' if ENV['APPVEYOR'] or RUBY_PLATFORM =~ /cygwin|mswin|mingw|bccwin|wince|emx/ # only on windows
 gem 'ocra', '~>1.3' if RUBY_PLATFORM =~ /cygwin|mswin|mingw|bccwin|wince|emx/ # only on windows
