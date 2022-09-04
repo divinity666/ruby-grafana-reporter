@@ -75,20 +75,22 @@ end
 
 task :buildexe do
   # Temporary gemfile to be used by OCRA.
-  #GEMFILE = 'ocra_gemfile'
+  GEMFILE = 'ocra_gemfile'
+
+  p NAME
 
   # Add gems from gemspec.
-  #ocra_gemfile = File.new(GEMFILE, 'w')
-  #File.open("#{NAME}.gemspec",'r') do |file|
-    #file.each { |line| ocra_gemfile.write "gem #{$1}\n" if line =~ /spec.add_dependency (.+)/ }
-    #end
-  #ocra_gemfile.close
+  ocra_gemfile = File.new(GEMFILE, 'w')
+  File.open("#{NAME}.gemspec",'r') do |file|
+    file.each { |line| ocra_gemfile.write "gem #{$1}\n" if line =~ /spec.add_dependency (.+)/ }
+    end
+  ocra_gemfile.close
 
   # read version information
   require_relative 'lib/VERSION'
 
   require 'openssl'
-  sh "ocra bin/ruby-grafana-reporter --dll ruby_builtin_dlls/libssp-0.dll --dll ruby_builtin_dlls/libssl-1_1-x64.dll --dll ruby_builtin_dlls/libcrypto-1_1-x64.dll --console --output ruby-grafana-reporter-#{GRAFANA_REPORTER_VERSION.join('.')}.exe #{OpenSSL::X509::DEFAULT_CERT_FILE}"
+  sh "ocra --gemfile #{GEMFILE} bin/ruby-grafana-reporter --dll ruby_builtin_dlls/libssp-0.dll --dll ruby_builtin_dlls/libssl-1_1-x64.dll --dll ruby_builtin_dlls/libcrypto-1_1-x64.dll --console --output ruby-grafana-reporter-#{GRAFANA_REPORTER_VERSION.join('.')}.exe #{OpenSSL::X509::DEFAULT_CERT_FILE}"
 end
 
 task :clean do
