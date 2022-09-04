@@ -8,26 +8,24 @@ image:
   - Visual Studio 2019
   - Ubuntu
 
-init:
-  - tzutil /s "W. Europe Standard Time"
-
-install:
-  - set PATH=C:\Ruby27-x64\bin
-  - bundle install
-
 for:
   -
       matrix:
         only:
           - image: Visual Studio 2019
+      install:
+        - tzutil /s "W. Europe Standard Time"
+        - set PATH=C:\Ruby27-x64\bin
+        - bundle install
 
   -
       matrix:
         only:
           - image: Ubuntu
 
-      before_test:
+      install:
         - export TZ=Europe/Berlin
+        - bundle install
 
 build: off
 
