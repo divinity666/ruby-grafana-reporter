@@ -35,7 +35,7 @@ task :build do
 end
 
 task :buildgem do
-  # build new versions
+  # read version information
   require_relative 'lib/VERSION'
 
   # build gem
@@ -43,6 +43,9 @@ task :buildgem do
 end
 
 task :preparebuild do
+  # read version information
+  require_relative 'lib/VERSION'
+
   # update version file
   version = File.read('lib/VERSION.rb')
   File.write('lib/VERSION.rb', version.gsub(/GRAFANA_REPORTER_RELEASE_DATE *= [^$\n]*/, "GRAFANA_REPORTER_RELEASE_DATE = '#{Time.now.to_s[0..9]}'"))
@@ -53,6 +56,7 @@ task :preparebuild do
 end
 
 task :buildsingle do
+  # read version information
   require_relative 'bin/get_single_file_application'
 
   # build single file application
@@ -71,7 +75,9 @@ task :testsingle do
 end
 
 task :buildexe do
+  # read version information
   require_relative 'lib/VERSION'
+
   require 'openssl'
   sh "ocra bin/ruby-grafana-reporter --dll ruby_builtin_dlls/libssp-0.dll --dll ruby_builtin_dlls/libssl-1_1-x64.dll --dll ruby_builtin_dlls/libcrypto-1_1-x64.dll --console --output ruby-grafana-reporter-#{GRAFANA_REPORTER_VERSION.join('.')}.exe #{OpenSSL::X509::DEFAULT_CERT_FILE}"
 end
