@@ -4,22 +4,19 @@ branches:
   only:
   - appveyor
 
+image:
+  - Visual Studio 2019
+  - Ubuntu
+
 install:
   - set PATH=C:\Ruby27-x64\bin
   - bundle install
-
-environment:
-  matrix:
-    - job name: Windows
-      appveyor_build_worker_image: Visual Studio 2019
-    - job name: Linux
-      appveyor_build_worker_image: Ubuntu
 
 for:
   -
       matrix:
         only:
-          - job_name: Windows
+          - image: Visual Studio 2019
 
       before_test:
         - tzutil /s "W. Europe Standard Time"
@@ -27,7 +24,7 @@ for:
   -
       matrix:
         only:
-          - job_name: Linux
+          - image: Ubuntu
 
       before_test:
         - export TZ=Europe/Berlin
