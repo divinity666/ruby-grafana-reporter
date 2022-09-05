@@ -25,8 +25,8 @@ for:
       build_script:
         - rake buildexe
 
-      #test_script:
-        #- bundle exec rake testexe
+      test_script:
+        - bundle exec rake testexe
 
   -
       matrix:
