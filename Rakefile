@@ -85,7 +85,7 @@ task :testexe do
   # read version information
   require_relative 'lib/VERSION'
 
-  sh "ruby-grafana-reporter-#{GRAFANA_REPORTER_VERSION.join('.')}.exe"
+  sh "ruby-grafana-reporter-#{GRAFANA_REPORTER_VERSION.join('.')}.exe -h"
 end
 
 task :clean do
