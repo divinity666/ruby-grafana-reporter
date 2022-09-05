@@ -56,6 +56,9 @@ end
 
 task :buildsingle do
   # read version information
+  require_relative 'lib/VERSION'
+
+  # read version information
   require_relative 'bin/get_single_file_application'
 
   # build single file application
