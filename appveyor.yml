@@ -23,9 +23,12 @@ for:
         - bundle install
 
       build_script:
+        - bundle exec rake buildsingle
         - rake buildexe
 
       test_script:
+        - bundle exec rake test
+        - bundle exec rake testsingle
         - bundle exec rake testexe
 
   -
