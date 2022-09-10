@@ -43,15 +43,14 @@ task :buildgem do
 end
 
 task :preparebuild do
-  # update version file
+  # update date in version file
   version = File.read('lib/VERSION.rb')
   File.write('lib/VERSION.rb', version.gsub(/GRAFANA_REPORTER_RELEASE_DATE *= [^$\n]*/, "GRAFANA_REPORTER_RELEASE_DATE = '#{Time.now.to_s[0..9]}'"))
 
-  #require_relative 'bin/get_single_file_application'
+  require_relative 'bin/get_single_file_application'
 
-  # TODO update docu in git
   # update help documentation
-  #File.write('FUNCTION_CALLS.md', GrafanaReporter::Asciidoctor::Help.new.github)
+  File.write('FUNCTION_CALLS.md', GrafanaReporter::Asciidoctor::Help.new.github)
 end
 
 task :buildsingle do
