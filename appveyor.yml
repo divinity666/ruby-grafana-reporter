@@ -1,9 +1,5 @@
 version: 0.6.4-{build}
 
-branches:
-  only:
-  - appveyor
-
 image:
   - Visual Studio 2019
   - Ubuntu
@@ -54,7 +50,6 @@ for:
 
 before_build:
   - bundle exec rake check
-  - bundle exec rake preparebuild
 
 before_test:
   - ruby -v
@@ -62,9 +57,11 @@ before_test:
   - bundle -v
 
 deploy:
-  provider: GitHub
-  auth_token:
-    secure: M1W91LySSlC/6n0+CCIfUhxfPu5DqG60KVdelbOCtYDUekkMyLj7RxLyEdLQYpAy
-  artifact: /.*\.(?:gem|exe|rb)/
-  draft: true
-
+  - provider: GitHub
+    auth_token:
+      secure: M1W91LySSlC/6n0+CCIfUhxfPu5DqG60KVdelbOCtYDUekkMyLj7RxLyEdLQYpAy
+    artifact: /.*\.(?:gem|exe|rb)/
+    draft: true
+    on:
+      branch: master
+      APPVEYOR_REPO_TAG: true
