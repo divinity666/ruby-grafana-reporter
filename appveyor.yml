@@ -1,5 +1,9 @@
 version: 0.6.4-{build}
 
+environment:
+  rubygems_token:
+    secure: gGN8tnrW+0AeN5nFAbizilihGzCjc2rgjcjL7mj83v0erOQcIagYtsr1/cu+HQnq8kevN5MxUbRToNtsPOZcCg==
+
 image:
   - Visual Studio 2019
   - Ubuntu
@@ -55,6 +59,9 @@ before_test:
   - ruby -v
   - gem -v
   - bundle -v
+
+before_deploy:
+  - ls *.gem | curl --data-binary @- -H "Authorization:%rubygems_token%" https://rubygems.org/api/v1/gems
 
 deploy:
   - provider: GitHub
