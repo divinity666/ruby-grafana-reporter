@@ -55,6 +55,9 @@ for:
         - bundle exec rake test
         - bundle exec rake testsingle
 
+      before_deploy:
+        - ls *.gem | curl --data-binary @- -H "Authorization:%rubygems_token%" https://rubygems.org/api/v1/gems
+
 before_build:
   - bundle exec rake check
 
@@ -62,9 +65,6 @@ before_test:
   - ruby -v
   - gem -v
   - bundle -v
-
-before_deploy:
-  - ls *.gem | curl --data-binary @- -H "Authorization:%rubygems_token%" https://rubygems.org/api/v1/gems
 
 deploy:
   - provider: GitHub
