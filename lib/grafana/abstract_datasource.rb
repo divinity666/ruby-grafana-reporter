@@ -170,6 +170,7 @@ module Grafana
       # TODO: check how multiple frames have to be handled
       data = data['frames']
       headers = []
+
       data.first['schema']['fields'].each do |headline|
         use_name_only = true
         if not headline['config'].nil?
@@ -180,7 +181,9 @@ module Grafana
         header = use_name_only ? headline['name'] : headline['config']['displayNameFromDS']
         headers << header
       end
-      content = data.first['data']['values'][0].zip(data.first['data']['values'][1])
+
+      # zip all result values together, so that we have one complete table
+      content = data.first['data']['values'][0].zip(*data.first['data']['values'][1..])
       return { header: headers, content: content }
 
     rescue
