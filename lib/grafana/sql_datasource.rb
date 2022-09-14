@@ -15,17 +15,39 @@ module Grafana
       raise MissingSqlQueryError if query_description[:raw_query].nil?
 
       sql = replace_variables(query_description[:raw_query], query_description[:variables])
-      request = {
-        body: {
-          from: query_description[:from],
-          to: query_description[:to],
-          queries: [rawSql: sql, datasourceId: id, format: 'table']
-        }.to_json,
-        request: Net::HTTP::Post
-      }
-
       webrequest = query_description[:prepared_request]
-      webrequest.relative_url = '/api/tsdb/query'
+      request = {}
+
+      ver = query_description[:grafana_version].split('.').map{|x| x.to_i}
+      if ver[0] >= 8
+        webrequest.relative_url = '/api/ds/query'
+        request = {
+          body: {
+            from: query_description[:from],
+            to: query_description[:to],
+            queries: [{
+              datasource: { type: type, uid: uid },
+              datasourceId: id,
+              rawSql: sql,
+              format: 'table',
+              # intervalMs: '',
+              # maxDataPoints: 999,
+              refId: 'A'
+            }]
+          }.to_json,
+          request: Net::HTTP::Post
+        }
+      else
+        webrequest.relative_url = '/api/tsdb/query'
+        request = {
+          body: {
+            from: query_description[:from],
+            to: query_description[:to],
+            queries: [rawSql: sql, datasourceId: id, format: 'table']
+          }.to_json,
+          request: Net::HTTP::Post
+        }
+      end
       webrequest.options.merge!(request)
 
       result = webrequest.execute(query_description[:timeout])

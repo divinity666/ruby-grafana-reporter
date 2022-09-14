@@ -59,6 +59,15 @@ describe SqlValueInlineMacro do
       expect(@report.logger).to receive(:fatal).with('undefined method `document\' for nil:NilClass')
       obj.process(nil, STUBS[:datasource_sql], { 'instance' => 'default' })
     end
+
+    it 'can handle new datasource api since grafana 8.x.x' do
+      @report.grafana("default").instance_eval("@version = '8.0.1'")
+
+      @report.logger.level = ::Logger::Severity::DEBUG
+      allow(@report.logger).to receive(:debug)
+      expect(@report.logger).not_to receive(:error)
+      expect(Asciidoctor.convert("grafana_sql_value:#{STUBS[:datasource_sql]}[sql=\"SELECT 1\"]", to_file: false)).to include('1')
+    end
   end
 
   context 'graphite' do

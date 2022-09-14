@@ -133,6 +133,14 @@ RSpec.configure do |config|
     )
     .to_return(status: 200, body: '{"results":{"A":{"refId":"A","meta":{"rowCount":1,"sql":"SELECT 1"},"series":null,"tables":[{"columns":[{"text":"1"}],"rows":[[1]]}],"dataframes":null}}}', headers: {})
 
+    stub_request(:post, 'http://localhost/api/ds/query').with(
+      body: /.*SELECT 1[^\d]*/,
+      headers: default_header.merge({
+        'Authorization' => "Bearer #{STUBS[:key_admin]}"
+      })
+    )
+    .to_return(status: 200, body: ' {"results":{"A":{"frames":[{"schema":{"refId":"A","meta":{"executedQueryString":"SELECT 1"},"fields":[{"name":"1","type":"number","typeInfo":{"frame":"int64","nullable":true}}]},"data":{"values":[[1]]}}],"refId":"A"}}}', headers: {})
+
     stub_request(:post, 'http://localhost/api/tsdb/query').with(
       body: /.*SELECT 2[^\d]*/,
       headers: default_header.merge({

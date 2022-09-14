@@ -1,4 +1,4 @@
-if ENV['TRAVIS']
+if ENV['APPVEYOR']
   require 'coveralls'
   Coveralls.wear! do
     add_filter "spec/"
