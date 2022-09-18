@@ -2,7 +2,7 @@ version: 0.6.4-{build}
 
 environment:
   RUBYGEMS_TOKEN:
-    secure: gGN8tnrW+0AeN5nFAbizilihGzCjc2rgjcjL7mj83v0erOQcIagYtsr1/cu+HQnq8kevN5MxUbRToNtsPOZcCg==
+    secure: RUnxmwed0QbCtVoP+US3z1ISjyDQ/BtMhTMJWOmTz8Hlw63FlYbs+fWbMY6YwRbb1tOLz3bKl+qqLFw8S2U4Hg==
   COVERALLS_SERVICE_NAME: appveyor
   COVERALLS_REPO_TOKEN:
     secure: cu6NcEUU479Jdkyf/qSduY/JwjsSQ8hkKZHB79UC/VY8alk1iUB1cWoBIl+Zl+Um
@@ -56,7 +56,9 @@ for:
         - bundle exec rake testsingle
 
       before_deploy:
-        - ls *.gem | curl --data-binary @- -H "Authorization:${RUBYGEMS_TOKEN}" https://rubygems.org/api/v1/gems
+        - sh: "echo -e \"---\n:rubygems_api_key: ${RUBYGEMS_TOKEN}\" > ~/.gem/credentials"
+        - chmod 0600 ~/.gem/credentials
+        - gem push *.gem
 
 before_build:
   - bundle exec rake check
