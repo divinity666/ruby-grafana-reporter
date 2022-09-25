@@ -80,7 +80,10 @@ task :buildexe do
   require_relative 'lib/VERSION'
 
   require 'openssl'
-  sh "ocra bin/ruby-grafana-reporter --gemfile Gemfile --dll ruby_builtin_dlls/libssp-0.dll --dll ruby_builtin_dlls/libssl-1_1-x64.dll --dll ruby_builtin_dlls/libcrypto-1_1-x64.dll --dll ruby_builtin_dlls/libgmp-10.dll --dll ruby_builtin_dlls/zlib1.dll --console --output ruby-grafana-reporter-#{GRAFANA_REPORTER_VERSION.join('.')}.exe #{OpenSSL::X509::DEFAULT_CERT_FILE}"
+  GEMFILE_OPT = ""
+  GEMFILE_OPT = "--gemfile Gemfile" if ENV['APPVEYOR']
+
+  sh "ocra bin/ruby-grafana-reporter #{GEMFILE_OPT} --dll ruby_builtin_dlls/libssp-0.dll --dll ruby_builtin_dlls/libssl-1_1-x64.dll --dll ruby_builtin_dlls/libcrypto-1_1-x64.dll --dll ruby_builtin_dlls/libgmp-10.dll --dll ruby_builtin_dlls/zlib1.dll --console --output ruby-grafana-reporter-#{GRAFANA_REPORTER_VERSION.join('.')}.exe #{OpenSSL::X509::DEFAULT_CERT_FILE}"
 end
 
 task :testexe do
