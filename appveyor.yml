@@ -4,7 +4,7 @@ environment:
   RUBYGEMS_TOKEN:
     secure: RUnxmwed0QbCtVoP+US3z1ISjyDQ/BtMhTMJWOmTz8Hlw63FlYbs+fWbMY6YwRbb1tOLz3bKl+qqLFw8S2U4Hg==
   COVERALLS_SERVICE_NAME: appveyor
-  COVERALLS_REPO_TOKEN:
+  COVERALLS_TOKEN:
     secure: cu6NcEUU479Jdkyf/qSduY/JwjsSQ8hkKZHB79UC/VY8alk1iUB1cWoBIl+Zl+Um
 
 image:
@@ -52,7 +52,7 @@ for:
         - bundle exec rake buildgem
 
       test_script:
-        - bundle exec rake test
+        - COVERALLS_REPO_TOKEN=${COVERALLS_TOKEN} bundle exec rspec spec/test_default.rb
         - bundle exec rake testsingle
 
       before_deploy:
@@ -74,6 +74,5 @@ deploy:
       secure: M1W91LySSlC/6n0+CCIfUhxfPu5DqG60KVdelbOCtYDUekkMyLj7RxLyEdLQYpAy
     artifact: /.*\.(?:gem|exe|rb)/
     draft: true
-#    on:
-#      branch: master
-#      APPVEYOR_REPO_TAG: true
+    on:
+      APPVEYOR_REPO_TAG: true
