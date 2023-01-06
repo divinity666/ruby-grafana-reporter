@@ -178,7 +178,8 @@ module Grafana
           @datasources.delete(ds_name)
         end
       end
-      @datasources['default'] = @datasources[json['defaultDatasource']]
+
+      @datasources['default'] = @datasources[json['defaultDatasource']] if not @datasources[json['defaultDatasource']].nil?
     end
   end
 end
