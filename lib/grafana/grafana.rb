@@ -105,7 +105,14 @@ module Grafana
     # @param datasource_id [Integer] id of the searched datasource
     # @return [Datasource] Datasource for the specified datasource id
     def datasource_by_id(datasource_id)
-      datasource = @datasources.select { |_name, ds| ds.id == datasource_id.to_i }.values.first
+      datasource = @datasources.select do |name, ds|
+        if ds.nil?
+          @logger.error("Datasource with name '#{name}' found in datasources array, but is a nil object.")
+          false
+        else
+          ds.id == datasource_id.to_i
+        end
+      end.values.first
       raise DatasourceDoesNotExistError.new('id', datasource_id) unless datasource
 
       datasource
