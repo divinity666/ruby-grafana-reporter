@@ -70,8 +70,8 @@ module GrafanaReporter
           @report.logger.error(e.message)
           reader.unshift_line "|#{e.message}"
         rescue StandardError => e
-          @report.logger.fatal(e.message)
-          reader.unshift_line "|#{e.message}"
+          @report.logger.fatal("#{e.message}\n#{e.backtrace.join("\n")}")
+          reader.unshift_line "|#{e.message}\n#{e.backtrace.join("\n")}"
         end
 
         reader

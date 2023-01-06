@@ -56,7 +56,7 @@ describe SqlValueInlineMacro do
 
     it 'handles standard error on internal fault' do
       obj = SqlValueInlineMacro.new.current_report(@report)
-      expect(@report.logger).to receive(:fatal).with('undefined method `document\' for nil:NilClass')
+      expect(@report.logger).to receive(:fatal).with(include('undefined method `document\' for nil:NilClass'))
       obj.process(nil, STUBS[:datasource_sql], { 'instance' => 'default' })
     end
 

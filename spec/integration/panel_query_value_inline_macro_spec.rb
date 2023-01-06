@@ -72,7 +72,7 @@ describe PanelQueryValueInlineMacro do
 
   it 'handles standard error on internal fault' do
     obj = PanelQueryValueInlineMacro.new.current_report(@report)
-    expect(@report.logger).to receive(:fatal).with('undefined method `document\' for nil:NilClass')
+    expect(@report.logger).to receive(:fatal).with(include('undefined method `document\' for nil:NilClass'))
     obj.process(nil, STUBS[:panel_sql][:id], { 'instance' => 'default', 'dashboard' => STUBS[:dashboard] })
   end
 end

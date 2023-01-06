@@ -51,7 +51,7 @@ describe SqlTableIncludeProcessor do
     it 'handles standard error on internal fault' do
       obj = SqlTableIncludeProcessor.new.current_report(@report)
       class MyReader; def unshift_line(*args); end; end
-      expect(@report.logger).to receive(:fatal).with('undefined method `attributes\' for nil:NilClass')
+      expect(@report.logger).to receive(:fatal).with(include('undefined method `attributes\' for nil:NilClass'))
       obj.process(nil, MyReader.new, ":#{STUBS[:datasource_sql]}", { 'instance' => 'default' })
     end
   end

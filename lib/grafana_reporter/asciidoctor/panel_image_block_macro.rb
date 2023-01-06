@@ -56,8 +56,8 @@ module GrafanaReporter
           @report.logger.error(e.message)
           return create_paragraph(parent, e.message, attrs)
         rescue StandardError => e
-          @report.logger.fatal(e.message)
-          return create_paragraph(parent, e.message, attrs)
+          @report.logger.fatal("#{e.message}\n#{e.backtrace.join("\n")}")
+          return create_paragraph(parent, "#{e.message}\n#{e.backtrace.join("\n")}", attrs)
         end
 
         attrs['target'] = image_path

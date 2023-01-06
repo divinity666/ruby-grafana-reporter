@@ -66,8 +66,8 @@ module GrafanaReporter
           @report.logger.error(e.message)
           create_inline(parent, :quoted, e.message)
         rescue StandardError => e
-          @report.logger.fatal(e.message)
-          create_inline(parent, :quoted, e.message)
+          @report.logger.fatal("#{e.message}\n#{e.backtrace.join("\n")}")
+          create_inline(parent, :quoted, "#{e.message}\n#{e.backtrace.join("\n")}")
         end
       end
 

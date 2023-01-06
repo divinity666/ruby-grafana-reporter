@@ -58,8 +58,8 @@ module GrafanaReporter
           @report.logger.error(e.message)
           return create_inline(parent, :quoted, e.message)
         rescue StandardError => e
-          @report.logger.fatal(e.message)
-          return create_inline(parent, :quoted, e.message)
+          @report.logger.fatal("#{e.message}\n#{e.backtrace.join("\n")}")
+          return create_inline(parent, :quoted, "#{e.message}\n#{e.backtrace.join("\n")}")
         end
 
         create_inline(parent, :image, nil, { target: image_path, attributes: attrs })

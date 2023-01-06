@@ -91,8 +91,8 @@ module GrafanaReporter
             @logger.error(e.message)
             socket.write http_response(400, 'Bad Request', e.message)
           rescue StandardError => e
-            @logger.fatal(e.message)
-            socket.write http_response(400, 'Bad Request', e.message)
+            @logger.fatal("#{e.message}\n#{e.backtrace.join("\n")}")
+            socket.write http_response(400, 'Bad Request', "#{e.message}\n#{e.backtrace.join("\n")}")
           ensure
             socket.close
           end

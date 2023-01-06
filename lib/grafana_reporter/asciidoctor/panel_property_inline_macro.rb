@@ -50,8 +50,8 @@ module GrafanaReporter
           @report.logger.error(e.message)
           return create_inline(parent, :quoted, e.message)
         rescue StandardError => e
-          @report.logger.fatal(e.message)
-          return create_inline(parent, :quoted, e.message)
+          @report.logger.fatal("#{e.message}\n#{e.backtrace.join("\n")}")
+          return create_inline(parent, :quoted, "#{e.message}\n#{e.backtrace.join("\n")}")
         end
 
         # translate linebreaks to asciidoctor syntax
