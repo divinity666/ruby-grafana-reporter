@@ -9,11 +9,27 @@ describe Grafana do
     end
 
     it 'raises error if datasource does not exist' do
-      expect { subject.datasource_by_name('blabla') }.to raise_error(DatasourceDoesNotExistError)
+      expect { subject.datasource_by_name(STUBS[:dashboard_does_not_exist]) }.to raise_error(DatasourceDoesNotExistError)
     end
 
     it 'raises error if dashboard does not exist' do
-      expect { subject.dashboard('blabla') }.to raise_error(DashboardDoesNotExistError)
+      expect { subject.dashboard(STUBS[:dashboard_does_not_exist]) }.to raise_error(DashboardDoesNotExistError)
+    end
+
+    it 'shows error message if datasource_by_id is called and dashboard array contains nil object and removes it from dashboards' do
+      subject.instance_variable_get(:@datasources)['test'] = nil
+      expect(subject.instance_variable_get(:@datasources).length).to eq(7)
+      expect(subject.logger).to receive(:warn).with(/is nil, which should never happen/)
+      subject.datasource_by_id(STUBS[:datasource_sql])
+      expect(subject.instance_variable_get(:@datasources).length).to eq(6)
+    end
+
+    it 'shows error message if datasource_by_uid is called and dashboard array contains nil object and removes it from dashboards' do
+      subject.instance_variable_get(:@datasources)['test'] = nil
+      expect(subject.instance_variable_get(:@datasources).length).to eq(7)
+      expect(subject.logger).to receive(:warn).with(/is nil, which should never happen/)
+      subject.datasource_by_uid('000000008')
+      expect(subject.instance_variable_get(:@datasources).length).to eq(6)
     end
   end
 

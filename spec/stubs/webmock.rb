@@ -11,6 +11,7 @@ STUBS = {
   org_name: 'Main',
   version: '6.5.3',
   dashboard: 'IDBRfjSmz',
+  dashboard_does_not_exist: 'blabla',
   panel_ds_unknown: { id: '15' },
   panel_sql: { id: '11', letter: 'A', title: 'Temperaturen' },
   panel_graphite: { id: '12', letter: 'A' },

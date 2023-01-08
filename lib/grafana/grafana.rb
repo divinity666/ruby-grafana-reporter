@@ -86,15 +86,8 @@ module Grafana
     # @param datasource_uid [String] unique id of the searched datasource
     # @return [Datasource] Datasource for the specified datasource unique id
     def datasource_by_uid(datasource_uid)
-      datasource = @datasources.select do |ds_name, ds|
-        if (ds.nil?)
-          # print debug info for https://github.com/divinity666/ruby-grafana-reporter/issues/29
-          @logger.warn("Datasource with name #{ds_name} is nil, which should never happen. Check logs for details.")
-          false
-        else
-          ds.uid == datasource_uid
-        end
-      end.values.first
+      clean_nil_datasources
+      datasource = @datasources.select { |ds_name, ds| ds.uid == datasource_uid }.values.first
       raise DatasourceDoesNotExistError.new('uid', datasource_uid) unless datasource
 
       datasource
@@ -105,14 +98,8 @@ module Grafana
     # @param datasource_id [Integer] id of the searched datasource
     # @return [Datasource] Datasource for the specified datasource id
     def datasource_by_id(datasource_id)
-      datasource = @datasources.select do |name, ds|
-        if ds.nil?
-          @logger.error("Datasource with name '#{name}' found in datasources array, but is a nil object.")
-          false
-        else
-          ds.id == datasource_id.to_i
-        end
-      end.values.first
+      clean_nil_datasources
+      datasource = @datasources.select { |name, ds| ds.id == datasource_id.to_i }.values.first
       raise DatasourceDoesNotExistError.new('id', datasource_id) unless datasource
 
       datasource
@@ -180,6 +167,16 @@ module Grafana
       end
 
       @datasources['default'] = @datasources[json['defaultDatasource']] if not @datasources[json['defaultDatasource']].nil?
+    end
+
+    def clean_nil_datasources
+      @datasources.delete_if do |name, ds|
+        if ds.nil?
+          # print debug info for https://github.com/divinity666/ruby-grafana-reporter/issues/29
+          @logger.warn("Datasource with name #{name} is nil, which should never happen. Check logs for details.")
+        end
+        ds.nil?
+      end
     end
   end
 end
