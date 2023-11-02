@@ -158,7 +158,7 @@ RSpec.configure do |config|
     )
     .to_return(status: 200, body: '{"results":{"A":{"refId":"A","meta":{"rowCount":0,"sql":"SELECT 1 as value WHERE value = 0"},"series":null,"tables":null,"dataframes":null}}}', headers: {})
 
-    stub_request(:get, %r{http://localhost/render/d-solo/IDBRfjSmz\?from=\d+&fullscreen=true&panelId=(?:15|11)&theme=light&timeout=60(?:&var-[^&]+)*}).with(
+    stub_request(:get, %r{http://localhost/render/d-solo/IDBRfjSmz\?from=\d+&fullscreen=true&panelId=(?:15|11)(?:&scale=\d+)?&theme=light&timeout=60(?:&var-[^&]+)*}).with(
       headers: default_header.merge({
         'Accept' => 'image/png',
         'Authorization' => "Bearer #{STUBS[:key_admin]}"

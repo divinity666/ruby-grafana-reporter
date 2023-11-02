@@ -391,6 +391,9 @@ end}
               render-width:
                 description: can be used to override default `width` in which the panel shall be rendered
                 call: render-width="<width>"
+              render-scale:
+                description: can be used to override default scale in which the panel shall be rendered
+                call: render-scale="<scale>"
               render-theme:
                 description: can be used to override default `theme` in which the panel shall be rendered (light by default)
                 call: render-theme="<theme>"

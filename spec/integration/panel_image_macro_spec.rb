@@ -52,6 +52,12 @@ describe PanelImageBlockMacro do
     expect(@report.logger).to receive(:fatal).with(include('undefined method `document\' for nil:NilClass'))
     obj.process(nil, STUBS[:panel_sql][:id], { 'instance' => 'default', 'dashboard' => STUBS[:dashboard] })
   end
+
+  it 'supports render-scale property' do
+    expect(@report.logger).not_to receive(:error)
+    result = Asciidoctor.convert("grafana_panel_image::#{STUBS[:panel_sql][:id]}[dashboard=\"#{STUBS[:dashboard]}\",render-scale=\"100\"]", to_file: false)
+    expect(WebMock).to have_requested(:get, /.*[\?&]scale=100.*/)
+  end
 end
 
 describe PanelImageInlineMacro do
@@ -94,5 +100,11 @@ describe PanelImageInlineMacro do
     obj = PanelImageInlineMacro.new.current_report(@report)
     expect(@report.logger).to receive(:fatal).with(include('undefined method `document\' for nil:NilClass'))
     obj.process(nil, STUBS[:panel_sql][:id], { 'instance' => 'default', 'dashboard' => STUBS[:dashboard] })
+  end
+
+  it 'supports render-scale property' do
+    expect(@report.logger).not_to receive(:error)
+    result = Asciidoctor.convert("grafana_panel_image:#{STUBS[:panel_sql][:id]}[dashboard=\"#{STUBS[:dashboard]}\",render-scale=\"100\"]", to_file: false)
+    expect(WebMock).to have_requested(:get, /.*[\?&]scale=100.*/)
   end
 end

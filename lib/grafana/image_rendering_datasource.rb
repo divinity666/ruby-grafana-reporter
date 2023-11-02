@@ -26,7 +26,7 @@ module Grafana
     private
 
     def url_params(query_desc)
-      url_vars = query_desc[:variables].select { |k, _v| k =~ /^(?:timeout|height|width|theme|fullscreen|var-.+)$/ }
+      url_vars = query_desc[:variables].select { |k, _v| k =~ /^(?:timeout|scale|height|width|theme|fullscreen|var-.+)$/ }
       url_vars = default_vars.merge(url_vars)
       url_vars['from'] = Variable.new(query_desc[:from])
       url_vars['to'] = Variable.new(query_desc[:to])
