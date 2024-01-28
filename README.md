@@ -20,7 +20,22 @@ Reporting Service for Grafana
   * [Using webhooks](#using-webhooks)
   * [Developing your own plugin](#developing-your-own-plugin)
 * [Roadmap](#roadmap)
-* [Donations](#donations)
+* [Contributing](#contributing)
+* [Licensing](#licensing)
+* [Acknowledgements](#acknowledgements)
+
+## Your support is appreciated!
+
+Hey there! Let me spend some personal words here:
+
+I provide you this software free of charge - and I'm happy, that I can do so. I have already
+spend a lot of my private time in developing, maintaining and supporting it.
+
+If you enjoy my work, I would feel greatly honoured, if you buy me a coffee:
+
+[![buymeacoffee](https://az743702.vo.msecnd.net/cdn/kofi3.png?v=0)](https://ko-fi.com/divinity666)
+
+Thanks for your support and keeping this project alive!
 
 ## About the project
 
@@ -356,9 +371,3 @@ The code in this project is licensed under MIT license.
 * [grafana](https://github.com/grafana/grafana)
 
 Inspired by [Izak Marai's grafana reporter](https://github.com/IzakMarais/reporter)
-
-## Donations
-
-If you like this project and you would like to support my work, feel free to donate. :)
-
-[![paypal](https://www.paypalobjects.com/en_US/i/btn/btn_donateCC_LG.gif)](https://www.paypal.com/donate?hosted_button_id=35LH6JNLPHPHQ)
