@@ -138,7 +138,7 @@ module GrafanaReporter
 
       # automatically add extension, if a file with default template extension exists
       @template = "#{@template}.#{self.class.default_template_extension}" if File.file?("#{@template}.#{self.class.default_template_extension}") && !File.file?(@template.to_s)
-      raise MissingTemplateError, @template.to_s unless File.file?(@template.to_s)
+      raise MissingTemplateError, "#{@template}.#{self.class.default_template_extension}" unless File.file?(@template.to_s)
 
       notify(:on_before_create)
       @start_time = Time.new

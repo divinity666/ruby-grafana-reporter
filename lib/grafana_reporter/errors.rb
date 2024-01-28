@@ -50,7 +50,7 @@ module GrafanaReporter
   # Thrown if a non existing template has been specified.
   class MissingTemplateError < ConfigurationError
     def initialize(template)
-      super("Given report template '#{template}' is not a valid template.")
+      super("Accessing report template file '#{template}' is not possible. Check if file exists and is accessible.")
     end
   end
 
