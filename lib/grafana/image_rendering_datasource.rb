@@ -16,7 +16,7 @@ module Grafana
       webrequest.relative_url = panel.render_url + url_params(query_description)
       webrequest.options.merge!({ accept: 'image/png' })
 
-      result = webrequest.execute
+      result = webrequest.execute(query_description[:timeout])
 
       raise ImageCouldNotBeRenderedError, panel if result.body.include?('<html')
 
