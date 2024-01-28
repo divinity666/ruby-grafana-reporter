@@ -136,8 +136,10 @@ asciidoctor:
 
 ### Grafana integration
 
-For using the reporter directly from grafana, you need to simply add a link to your
-grafana dashboard:
+For using the reporter directly from grafana, the reporter has to run as webservice, i.e. it has to be
+called without the `-t` parameter.
+
+If this is the case, you simply simply need add a link to your grafana dashboard:
 
 * Open the dashboard configuration
 * Select `Links`
@@ -168,7 +170,32 @@ a variable and forward it to the reporter.
 
 ## Advanced information
 
-### Webservice
+### Use grafana variables in templates
+It is common practice to use dashboard variables in grafana, to allow users to show
+the dashboard for a specific set of data only. This is where grafana variables are
+used.
+
+Those variables are then also used in panel queries, to react on selecting or entering
+those variables.
+
+You may provide those variables during report generation to the reporter. Therefore
+you have to specify them in the individual calls.
+
+Let's say, you have a variable called `serverid` in the dashboard. You may now want
+to set this variable for a panel image rendering. This cann be done with the following
+calls:
+
+````
+grafana_panel_image:1[var-serverid=main-server]
+grafana_panel_image:1[var-serverid=replica-server]
+````
+
+This will render two images: one for `main-server` and one for `replica-server`.
+
+So, to forward grafana variables to the reporter calls, you simply have to use the
+form `var-<<your-variable-name>>` and specify those in your reporter template.
+
+### Webservice endpoints
 
 Running the reporter as a webservice provides the following URLs
 
