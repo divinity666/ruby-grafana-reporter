@@ -104,8 +104,8 @@ describe Application do
     end
 
     it 'does not raise error on non existing template' do
-      expect(subject.config.logger).to receive(:error).with(/is not a valid template/)
-      expect { subject.configure_and_run(['-c', './spec/tests/demo_config.txt', '-t', 'does_not_exist']) }.to output(/report template .* is not a valid template/).to_stdout
+      expect(subject.config.logger).to receive(:error).with(/Check if file exists/)
+      expect { subject.configure_and_run(['-c', './spec/tests/demo_config.txt', '-t', 'does_not_exist']) }.to output(/report template .* Check if file exists/).to_stdout
     end
   end
 
@@ -346,7 +346,7 @@ default-document-attributes:
       evt = ReportEventHandler.new
       AbstractReport.add_event_listener(:on_after_finish, evt)
 
-      expect_any_instance_of(GrafanaReporter::Logger::TwoWayDelegateLogger).to receive(:error).with(/is not a valid template\./)
+      expect_any_instance_of(GrafanaReporter::Logger::TwoWayDelegateLogger).to receive(:error).with(/Check if file exists/)
       res = Net::HTTP.get(URI('http://localhost:8033/render'))
       cur_time = Time.new
       sleep 0.1 while !evt.done? && Time.new - cur_time < 10
@@ -356,7 +356,7 @@ default-document-attributes:
       evt = ReportEventHandler.new
       AbstractReport.add_event_listener(:on_after_finish, evt)
 
-      expect_any_instance_of(GrafanaReporter::Logger::TwoWayDelegateLogger).to receive(:error).with(/is not a valid template\./)
+      expect_any_instance_of(GrafanaReporter::Logger::TwoWayDelegateLogger).to receive(:error).with(/Check if file exists/)
       res = Net::HTTP.get(URI('http://localhost:8033/render?var-template=does_not_exist'))
       cur_time = Time.new
       sleep 0.1 while !evt.done? && Time.new - cur_time < 10
