@@ -8,7 +8,7 @@ environment:
     secure: cu6NcEUU479Jdkyf/qSduY/JwjsSQ8hkKZHB79UC/VY8alk1iUB1cWoBIl+Zl+Um
 
 image:
-  - Visual Studio 2019
+  - Visual Studio 2022
   - Ubuntu
 
 for:
