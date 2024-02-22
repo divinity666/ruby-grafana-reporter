@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require 'rubygems'
+require 'rubygems/ext/builder'
 require 'net/http'
 require 'fileutils'
 require 'yaml'
