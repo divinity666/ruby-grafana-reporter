@@ -31,11 +31,36 @@ module Grafana
       query = query.gsub(/\$(?:__)?interval(?=\W|$)/, "#{interval.is_a?(String) ? interval : "#{(interval / 1000).to_i}s"}")
       query = query.gsub(/\$(?:__)?interval_ms(?=\W|$)/, "#{interval}")
 
-      url = "/api/datasources/proxy/#{id}/query?db=#{@model['database']}&q=#{ERB::Util.url_encode(query)}&epoch=ms"
-
       webrequest = query_description[:prepared_request]
-      webrequest.relative_url = url
-      webrequest.options.merge!({ request: Net::HTTP::Get })
+      request = {}
+
+      ver = query_description[:grafana_version].split('.').map{|x| x.to_i}
+      if ver[0] >= 8
+        webrequest.relative_url = "/api/ds/query?ds_type=influxdb"
+
+        request = {
+          request: Net::HTTP::Post,
+          body: {
+            from: query_description[:from],
+            to: query_description[:to],
+            queries: [
+              {
+                datasource: {type: "influxdb"},
+                datasourceId: id,
+                intervalMs: interval,
+                query: query
+              }
+          ]}.to_json
+        }
+      else
+        webrequest.relative_url = "/api/datasources/proxy/#{id}/query?db=#{@model['database']}&q=#{ERB::Util.url_encode(query)}&epoch=ms"
+        request = {
+          request: Net::HTTP::Get
+        }
+      end
+
+      webrequest.options.merge!(request)
+
 
       result = webrequest.execute(query_description[:timeout])
       preformat_response(result.body)
@@ -43,7 +68,7 @@ module Grafana
 
     # @see AbstractDatasource#raw_query_from_panel_model
     def raw_query_from_panel_model(panel_query_target)
-      return panel_query_target['query'] if panel_query_target['rawQuery']
+      return panel_query_target['query'] if panel_query_target['query'] or panel_query_target['rawQuery']
 
       # build composed queries
       build_select(panel_query_target['select']) + build_from(panel_query_target) + build_where(panel_query_target['tags']) + build_group_by(panel_query_target['groupBy'])
