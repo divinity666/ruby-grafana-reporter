@@ -16,7 +16,7 @@ if ENV['COVERALLS_REPO_TOKEN']
         client = self.build_client_orig(uri)
         if client.ssl_version == 'TLSv1'
           Coveralls::Output.puts("[ruby-grafana-reporter] monkey patching Coveralls::API client", :color => "yellow")
-          request.ssl_version = 'TLSv1_2'
+          client.ssl_version = 'TLSv1_2'
         else
           Coveralls::Output.puts("[ruby-grafana-reporter] monkey patching Coveralls::API client no longer needed and may be REMOVED", :color => "yellow")
         end
