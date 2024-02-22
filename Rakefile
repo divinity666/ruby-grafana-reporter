@@ -76,7 +76,6 @@ task :testsingle do
 end
 
 task :buildexe do
-  require 'rubygems'
   # read version information
   require_relative 'lib/VERSION'
 
