@@ -8,14 +8,14 @@ environment:
     secure: cu6NcEUU479Jdkyf/qSduY/JwjsSQ8hkKZHB79UC/VY8alk1iUB1cWoBIl+Zl+Um
 
 image:
-  - Visual Studio 2022
+  - Visual Studio 2019
   - Ubuntu
 
 for:
   -
       matrix:
         only:
-          - image: Visual Studio 2022
+          - image: Visual Studio 2019
 
       artifacts:
         - path: '*.exe'
