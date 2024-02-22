@@ -20,7 +20,7 @@ if ENV['COVERALLS_REPO_TOKEN']
         else
           Coveralls::Output.puts("[ruby-grafana-reporter] monkey patching Coveralls::API client no longer needed and may be REMOVED", :color => "yellow")
         end
-        request
+        client
       end
 
       def self.build_request(path, hash)
