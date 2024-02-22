@@ -13,4 +13,4 @@ else
   end
 end
 gem 'rake', '~>13.0' if ENV['APPVEYOR'] or RUBY_PLATFORM =~ /cygwin|mswin|mingw|bccwin|wince|emx/ # only on windows
-gem 'ocra', '~>1.3' if RUBY_PLATFORM =~ /cygwin|mswin|mingw|bccwin|wince|emx/ # only on windows
+gem 'ocran', '~>1.3' if RUBY_PLATFORM =~ /cygwin|mswin|mingw|bccwin|wince|emx/ # only on windows

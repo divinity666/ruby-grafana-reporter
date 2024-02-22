@@ -32,7 +32,7 @@ module GrafanaReporter
       demo_report ||= '<<your_report_name>>'
       config_param = config_file == Configuration::DEFAULT_CONFIG_FILE_NAME ? '' : " -c #{config_file}"
       program_call = "#{Gem.ruby} #{$PROGRAM_NAME}"
-      program_call = ENV['OCRA_EXECUTABLE'].gsub("#{Dir.pwd}/".gsub('/', '\\'), '') if ENV['OCRA_EXECUTABLE']
+      program_call = ENV['OCRAN_EXECUTABLE'].gsub("#{Dir.pwd}/".gsub('/', '\\'), '') if ENV['OCRAN_EXECUTABLE']
 
       puts
       puts 'Now everything is setup properly. Create your reports as required in the templates '\

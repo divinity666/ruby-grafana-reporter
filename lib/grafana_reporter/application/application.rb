@@ -34,8 +34,8 @@ module GrafanaReporter
         action_wizard = false
 
         parser = OptionParser.new do |opts|
-          opts.banner = if ENV['OCRA_EXECUTABLE']
-                          "Usage: #{ENV['OCRA_EXECUTABLE'].gsub("#{Dir.pwd}/".gsub('/', '\\'), '')} [options]"
+          opts.banner = if ENV['OCRAN_EXECUTABLE']
+                          "Usage: #{ENV['OCRAN_EXECUTABLE'].gsub("#{Dir.pwd}/".gsub('/', '\\'), '')} [options]"
                         else
                           "Usage: #{Gem.ruby} #{$PROGRAM_NAME} [options]"
                         end
