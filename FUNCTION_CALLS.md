@@ -133,6 +133,7 @@ Includes a panel image as an image in the document. Can be called for inline-ima
 | `from_timezone="<timezone>"` | can be used to override system timezone for `from` time and will also override `grafana_default_from_timezone` option
 | `instance="<instance_name>"` | can be used to override global grafana instance, set in the report with `grafana_default_instance`. If nothing is set, the configured grafana instance with name `default` will be used.
 | `render-height="<height>"` | can be used to override default `height` in which the panel shall be rendered
+| `render-scale="<scale>"` | can be used to override default scale in which the panel shall be rendered
 | `render-theme="<theme>"` | can be used to override default `theme` in which the panel shall be rendered (light by default)
 | `render-timeout="<timeout>"` | can be used to override default `timeout` in which the panel shall be rendered (60 seconds by default)
 | `render-width="<width>"` | can be used to override default `width` in which the panel shall be rendered
