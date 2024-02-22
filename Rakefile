@@ -79,6 +79,7 @@ task :buildexe do
   # read version information
   require_relative 'lib/VERSION'
 
+  require 'rubygems'
   require 'openssl'
   GEMFILE_OPT = ""
   GEMFILE_OPT = "--gemfile Gemfile" if ENV['APPVEYOR']
