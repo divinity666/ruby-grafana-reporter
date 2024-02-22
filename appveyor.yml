@@ -2,7 +2,7 @@ version: 0.6.4-{build}
 
 environment:
   RUBYGEMS_TOKEN:
-    secure: RUnxmwed0QbCtVoP+US3z1ISjyDQ/BtMhTMJWOmTz8Hlw63FlYbs+fWbMY6YwRbb1tOLz3bKl+qqLFw8S2U4Hg==
+    secure: JMYgDTDQLMo9n9iqe+z18TKdsWhHdaSzJB/BeWbxfD6efzXzYK6K59XzAKX5jFseQetL0RCrk+gE9WQrT6OTcg==
   COVERALLS_SERVICE_NAME: appveyor
   COVERALLS_TOKEN:
     secure: cu6NcEUU479Jdkyf/qSduY/JwjsSQ8hkKZHB79UC/VY8alk1iUB1cWoBIl+Zl+Um
@@ -56,7 +56,7 @@ for:
         - bundle exec rake testsingle
 
       before_deploy:
-        - sh: "echo -e \"---\n:rubygems_api_key: ${RUBYGEMS_TOKEN}\" > ~/.gem/credentials"
+        - sh: "mkdir ~/.gem && echo -e \"---\n:rubygems_api_key: ${RUBYGEMS_TOKEN}\" > ~/.gem/credentials"
         - chmod 0600 ~/.gem/credentials
         - gem push *.gem
 
@@ -71,7 +71,9 @@ before_test:
 deploy:
   - provider: GitHub
     auth_token:
-      secure: M1W91LySSlC/6n0+CCIfUhxfPu5DqG60KVdelbOCtYDUekkMyLj7RxLyEdLQYpAy
+      # expires early 2025
+      # create API key in github and encrypt here: https://ci.appveyor.com/tools/encrypt
+      secure: 4YJ0a92H3pQi1rv704FuV/l4Dy1mn5fDf536xY6QkL7r7l3LGHbaqldXO7mXvoLB/NlX19DXUggx7NlneUm3Bp/RYJPhYlduh1RI8nJH49/ul8pueVpZ9Y18CorNZAUu
     artifact: /.*\.(?:gem|exe|rb)/
     draft: true
     on:
