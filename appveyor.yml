@@ -15,14 +15,14 @@ for:
   -
       matrix:
         only:
-          - image: Visual Studio 2019
+          - image: Visual Studio 2022
 
       artifacts:
         - path: '*.exe'
 
       install:
         - tzutil /s "W. Europe Standard Time"
-        - set PATH=C:\Ruby30-x64\bin
+        - set PATH=C:\Ruby27-x64\bin
         - bundle install
 
       build_script:
