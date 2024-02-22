@@ -7,9 +7,21 @@ if ENV['COVERALLS_REPO_TOKEN']
 
       class << self
         alias_method :build_request_orig, :build_request
+        alias_method :build_client_orig, :build_client
       end
 
       private
+
+      def self.build_client(uri)
+        client = self.build_client_orig(uri)
+        if client.ssl_version == 'TLSv1'
+          Coveralls::Output.puts("[ruby-grafana-reporter] monkey patching Coveralls::API client", :color => "yellow")
+          request.ssl_version = 'TLSv1_2'
+        else
+          Coveralls::Output.puts("[ruby-grafana-reporter] monkey patching Coveralls::API client no longer needed and may be REMOVED", :color => "yellow")
+        end
+        request
+      end
 
       def self.build_request(path, hash)
         request = self.build_request_orig(path, hash)
@@ -17,7 +29,7 @@ if ENV['COVERALLS_REPO_TOKEN']
           Coveralls::Output.puts("[ruby-grafana-reporter] monkey patching Coveralls::API request", :color => "yellow")
           request.content_type = request.content_type.gsub(/,/, ";")
         else
-          Coveralls::Output.puts("[ruby-grafana-reporter] monkey patching Coveralls::API no longer needed and may be REMOVED", :color => "yellow")
+          Coveralls::Output.puts("[ruby-grafana-reporter] monkey patching Coveralls::API request no longer needed and may be REMOVED", :color => "yellow")
         end
         request
       end
