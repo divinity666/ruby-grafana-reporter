@@ -50,6 +50,10 @@ describe AbstractQuery do
       expect(subject.translate_date('now-h/h', Variable.new('2020-07-28T20:58:03.005+0200'), true)).to eq('1595959199000')
     end
 
+    it 'can add times to rounded days' do
+      expect(subject.translate_date('now/d+8h', Variable.new('2020-07-28T20:58:03.005+0200'), false)).to eq('1595916000000')
+    end
+
     it 'can translate now rounded days' do
       expect(subject.translate_date('now/d', Variable.new('2020-07-28T20:58:03.005+0200'), false)).to eq('1595887200000')
       expect(subject.translate_date('now/d', Variable.new('2020-07-28T20:58:03.005+0200'), true)).to eq('1595973599000')

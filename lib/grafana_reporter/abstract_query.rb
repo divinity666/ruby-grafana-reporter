@@ -383,7 +383,7 @@ module GrafanaReporter
         delta_match = date_spec.match(/^(?<op>(?:-|\+))(?<count>\d+)?(?<unit>[smhdwMy])/)
         if delta_match
           date = delta_date(date, "#{delta_match[:op]}#{delta_match[:count] || 1}".to_i, delta_match[:unit])
-          date_spec = date_spec.gsub(/^#{delta_match[:op]}#{delta_match[:count]}#{delta_match[:unit]}/, '')
+          date_spec = date_spec.gsub(/^#{delta_match[:op] == '+' ? '\+' : '-'}#{delta_match[:count]}#{delta_match[:unit]}/, '')
         end
 
         raise TimeRangeUnknownError, orig_date unless fit_match || delta_match
