@@ -74,7 +74,6 @@ module GrafanaReporter
       # @see ProcessorMixin#build_demo_entry
       def build_demo_entry(panel)
         return nil unless panel
-        return nil unless panel.model['type'] == 'singlestat'
 
         ref_id = nil
         panel.model['targets'].each do |item|

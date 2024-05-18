@@ -68,6 +68,23 @@ module Grafana
       'NON-Admin'
     end
 
+    # Returns the datasource, which has been queried by model entry in the panel model.
+    #
+    # @param model_entry [Object] model entry of the searched datasource (e.g. String or Hash)
+    # @return [Datasource] Datasource for the specified datasource model entry
+    def datasource_by_model_entry(model_entry)
+      datasource = nil
+      if model_entry.is_a?(String)
+        datasource = datasource_by_name(model_entry)
+      elsif model_entry.is_a?(Hash)
+        datasource = datasource_by_uid(model_entry[:uid])
+      end
+
+      raise DatasourceDoesNotExistError.new('model entry', model_entry) unless datasource
+
+      datasource
+    end
+
     # Returns the datasource, which has been queried by the datasource name.
     #
     # @param datasource_name [String] name of the searched datasource
@@ -86,6 +103,8 @@ module Grafana
     # @param datasource_uid [String] unique id of the searched datasource
     # @return [Datasource] Datasource for the specified datasource unique id
     def datasource_by_uid(datasource_uid)
+      raise DatasourceDoesNotExistError.new('uid', datasource_uid) unless datasource_uid
+
       clean_nil_datasources
       datasource = @datasources.select { |ds_name, ds| ds.uid == datasource_uid }.values.first
       raise DatasourceDoesNotExistError.new('uid', datasource_uid) unless datasource

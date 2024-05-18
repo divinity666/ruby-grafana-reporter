@@ -74,7 +74,6 @@ module GrafanaReporter
       # @see ProcessorMixin#build_demo_entry
       def build_demo_entry(panel)
         return nil unless panel
-        return nil unless panel.model['type'].include?('table')
 
         ref_id = nil
         panel.model['targets'].each do |item|
@@ -85,8 +84,8 @@ module GrafanaReporter
         end
         return nil unless ref_id
 
-        "|===\ninclude::grafana_sql_table:#{panel.dashboard.grafana.datasource_by_name(panel.model['datasource']).id}"\
-        "[sql=\"#{panel.query(ref_id).gsub(/"/, '\"').gsub("\n", ' ').gsub(/\\/, '\\\\')}\",filter_columns=\"time\","\
+        "|===\ninclude::grafana_sql_table:#{panel.dashboard.grafana.datasource_by_model_entry(panel.model['datasource']).id}"\
+        "[sql=\"#{panel.query(ref_id).gsub(/"/, '\"').gsub("\r\n", ' ').gsub("\n", ' ').gsub(/\\/, '\\\\')}\",filter_columns=\"time\","\
         "dashboard=\"#{panel.dashboard.id}\",from=\"now-1h\",to=\"now\"]\n|==="
       end
     end

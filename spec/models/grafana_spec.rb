@@ -16,6 +16,26 @@ describe Grafana do
       expect { subject.dashboard(STUBS[:dashboard_does_not_exist]) }.to raise_error(DashboardDoesNotExistError)
     end
 
+    it 'can identify datasource by model entry by name' do
+      expect { subject.datasource_by_model_entry("demo") }.not_to raise_error
+    end
+
+    it 'can identify datasource by model entry by hash with uid' do
+      expect { subject.datasource_by_model_entry({"uid": "000000001"}) }.not_to raise_error
+    end
+
+    it 'raises error if datasource by model entry contains unknown name' do
+      expect { subject.datasource_by_model_entry("demobla") }.to raise_error(DatasourceDoesNotExistError)
+    end
+
+    it 'raises error if datasource by model entry contains unknown hash uid' do
+      expect { subject.datasource_by_model_entry({"uid": "-1"}) }.to raise_error(DatasourceDoesNotExistError)
+    end
+
+    it 'raises error if datasource by id unknown uid' do
+      expect { subject.datasource_by_uid("-1") }.to raise_error(DatasourceDoesNotExistError)
+    end
+
     it 'shows error message if datasource_by_id is called and dashboard array contains nil object and removes it from dashboards' do
       subject.instance_variable_get(:@datasources)['test'] = nil
       expect(subject.instance_variable_get(:@datasources).length).to eq(7)

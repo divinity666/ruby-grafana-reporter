@@ -79,7 +79,6 @@ module GrafanaReporter
       # @see ProcessorMixin#build_demo_entry
       def build_demo_entry(panel)
         return nil unless panel
-        return nil unless panel.model['type'] == 'singlestat'
 
         ref_id = nil
         panel.model['targets'].each do |item|
@@ -90,8 +89,8 @@ module GrafanaReporter
         end
         return nil unless ref_id
 
-        "grafana_sql_value:#{panel.dashboard.grafana.datasource_by_name(panel.model['datasource']).id}"\
-        "[sql=\"#{panel.query(ref_id).gsub(/"/, '\"').gsub("\n", ' ').gsub(/\\/, '\\\\')}\",from=\"now-1h\","\
+        "grafana_sql_value:#{panel.dashboard.grafana.datasource_by_model_entry(panel.model['datasource']).id}"\
+        "[sql=\"#{panel.query(ref_id).gsub(/"/, '\"').gsub("\r\n", ' ').gsub("\n", ' ').gsub(/\\/, '\\\\')}\",from=\"now-1h\","\
         'to="now"]'
       end
     end
