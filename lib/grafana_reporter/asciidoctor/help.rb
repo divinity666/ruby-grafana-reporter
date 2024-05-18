@@ -229,6 +229,12 @@ end}
                 escaped by using `_,`. Execution of related functions is applied in the following order
                 `format`, `replace_values`, `filter_columns`, `transpose`.
 
+            select_value:
+              call: select_value="<select_value>"
+              description: >-
+                Allows the selection of a specific value from the result set.  Supported options are `min`, `max`, `avg`,
+                `sum`, `first`, `last`.
+
             transpose:
               call: transpose="true"
               description: >-
@@ -456,6 +462,7 @@ end}
               from:
               instance:
               replace_values:
+              select_value:
               timeout:
               to:
               from_timezone:
@@ -505,6 +512,7 @@ end}
               from:
               instance:
               replace_values:
+              select_value:
               timeout:
               to:
               from_timezone:

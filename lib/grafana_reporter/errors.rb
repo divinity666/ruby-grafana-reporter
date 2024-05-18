@@ -79,6 +79,15 @@ module GrafanaReporter
     end
   end
 
+  # Thrown, if the value configuration in {QueryValueQuery#select_value} is
+  # invalid.
+  class UnsupportedSelectValueStatementError < GrafanaReporterError
+    def initialize(statement)
+      super("Unsupported 'select_value' specified in template file: '#{statement}'. Supported values are 'min', 'max', "\
+            "'avg', 'sum', 'first', 'last'.")
+    end
+  end
+
   # Thrown, if a configured parameter is malformed.
   class MalformedAttributeContentError < GrafanaReporterError
     def initialize(message, attribute, content)

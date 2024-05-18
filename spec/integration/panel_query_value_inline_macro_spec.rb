@@ -55,6 +55,41 @@ describe PanelQueryValueInlineMacro do
     expect(Asciidoctor.convert("grafana_panel_query_value:#{STUBS[:panel_sql][:id]}[query=\"#{STUBS[:panel_sql][:letter]}\",dashboard=\"#{STUBS[:dashboard]}\",filter_columns=\"Warmwasser\"]", to_file: false)).to include('<p>1594308060000')
   end
 
+  it 'can apply select_value first' do
+    expect(@report.logger).not_to receive(:error)
+    expect(Asciidoctor.convert("grafana_panel_query_value:#{STUBS[:panel_sql][:id]}[query=\"#{STUBS[:panel_sql][:letter]}\",dashboard=\"#{STUBS[:dashboard]}\",filter_columns=\"time_sec\",select_value=\"first\"]", to_file: false)).to include('<p>43.9')
+  end
+
+  it 'can apply select_value last' do
+    expect(@report.logger).not_to receive(:error)
+    expect(Asciidoctor.convert("grafana_panel_query_value:#{STUBS[:panel_sql][:id]}[query=\"#{STUBS[:panel_sql][:letter]}\",dashboard=\"#{STUBS[:dashboard]}\",filter_columns=\"time_sec\",select_value=\"last\"]", to_file: false)).to include('<p>40.9')
+  end
+
+  it 'can apply select_value min' do
+    expect(@report.logger).not_to receive(:error)
+    expect(Asciidoctor.convert("grafana_panel_query_value:#{STUBS[:panel_sql][:id]}[query=\"#{STUBS[:panel_sql][:letter]}\",dashboard=\"#{STUBS[:dashboard]}\",filter_columns=\"time_sec\",select_value=\"min\"]", to_file: false)).to include('<p>40')
+  end
+
+  it 'can apply select_value max' do
+    expect(@report.logger).not_to receive(:error)
+    expect(Asciidoctor.convert("grafana_panel_query_value:#{STUBS[:panel_sql][:id]}[query=\"#{STUBS[:panel_sql][:letter]}\",dashboard=\"#{STUBS[:dashboard]}\",filter_columns=\"time_sec\",select_value=\"max\"]", to_file: false)).to include('<p>45')
+  end
+
+  it 'can apply select_value avg' do
+    expect(@report.logger).not_to receive(:error)
+    expect(Asciidoctor.convert("grafana_panel_query_value:#{STUBS[:panel_sql][:id]}[query=\"#{STUBS[:panel_sql][:letter]}\",dashboard=\"#{STUBS[:dashboard]}\",filter_columns=\"time_sec\",select_value=\"avg\"]", to_file: false)).to include('<p>43.33405797101')
+  end
+
+  it 'can apply select_value sum' do
+    expect(@report.logger).not_to receive(:error)
+    expect(Asciidoctor.convert("grafana_panel_query_value:#{STUBS[:panel_sql][:id]}[query=\"#{STUBS[:panel_sql][:letter]}\",dashboard=\"#{STUBS[:dashboard]}\",filter_columns=\"time_sec\",select_value=\"sum\"]", to_file: false)).to include('<p>29900.5')
+  end
+
+  it 'raises error if unknown select_value is provided' do
+    expect(@report.logger).to receive(:error).with(include("Unsupported 'select_value' specified in template file")).at_least(:once)
+    expect(Asciidoctor.convert("grafana_panel_query_value:#{STUBS[:panel_sql][:id]}[query=\"#{STUBS[:panel_sql][:letter]}\",dashboard=\"#{STUBS[:dashboard]}\",filter_columns=\"time_sec\",select_value=\"unknown\"]", to_file: false)).to include("<p>GrafanaReporterError: Unsupported 'select_value' specified in template file")
+  end
+
   it 'can filter columns and format values' do
     expect(@report.logger).not_to receive(:error)
     expect(Asciidoctor.convert("grafana_panel_query_value:#{STUBS[:panel_sql][:id]}[query=\"#{STUBS[:panel_sql][:letter]}\",dashboard=\"#{STUBS[:dashboard]}\",format=\",%.2f\",filter_columns=\"time_sec\"]", to_file: false)).to include('<p>43.90')

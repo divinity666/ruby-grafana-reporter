@@ -33,7 +33,30 @@ module GrafanaReporter
 
       when /(?:panel_value|sql_value)/
         tmp = @result[:content] || []
-        @result = tmp.flatten.first
+        # use only first column of return values and replace null values with zero
+        tmp = tmp.map{ |item| item[0] || 0 }
+
+        # as default behaviour we fallback to the first_value, as this was the default in older releases
+        select_value = 'first'
+        select_value = @variables['select_value'].raw_value if @variables['select_value']
+        case select_value
+        when 'min'
+          result = tmp.min
+        when 'max'
+          result = tmp.max
+        when 'avg'
+          result = tmp.size > 0 ? tmp.sum / tmp.size : 0
+        when 'sum'
+          result = tmp.sum
+        when 'last'
+          result = tmp.last
+        when 'first'
+          result = tmp.first
+        else
+          raise UnsupportedSelectValueStatementError, @variables['select_value'].raw_value
+        end
+
+        @result = result
 
       else
         raise StandardError, "Unsupported 'result_type' received: '#{@variables['result_type'].raw_value}'"
