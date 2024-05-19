@@ -23,7 +23,7 @@ for:
       install:
         - tzutil /s "W. Europe Standard Time"
         - set PATH=C:\Ruby27-x64\bin;%PATH%
-        - gem install bundler -v 2.4.22
+        - gem install --default bundler -v 2.4.22
         - bundle install
 
       build_script:
@@ -48,6 +48,8 @@ for:
 
       install:
         - export TZ=Europe/Berlin
+        - rbenv global 2.7.8
+        - rbenv rehash
         - gem install bundler
         - bundle install
 
