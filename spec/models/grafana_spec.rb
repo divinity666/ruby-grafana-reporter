@@ -21,7 +21,7 @@ describe Grafana do
     end
 
     it 'can identify datasource by model entry by hash with uid' do
-      expect { subject.datasource_by_model_entry({"uid": "000000001"}) }.not_to raise_error
+      expect { subject.datasource_by_model_entry(JSON.parse("{\"uid\": \"000000001\"}")) }.not_to raise_error
     end
 
     it 'raises error if datasource by model entry contains unknown name' do
@@ -29,7 +29,7 @@ describe Grafana do
     end
 
     it 'raises error if datasource by model entry contains unknown hash uid' do
-      expect { subject.datasource_by_model_entry({"uid": "-1"}) }.to raise_error(DatasourceDoesNotExistError)
+      expect { subject.datasource_by_model_entry(JSON.parse("{\"uid\": \"-1\"}")) }.to raise_error(DatasourceDoesNotExistError)
     end
 
     it 'raises error if datasource by id unknown uid' do

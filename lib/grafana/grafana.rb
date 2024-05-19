@@ -77,7 +77,7 @@ module Grafana
       if model_entry.is_a?(String)
         datasource = datasource_by_name(model_entry)
       elsif model_entry.is_a?(Hash)
-        datasource = datasource_by_uid(model_entry[:uid])
+        datasource = datasource_by_uid(model_entry['uid'])
       end
 
       raise DatasourceDoesNotExistError.new('model entry', model_entry) unless datasource
