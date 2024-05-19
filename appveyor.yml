@@ -22,8 +22,7 @@ for:
 
       install:
         - tzutil /s "W. Europe Standard Time"
-        - set PATH=C:\Ruby27-x64\bin
-        - bundle install
+        - set PATH=C:\Ruby27-x64\bin;%PATH%
 
       build_script:
         - bundle exec rake buildsingle
@@ -45,7 +44,7 @@ for:
 
       install:
         - export TZ=Europe/Berlin
-        - bundle install
+        - gem install bundler
 
       build_script:
         - bundle exec rake buildsingle
@@ -67,6 +66,7 @@ before_test:
   - ruby -v
   - gem -v
   - bundle -v
+  - bundle install
 
 deploy:
   - provider: GitHub
