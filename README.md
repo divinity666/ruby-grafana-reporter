@@ -50,7 +50,7 @@ By default (an extended version of) Asciidoctor is enabled as template language.
 
 ## Getting started
 
-![GettingStarted](./assets/GettingStartedAnimation.gif)
+![GettingStarted](https://github.com/divinity666/ruby-grafana-reporter/blob/master/.assets/GettingStartedAnimation.gif)
 
 ## Features
 
