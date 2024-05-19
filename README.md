@@ -26,12 +26,10 @@ Reporting Service for Grafana
 
 ## Your support is appreciated!
 
-Hey there! Let me spend some personal words here:
-
-I provide you this software free of charge - and I'm happy, that I can do so. I have already
+Hey there! I provide you this software free of charge. I have already
 spend a lot of my private time in developing, maintaining and supporting it.
 
-If you enjoy my work, I would feel greatly honoured, if you buy me a coffee:
+If you enjoy my work, feel free to
 
 [![buymeacoffee](https://az743702.vo.msecnd.net/cdn/kofi3.png?v=0)](https://ko-fi.com/divinity666)
 
@@ -49,6 +47,10 @@ dashboards and to use it in your custom templates to finally create reports in P
 (default), HTML, or any other format.
 
 By default (an extended version of) Asciidoctor is enabled as template language.
+
+## Getting started
+
+![GettingStarted](./assets/GettingStartedAnimation.gif)
 
 ## Features
 
