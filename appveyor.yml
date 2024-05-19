@@ -44,7 +44,6 @@ for:
 
       install:
         - export TZ=Europe/Berlin
-        - gem install bundler
 
       build_script:
         - bundle exec rake buildsingle
@@ -60,6 +59,7 @@ for:
         - gem push *.gem
 
 before_build:
+  - bundle install
   - bundle exec rake check
 
 before_test:
