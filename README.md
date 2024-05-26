@@ -9,10 +9,12 @@ Reporting Service for Grafana
 ## Table of Contents
 
 * [About the project](#about-the-project)
-* [Features](#features)
-* [Supported datasources](#supported-datasources)
-* [Quick Start](#quick-start)
-  * [Setup](#setup)
+* [Getting started](#getting-started)
+  * [Use cases](#use-cases)
+  * [Features](#features)
+  * [Supported datasources](#supported-datasources)
+* [Setup](#setup)
+  * [Installation](#installation)
   * [Grafana integration](#grafana-integration)
 * [Advanced information](#advanced-information)
   * [Webservice](#webservice)
@@ -52,7 +54,13 @@ By default (an extended version of) Asciidoctor is enabled as template language.
 
 ![GettingStarted](https://github.com/divinity666/ruby-grafana-reporter/blob/master/.assets/GettingStartedAnimation.gif)
 
-## Features
+### Use cases
+
+* Create an automated PDF report about your server infrastructure health for your management
+* Allow users to build an on-demand CSV file containing data shown on your dashboard, for further use in Excel
+* Export your home meter data as a static web-page, that you can publish to the web
+
+### Features
 
 * Supports creation of reports for multiple [grafana](https://github.com/grafana/grafana)
 dashboards (and also multiple grafana installations!) in one resulting report
@@ -69,12 +77,13 @@ database queries
   * webservice to be called directly from grafana
   * standalone command line tool, e.g. to be automated with `cron` or `bash` scrips
   * microservice from standard asciidoctor docker container without any dependencies
-* Supports webhook callbacks on before, on cancel and on finishing a report (see
-configuration file)
-* Solid as a rock, also in case of template errors and whatever else may happen
+* Use webhook callbacks on before, on cancel and on finishing a report (see
+configuration file) to combine them with your services
+* Solid as a rock - no matter if you do mistakes in your configuration or grafana does no
+longer match templates: the ruby-grafana-reporter webservice will always return properly.
 * Full [API documentation](https://rubydoc.info/gems/ruby-grafana-reporter) available
 
-## Supported datasources
+### Supported datasources
 
 Functionalities are provided as shown here:
 
@@ -93,10 +102,10 @@ Composed queries are all kinds of query, where the grafana UI feature (aka visua
 mode) for query specifications are used. In this case grafana is translating the UI query
 specification to a raw query, which then in fact is sent to the database.
 
-## Quick Start
+## Setup
 
 
-### Setup
+### Installation
 
 You don't have a grafana setup runnning already? No worries, just configure
 `https://play.grafana.org` in the configuration wizard and see the magic
@@ -199,7 +208,7 @@ You may provide those variables during report generation to the reporter. Theref
 you have to specify them in the individual calls.
 
 Let's say, you have a variable called `serverid` in the dashboard. You may now want
-to set this variable for a panel image rendering. This cann be done with the following
+to set this variable for a panel image rendering. This can be done with the following
 calls:
 
 ````
