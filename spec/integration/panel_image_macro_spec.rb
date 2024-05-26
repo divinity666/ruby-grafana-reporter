@@ -49,7 +49,7 @@ describe PanelImageBlockMacro do
 
   it 'handles standard error on internal fault' do
     obj = PanelImageBlockMacro.new.current_report(@report)
-    expect(@report.logger).to receive(:fatal).with(include('undefined method `document\' for nil:NilClass'))
+    expect(@report.logger).to receive(:fatal).with(include('undefined method `document\' for nil'))
     obj.process(nil, STUBS[:panel_sql][:id], { 'instance' => 'default', 'dashboard' => STUBS[:dashboard] })
   end
 
@@ -98,7 +98,7 @@ describe PanelImageInlineMacro do
 
   it 'handles standard error on internal fault' do
     obj = PanelImageInlineMacro.new.current_report(@report)
-    expect(@report.logger).to receive(:fatal).with(include('undefined method `document\' for nil:NilClass'))
+    expect(@report.logger).to receive(:fatal).with(include('undefined method `document\' for nil'))
     obj.process(nil, STUBS[:panel_sql][:id], { 'instance' => 'default', 'dashboard' => STUBS[:dashboard] })
   end
 

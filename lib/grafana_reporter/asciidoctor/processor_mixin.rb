@@ -36,9 +36,9 @@ module GrafanaReporter
 
         result.merge!(item_hash.select do |k, _v|
           # TODO: specify accepted options for each processor class individually
-          k =~ /^(?:var-|render-)/ ||
-          k =~ /^(?:timeout|from|to)$/ ||
-          k =~ /filter_columns|format|replace_values_.*|transpose|from_timezone|
+          k.to_s =~ /^(?:var-|render-)/ ||
+          k.to_s =~ /^(?:timeout|from|to)$/ ||
+          k.to_s =~ /filter_columns|format|replace_values_.*|transpose|from_timezone|
                to_timezone|result_type|query|table_formatter|include_headline|
                column_divider|row_divider|instant|interval|verbose_log|select_value/x
         end)
