@@ -22,9 +22,9 @@ for:
 
       install:
         - tzutil /s "W. Europe Standard Time"
-        - set PATH=C:\Ruby27-x64\bin;%PATH%
-        - gem install bundler -v 2.4.22
-        - bundle _2.4.22_ install
+        - set PATH=C:\Ruby33-x64\bin;%PATH%
+        - gem install bundler -v 2.5.10
+        - bundle _2.5.10_ install
 
       build_script:
         - bundle exec rake buildsingle
