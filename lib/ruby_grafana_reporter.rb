@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require 'rubygems'
+require 'rubygems/name_tuple'
 require 'rubygems/ext'
 require 'net/http'
 require 'fileutils'

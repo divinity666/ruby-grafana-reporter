@@ -83,16 +83,23 @@ task :buildexe do
   GEMFILE_OPT = ""
   GEMFILE_OPT = "--gemfile Gemfile" if ENV['APPVEYOR']
 
-  sh "dir C:\\Ruby32\\bin\\ruby_builtin_dlls\\"
+  # find executable path of ruby to print builtin_dlls for debugging purposes
+  BUILTIN_DLLS="#{RbConfig::CONFIG["bindir"].gsub(/\//, "\\")}\\ruby_builtin_dlls\\"
+  puts "Showing content of #{BUILTIN_DLLS}: "
+  # allow command to fail
+  system "dir #{BUILTIN_DLLS}"
 
-  sh "ocran bin/ruby-grafana-reporter #{GEMFILE_OPT} --dll ruby_builtin_dlls/libssl-3.dll --dll ruby_builtin_dlls/libcrypto-3.dll --dll ruby_builtin_dlls/libgmp-10.dll --dll ruby_builtin_dlls/zlib1.dll --console --output ruby-grafana-reporter-#{GRAFANA_REPORTER_VERSION.join('.')}.exe #{OpenSSL::X509::DEFAULT_CERT_FILE}"
+  POSTFIX=""
+  POSTFIX="-x64" if BUILTIN_DLLS =~ /-x64\\/
+
+  sh "ocran bin/ruby-grafana-reporter #{GEMFILE_OPT} --dll ruby_builtin_dlls/libssl-3#{POSTFIX}.dll --dll ruby_builtin_dlls/libcrypto-3#{POSTFIX}.dll --dll ruby_builtin_dlls/libgmp-10.dll --dll ruby_builtin_dlls/zlib1.dll --console --output ruby-grafana-reporter-#{GRAFANA_REPORTER_VERSION.join('.')}.exe #{OpenSSL::X509::DEFAULT_CERT_FILE}"
 end
 
 task :testexe do
   # read version information
   require_relative 'lib/VERSION'
 
-  sh "ruby-grafana-reporter-#{GRAFANA_REPORTER_VERSION.join('.')}.exe -h"
+  system "ruby-grafana-reporter-#{GRAFANA_REPORTER_VERSION.join('.')}.exe -h"
 end
 
 task :clean do
