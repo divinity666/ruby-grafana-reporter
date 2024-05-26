@@ -83,7 +83,7 @@ task :buildexe do
   GEMFILE_OPT = ""
   GEMFILE_OPT = "--gemfile Gemfile" if ENV['APPVEYOR']
 
-  sh "dir C:\\Ruby33-x64\\bin\\ruby_builtin_dlls\\"
+  sh "dir C:\\Ruby32-x64\\bin\\ruby_builtin_dlls\\"
 
   sh "ocran bin/ruby-grafana-reporter #{GEMFILE_OPT} --dll ruby_builtin_dlls/libssl-3-x64.dll --dll ruby_builtin_dlls/libcrypto-3-x64.dll --dll ruby_builtin_dlls/libgmp-10.dll --dll ruby_builtin_dlls/zlib1.dll --console --output ruby-grafana-reporter-#{GRAFANA_REPORTER_VERSION.join('.')}.exe #{OpenSSL::X509::DEFAULT_CERT_FILE}"
 end
