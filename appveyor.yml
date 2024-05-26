@@ -17,9 +17,6 @@ for:
         only:
           - image: Visual Studio 2022
 
-      platform:
-          - x64
-
       artifacts:
         - path: '*.exe'
 
