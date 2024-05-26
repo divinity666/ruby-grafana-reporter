@@ -22,8 +22,9 @@ for:
 
       install:
         - tzutil /s "W. Europe Standard Time"
-        - set PATH=C:\mingw-w64\x86_64-8.1.0-posix-seh-rt_v6-rev0;C:\Ruby33-x64\bin;%PATH%
+        - set PATH=C:\Ruby33-x64\bin;%PATH%
         - gem install bundler
+        - gem install pkg-config
         - bundle install
 
       build_script:
