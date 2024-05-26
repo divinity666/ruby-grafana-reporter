@@ -22,9 +22,8 @@ for:
 
       install:
         - tzutil /s "W. Europe Standard Time"
-        - set PATH=C:\Ruby33-x64\bin;%PATH%
+        #- set PATH=C:\Ruby33-x64\bin;%PATH%
         - gem install bundler
-        - gem install pkg-config
         - bundle install
 
       build_script:
