@@ -49,18 +49,18 @@ describe PanelQueryTableIncludeProcessor do
 
     it 'can replace regex values' do
       expect(@report.logger).not_to receive(:error)
-      expect(Asciidoctor.convert("include::grafana_panel_query_table:#{STUBS[:panel_sql][:id]}[query=\"#{STUBS[:panel_sql][:letter]}\",dashboard=\"#{STUBS[:dashboard]}\",format=\",%.2f\",filter_columns=\"time_sec\",replace_values_2=\"^(43)\..*$:geht - \\1\"]", to_file: false)).to include('| geht - 43').and include('| 44.00')
+      expect(Asciidoctor.convert("include::grafana_panel_query_table:#{STUBS[:panel_sql][:id]}[query=\"#{STUBS[:panel_sql][:letter]}\",dashboard=\"#{STUBS[:dashboard]}\",format=\"%.2f\",filter_columns=\"time_sec\",replace_values_1=\"^(43)\..*$:geht - \\1\"]", to_file: false)).to include('| geht - 43').and include('| 44.00')
     end
 
     it 'can handle malformed regex values' do
       expect(@report.logger).to receive(:error).at_least(:once)
-      expect(Asciidoctor.convert("include::grafana_panel_query_table:#{STUBS[:panel_sql][:id]}[query=\"#{STUBS[:panel_sql][:letter]}\",dashboard=\"#{STUBS[:dashboard]}\",replace_values_2=\"^(43\..*$:geht - \\1\"]", to_file: false)).to include('| end pattern with unmatched parenthesis')
+      expect(Asciidoctor.convert("include::grafana_panel_query_table:#{STUBS[:panel_sql][:id]}[query=\"#{STUBS[:panel_sql][:letter]}\",dashboard=\"#{STUBS[:dashboard]}\",replace_values_1=\"^(43\..*$:geht - \\1\"]", to_file: false)).to include('| end pattern with unmatched parenthesis')
     end
 
     it 'can replace values with value comparison' do
       expect(@report.logger).not_to receive(:error)
-      expect(Asciidoctor.convert("include::grafana_panel_query_table:#{STUBS[:panel_sql][:id]}[query=\"#{STUBS[:panel_sql][:letter]}\",dashboard=\"#{STUBS[:dashboard]}\",format=\",%.2f\",filter_columns=\"time_sec\",replace_values_2=\"<44:geht\"]", to_file: false)).to include('| geht').and include('| 44.00')
-      expect(Asciidoctor.convert("include::grafana_panel_query_table:#{STUBS[:panel_sql][:id]}[query=\"#{STUBS[:panel_sql][:letter]}\",dashboard=\"#{STUBS[:dashboard]}\",format=\",%.2f\",filter_columns=\"time_sec\",replace_values_2=\"<44:\\1 zu klein\"]", to_file: false)).to include('| 43.90 zu klein').and include('| 44.00')
+      expect(Asciidoctor.convert("include::grafana_panel_query_table:#{STUBS[:panel_sql][:id]}[query=\"#{STUBS[:panel_sql][:letter]}\",dashboard=\"#{STUBS[:dashboard]}\",format=\"%.2f\",filter_columns=\"time_sec\",replace_values_1=\"<44:geht\"]", to_file: false)).to include('| geht').and include('| 44.00')
+      expect(Asciidoctor.convert("include::grafana_panel_query_table:#{STUBS[:panel_sql][:id]}[query=\"#{STUBS[:panel_sql][:letter]}\",dashboard=\"#{STUBS[:dashboard]}\",format=\"%.2f\",filter_columns=\"time_sec\",replace_values_1=\"<44:\\1 zu klein\"]", to_file: false)).to include('| 43.90 zu klein').and include('| 44.00')
     end
 
     it 'can filter columns' do
@@ -76,7 +76,7 @@ describe PanelQueryTableIncludeProcessor do
 
     it 'handles column and row divider in deprecated table formatter' do
       expect(@report.logger).not_to receive(:error)
-      expect_any_instance_of(GrafanaReporter::Logger::TwoWayDelegateLogger).to receive(:warn).with(/You are using deprecated 'table_formatter' named 'adoc_deprecated'/)
+      expect_any_instance_of(GrafanaReporter::Logger::TwoWayDelegateLogger).to receive(:warn).with(include("You are using deprecated 'table_formatter' named 'adoc_deprecated'"))
       expect(Asciidoctor.convert("include::grafana_panel_query_table:#{STUBS[:panel_sql][:id]}[query=\"#{STUBS[:panel_sql][:letter]}\",dashboard=\"#{STUBS[:dashboard]}\",column_divider=\" col \",row_divider=\"row \",table_formatter=\"adoc_deprecated\"]", to_file: false)).to match(/<p>row 1594308060000 col 43.9/)
     end
 
@@ -110,6 +110,27 @@ describe PanelQueryTableIncludeProcessor do
       class MyReader; def unshift_line(*args); end; end
       expect(@report.logger).to receive(:fatal).with(include('undefined method `attributes\' for nil'))
       obj.process(nil, MyReader.new, ":#{STUBS[:panel_sql][:id]}", { 'instance' => 'default', 'dashboard' => STUBS[:dashboard] })
+    end
+
+    it 'can handle format for non-float values' do
+      expect(@report.logger).not_to receive(:error)
+      expect_any_instance_of(GrafanaReporter::Logger::TwoWayDelegateLogger).to receive(:warn).at_least(:once)
+      expect(Asciidoctor.convert("include::grafana_panel_query_table:#{STUBS[:panel_sql][:id]}[query=\"#{STUBS[:panel_sql][:letter]}\",dashboard=\"#{STUBS[:dashboard]}\",replace_values_2=\"43.9:ok\",format=\",%.2f\",after_calculate=\"replace_values,format\"]", to_file: false)).to match(/<p>\| 1594308060000 \| ok/)
+    end
+
+    it 'can apply replace_values after format in after_calculate' do
+      expect(@report.logger).not_to receive(:error)
+      expect(Asciidoctor.convert("include::grafana_panel_query_table:#{STUBS[:panel_sql][:id]}[query=\"#{STUBS[:panel_sql][:letter]}\",dashboard=\"#{STUBS[:dashboard]}\",replace_values_2=\"43.90:ok\",format=\",%.2f\",after_fetch=\"\",after_calculate=\"format,replace_values\"]", to_file: false)).to match(/<p>\| 1594308060000 \| ok/)
+    end
+
+    it 'can apply replace_values before format in after_calculate' do
+      expect(@report.logger).not_to receive(:error)
+      expect(Asciidoctor.convert("include::grafana_panel_query_table:#{STUBS[:panel_sql][:id]}[query=\"#{STUBS[:panel_sql][:letter]}\",dashboard=\"#{STUBS[:dashboard]}\",replace_values_2=\"43.9:43\",format=\",%.2f\",after_fetch=\"\",after_calculate=\"replace_values,format\"]", to_file: false)).to match(/<p>\| 1594308060000 \| 43.00/)
+    end
+
+    it 'can disable after_fetch and after_calculate' do
+      expect(@report.logger).not_to receive(:error)
+      expect(Asciidoctor.convert("include::grafana_panel_query_table:#{STUBS[:panel_sql][:id]}[query=\"#{STUBS[:panel_sql][:letter]}\",dashboard=\"#{STUBS[:dashboard]}\",format=\",%.2f\",after_fetch=\"\",after_calculate=\"\"]", to_file: false)).to match(/<p>\| 1594308060000 \| 43.9/)
     end
   end
 

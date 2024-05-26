@@ -92,17 +92,18 @@ describe PanelQueryValueInlineMacro do
 
   it 'can filter columns and format values' do
     expect(@report.logger).not_to receive(:error)
-    expect(Asciidoctor.convert("grafana_panel_query_value:#{STUBS[:panel_sql][:id]}[query=\"#{STUBS[:panel_sql][:letter]}\",dashboard=\"#{STUBS[:dashboard]}\",format=\",%.2f\",filter_columns=\"time_sec\"]", to_file: false)).to include('<p>43.90')
+    expect(Asciidoctor.convert("grafana_panel_query_value:#{STUBS[:panel_sql][:id]}[query=\"#{STUBS[:panel_sql][:letter]}\",dashboard=\"#{STUBS[:dashboard]}\",format=\"%.2f\",filter_columns=\"time_sec\"]", to_file: false)).to include('<p>43.90')
   end
 
-  it 'can filter columns and handle wront format definitions' do
-    expect(@report.logger).to receive(:error).with('invalid format character - %').at_least(:once)
-    expect(Asciidoctor.convert("grafana_panel_query_value:#{STUBS[:panel_sql][:id]}[query=\"#{STUBS[:panel_sql][:letter]}\",dashboard=\"#{STUBS[:dashboard]}\",format=\",%2%2f\",filter_columns=\"time_sec\"]", to_file: false)).to include('<p>invalid format character')
+  it 'can filter columns and handle wrong format definitions' do
+    @report.logger.level = ::Logger::Severity::ERROR
+    expect_any_instance_of(GrafanaReporter::Logger::TwoWayDelegateLogger).to receive(:warn).at_least(:once)
+    expect(Asciidoctor.convert("grafana_panel_query_value:#{STUBS[:panel_sql][:id]}[query=\"#{STUBS[:panel_sql][:letter]}\",dashboard=\"#{STUBS[:dashboard]}\",format=\"%2%2f\",filter_columns=\"time_sec\"]", to_file: false)).to include('<p>43.9')
   end
 
   it 'shows fatal error if query is missing' do
     expect(@report.logger).to receive(:error).with(/GrafanaError: The specified query '' does not exist in the panel '11' in dashboard.*/)
-    expect(Asciidoctor.convert("grafana_panel_query_value:#{STUBS[:panel_sql][:id]}[dashboard=\"#{STUBS[:dashboard]}\",format=\",%.2f\",filter_columns=\"time_sec\"]", to_file: false)).to include('GrafanaError: The specified query \'\' does not exist in the panel \'11\' in dashboard')
+    expect(Asciidoctor.convert("grafana_panel_query_value:#{STUBS[:panel_sql][:id]}[dashboard=\"#{STUBS[:dashboard]}\",format=\"%.2f\",filter_columns=\"time_sec\"]", to_file: false)).to include('GrafanaError: The specified query \'\' does not exist in the panel \'11\' in dashboard')
   end
 
   it 'handles standard error on internal fault' do

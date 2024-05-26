@@ -194,6 +194,26 @@ end}
               call: to="<timestamp>"
               description: can be used to override default `to` time
 
+            after_fetch:
+              call: after_fetch="<action_1>,<action_2>,..."
+              description: >-
+                Specify the actions, that shall be performed after the query data has been fetched (and before
+                `select_value` calculations are performed). Possible values are: `format`, `replace_values`,
+                `filter_columns`, `transpose` and `transpose!`. `transpose!` enforces a transposition of the
+                table, independent from the configuration `transpose="true"`, which can specifically be useful,
+                if a table is being transposed twice.
+                Default: `filter_columns`
+
+            after_calculate:
+              call: after_calculate="<action_1>,<action_2>,..."
+              description: >-
+                Specify the actions, that shall be performed after the query calculations have been finished,
+                i.e. after `select_value` calculations have been performed. Possible values are: `format`,
+                `replace_values`, `filter_columns`, `transpose` and `transpose!`. `transpose!` enforces a
+                transposition of the table, independent from the configuration `transpose="true"`, which can
+                specifically be useful, if a table is being transposed twice.
+                Default: `format,replace_values,transpose`
+
             format:
               call: format="<format_col1>,<format_col2>,..."
               description: >-
@@ -202,8 +222,6 @@ end}
                 apply `%.2f` to the first column and `%.3f` to the second column. All other columns would not be
                 formatted. You may also format time in milliseconds to a time format by specifying e.g. `date:iso`.
                 Commas in format strings are supported, but have to be escaped by using `_,`.
-                Execution of related functions is applied in the following order `format`,
-                `replace_values`, `filter_columns`, `transpose`.
               see: 'https://ruby-doc.org/core/Kernel.html#method-i-sprintf'
 
             replace_values:
@@ -212,9 +230,7 @@ end}
                 Specify result values which shall be replaced, e.g. `2:OK` will replace query values `2` with value `OK`.
                 Replacing several values is possible by separating by `,`. Matches with regular expressions are also
                 supported, but must be full matches, i.e. have to start with `^` and end with `$`, e.g. `^[012]$:OK`.
-                Number replacements can also be performed, e.g. `<8.2` or `<>3`. Execution of related functions is
-                applied in the following order `format`,
-                `replace_values`, `filter_columns`, `transpose`.
+                Number replacements can also be performed, e.g. `<8.2` or `<>3`.
               see: https://ruby-doc.org/core/Regexp.html#class-Regexp-label-Character+Classes
 
             include_headline:
@@ -226,8 +242,7 @@ end}
               call: filter_columns="<column_name_1>,<column_name_2>,..."
               description: >-
                 Removes specified columns from result.  Commas in format strings are supported, but have to be
-                escaped by using `_,`. Execution of related functions is applied in the following order
-                `format`, `replace_values`, `filter_columns`, `transpose`.
+                escaped by using `_,`.
 
             select_value:
               call: select_value="<select_value>"
@@ -238,23 +253,23 @@ end}
             transpose:
               call: transpose="true"
               description: >-
-                Transposes the query result, i.e. columns become rows and rows become columnns. Execution of related
-                functions is applied in the following order `format`, `replace_values`, `filter_columns`,
-                `transpose`.
+                Transposes the query result, i.e. columns become rows and rows become columnns.
 
             column_divider:
               call: column_divider="<divider>"
               description: >-
                 Replace the default column divider with another one, when used in conjunction with `table_formatter` set to
-                `adoc_deprecated`. Defaults to ` | ` for being interpreted as a asciidoctor column. DEPRECATED: switch to
-                `table_formatter` named `adoc_plain`, or implement a custom table formatter.
+                `adoc_deprecated`. Defaults to ` | ` for being interpreted as a asciidoctor column. Note that this option is
+                DEPRECATED. As a replacement,  switch to `table_formatter` named `adoc_plain`, or implement a custom table
+                formatter.
 
             row_divider:
               call: row_divider="<divider>"
               description: >-
                 Replace the default row divider with another one, when used in conjunction with `table_formatter` set to
-                `adoc_deprecated`. Defaults to `| ` for being interpreted as a asciidoctor row. DEPRECATED: switch to
-                `table_formatter` named `adoc_plain`, or implement a custom table formatter.
+                `adoc_deprecated`. Defaults to `| ` for being interpreted as a asciidoctor row. Note that this option is
+                DEPRECATED. As a replacement, switch to `table_formatter` named `adoc_plain`, or implement a custom table
+                formatter.
 
             table_formatter:
               call: table_formatter="<formatter>"
@@ -323,6 +338,8 @@ end}
                   or `grafana_default_dashboard` is set.
                 call: panel="<panel_id>"
             standard_options:
+              after_calculate:
+              after_fetch:
               column_divider:
               dashboard: >-
                 If this option, or the global option `grafana_default_dashboard` is set, the resulting alerts will be limited to
@@ -359,6 +376,8 @@ end}
                   `grafana_default_dashboard` is set.
                 call: panel="<panel_id>"
             standard_options:
+              after_calculate:
+              after_fetch:
               column_divider:
               dashboard: >-
                 If this option, or the global option `grafana_default_dashboard` is set, the resulting alerts will be limited to this
@@ -426,6 +445,8 @@ end}
                 call: query="<query_letter>"
                 description: +<query_letter>+ needs to point to the grafana query which shall be evaluated, e.g. +A+ or +B+.
             standard_options:
+              after_calculate:
+              after_fetch:
               column_divider:
               dashboard:
               filter_columns:
@@ -456,6 +477,8 @@ end}
                 call: query="<query_letter>"
                 description: +<query_letter>+ needs to point to the grafana query which shall be evaluated, e.g. +A+ or +B+.
             standard_options:
+              after_calculate:
+              after_fetch:
               dashboard:
               filter_columns:
               format:
@@ -478,6 +501,8 @@ end}
               Grafana variables will be replaced in the SQL statement.
             see: https://grafana.com/docs/grafana/latest/variables/syntax/
             standard_options:
+              after_calculate:
+              after_fetch:
               column_divider:
               filter_columns:
               format:
@@ -507,6 +532,8 @@ end}
               square brackets, i.e. +]+ needs to be replaced with +\\]+.
             see: https://grafana.com/docs/grafana/latest/variables/syntax/
             standard_options:
+              after_calculate:
+              after_fetch:
               filter_columns:
               format:
               from:

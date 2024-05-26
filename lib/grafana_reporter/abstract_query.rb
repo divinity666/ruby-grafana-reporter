@@ -140,7 +140,6 @@ module GrafanaReporter
     def transpose(result, transpose_variable)
       return result unless transpose_variable
       return result unless transpose_variable.raw_value == 'true'
-
       result[:content] = result[:content].transpose
 
       result
@@ -202,8 +201,7 @@ module GrafanaReporter
               row[i] = format % row[i] if row[i]
             end
           rescue StandardError => e
-            @logger.error(e.message)
-            row[i] = e.message
+            @logger.warn("Formatting of row #{i} with content '#{row[i]}' and format request '#{format}' was not possible. Row is left unchanged (message: #{e.message})")
           end
         end
       end
@@ -393,6 +391,30 @@ module GrafanaReporter
       date = (date.to_time - 1).to_datetime if is_to_time
 
       (Time.at(date.to_time.to_i).to_i * 1000).to_s
+    end
+
+    # Applies a given action string, separated by commas, in the given order to the results.
+    def apply(result, actions, variables)
+      actions.raw_value.split(',').each do |action|
+        case action.strip
+        when 'filter_columns'
+          result = filter_columns(result, variables['filter_columns'])
+        when 'format'
+          result = format_columns(result, variables['format'])
+        when 'replace_values'
+          result = replace_values(result, variables.select { |k, _v| k =~ /^replace_values_\d+/ })
+        when 'transpose!'
+          result = transpose(result, Variable.new('true'))
+        when 'transpose'
+          result = transpose(result, variables['transpose'])
+        else
+          @logger.warn("Unsupported action '#{action}' configured in 'after_fetch' or 'after_calculate'. Only" \
+                       " the following options are supported: filter_columns, format, replace_values, transpose,"\
+                       " transpose!")
+        end
+      end
+
+      result
     end
 
     private

@@ -11,20 +11,23 @@ module GrafanaReporter
       end
 
       @variables['result_type'] ||= Variable.new('')
+      @variables['after_fetch'] ||= Variable.new('filter_columns')
+      @variables['after_calculate'] ||= Variable.new('format,replace_values,transpose')
     end
 
-    # Executes {AbstractQuery#format_columns}, {AbstractQuery#replace_values} and
-    # {AbstractQuery#filter_columns} on the query results.
+    # Executes 'after_fetch', 'after_calculate' and 'select_value' on the on the query results.
     #
     # Finally the results are formatted as a asciidoctor table.
     # @see Grafana::AbstractQuery#post_process
     def post_process
-      modify_results
+      @result = apply(@result, @variables['after_fetch'], @variables)
 
       case @variables['result_type'].raw_value
       when 'object'
+        @result = apply(@result, @variables['after_calculate'], @variables)
 
       when /(?:panel_table|sql_table)/
+        @result = apply(@result, @variables['after_calculate'], @variables)
         @result = format_table_output(@result, row_divider: @variables['row_divider'],
                                                column_divider: @variables['column_divider'],
                                                table_formatter: @variables['table_formatter'],
@@ -32,7 +35,7 @@ module GrafanaReporter
                                                transpose: @variables['transpose'])
 
       when /(?:panel_value|sql_value)/
-        tmp = @result[:content] || []
+        tmp = @result[:content] || [[]]
         # use only first column of return values and replace null values with zero
         tmp = tmp.map{ |item| item[0] || 0 }
 
@@ -56,7 +59,9 @@ module GrafanaReporter
           raise UnsupportedSelectValueStatementError, @variables['select_value'].raw_value
         end
 
-        @result = result
+        @result[:content] = [[result]]
+        @result = apply(@result, @variables['after_calculate'], @variables)
+        @result = @result[:content].flatten.first
 
       else
         raise StandardError, "Unsupported 'result_type' received: '#{@variables['result_type'].raw_value}'"
@@ -79,15 +84,6 @@ module GrafanaReporter
         raise StandardError, "Unsupported 'result_type' received: '#{@variables['result_type'].raw_value}'"
 
       end
-    end
-
-    private
-
-    def modify_results
-      @result = format_columns(@result, @variables['format'])
-      @result = replace_values(@result, @variables.select { |k, _v| k =~ /^replace_values_\d+/ })
-      @result = filter_columns(@result, @variables['filter_columns'])
-      @result = transpose(@result, @variables['transpose'])
     end
   end
 end
