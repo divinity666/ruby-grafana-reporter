@@ -10,9 +10,9 @@ module GrafanaReporter
         @datasource = @panel.datasource
       end
 
-      @variables['result_type'] ||= Variable.new('')
-      @variables['after_fetch'] ||= Variable.new('filter_columns')
-      @variables['after_calculate'] ||= Variable.new('format,replace_values,transpose')
+      @variables['result_type'] ||= ::Grafana::Variable.new('')
+      @variables['after_fetch'] ||= ::Grafana::Variable.new('filter_columns')
+      @variables['after_calculate'] ||= ::Grafana::Variable.new('format,replace_values,transpose')
     end
 
     # Executes 'after_fetch', 'after_calculate' and 'select_value' on the on the query results.
