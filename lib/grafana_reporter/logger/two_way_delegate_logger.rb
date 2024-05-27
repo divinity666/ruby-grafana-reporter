@@ -42,16 +42,34 @@ module GrafanaReporter
         @additional_logger = logger || ::Logger.new(nil)
       end
 
-      # Delegates all not configured calls to the internal and the additional logger.
-      def method_missing(method, *args)
-        @internal_logger.send(method, *args)
-        @additional_logger.send(method, *args)
+      def fatal(*args)
+        @internal_logger.fatal(*args)
+        @additional_logger.fatal(*args)
       end
 
-      # Registers all methods to which the internal logger responds.
-      def respond_to_missing?(method, *_args)
-        super
-        @internal_logger.respond_to?(method)
+      def error(*args)
+        @internal_logger.error(*args)
+        @additional_logger.error(*args)
+      end
+
+      def warn(*args)
+        @internal_logger.warn(*args)
+        @additional_logger.warn(*args)
+      end
+
+      def info(*args)
+        @internal_logger.info(*args)
+        @additional_logger.info(*args)
+      end
+
+      def debug(*args)
+        @internal_logger.debug(*args)
+        @additional_logger.debug(*args)
+      end
+
+      # Registers all methods to which the internal logger will respond.
+      def method_missing(method, *args)
+        @internal_logger.send(method, *args)
       end
     end
   end

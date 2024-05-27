@@ -201,7 +201,8 @@ module GrafanaReporter
               row[i] = format % row[i] if row[i]
             end
           rescue StandardError => e
-            @logger.warn("Formatting of row #{i} with content '#{row[i]}' and format request '#{format}' was not possible. Row is left unchanged (message: #{e.message})")
+            @logger.warn("Formatting of row #{i} with content '#{row[i]}' and format request '#{format}'"\
+                         " was not possible. Row is left unchanged (message: #{e.message})")
           end
         end
       end

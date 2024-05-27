@@ -75,8 +75,7 @@ describe PanelQueryTableIncludeProcessor do
     end
 
     it 'handles column and row divider in deprecated table formatter' do
-      expect(@report.logger).not_to receive(:error)
-      expect_any_instance_of(GrafanaReporter::Logger::TwoWayDelegateLogger).to receive(:warn).with(include("You are using deprecated 'table_formatter' named 'adoc_deprecated'"))
+      expect(@report.logger).to receive(:warn).with(include("You are using deprecated 'table_formatter' named 'adoc_deprecated'"))
       expect(Asciidoctor.convert("include::grafana_panel_query_table:#{STUBS[:panel_sql][:id]}[query=\"#{STUBS[:panel_sql][:letter]}\",dashboard=\"#{STUBS[:dashboard]}\",column_divider=\" col \",row_divider=\"row \",table_formatter=\"adoc_deprecated\"]", to_file: false)).to match(/<p>row 1594308060000 col 43.9/)
     end
 
@@ -114,7 +113,7 @@ describe PanelQueryTableIncludeProcessor do
 
     it 'can handle format for non-float values' do
       expect(@report.logger).not_to receive(:error)
-      expect_any_instance_of(GrafanaReporter::Logger::TwoWayDelegateLogger).to receive(:warn).at_least(:once)
+      expect(@report.logger).to receive(:warn).at_least(:once)
       expect(Asciidoctor.convert("include::grafana_panel_query_table:#{STUBS[:panel_sql][:id]}[query=\"#{STUBS[:panel_sql][:letter]}\",dashboard=\"#{STUBS[:dashboard]}\",replace_values_2=\"43.9:ok\",format=\",%.2f\",after_calculate=\"replace_values,format\"]", to_file: false)).to match(/<p>\| 1594308060000 \| ok/)
     end
 

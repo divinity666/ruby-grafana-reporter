@@ -96,8 +96,7 @@ describe PanelQueryValueInlineMacro do
   end
 
   it 'can filter columns and handle wrong format definitions' do
-    @report.logger.level = ::Logger::Severity::ERROR
-    expect_any_instance_of(GrafanaReporter::Logger::TwoWayDelegateLogger).to receive(:warn).at_least(:once)
+    expect(@report.logger).to receive(:warn).at_least(:once)
     expect(Asciidoctor.convert("grafana_panel_query_value:#{STUBS[:panel_sql][:id]}[query=\"#{STUBS[:panel_sql][:letter]}\",dashboard=\"#{STUBS[:dashboard]}\",format=\"%2%2f\",filter_columns=\"time_sec\"]", to_file: false)).to include('<p>43.9')
   end
 
