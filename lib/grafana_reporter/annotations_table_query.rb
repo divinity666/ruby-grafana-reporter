@@ -19,8 +19,8 @@ module GrafanaReporter
       raise MissingMandatoryAttributeError, 'columns' unless @raw_query['columns']
 
       @datasource = Grafana::GrafanaAnnotationsDatasource.new(nil)
-      @variables['after_fetch'] ||= Variable.new('filter_columns')
-      @variables['after_calculate'] ||= Variable.new('format,replace_values,transpose')
+      @variables['after_fetch'] ||= ::Grafana::Variable.new('filter_columns')
+      @variables['after_calculate'] ||= ::Grafana::Variable.new('format,replace_values,transpose')
     end
 
     # Filters the query result for the given columns and sets the result
