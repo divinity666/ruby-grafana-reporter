@@ -139,7 +139,9 @@ default-document-attributes:
         end
       end
 
-      grafana = ::Grafana::Grafana.new(config.grafana_host, config.grafana_api_key, ssl_disable_verify: config.grafana_ssl_disable_verify)
+      grafana = ::Grafana::Grafana.new(config.grafana_host, config.grafana_api_key,
+                                       ssl_cert: config.grafana_ssl_cert,
+                                       ssl_disable_verify: config.grafana_ssl_disable_verify)
       demo_report_content = DemoReportWizard.new(config.report_class.demo_report_classes).build(grafana)
 
       begin

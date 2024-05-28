@@ -21,6 +21,7 @@ module Grafana
       webrequest.relative_url = "/api/annotations#{url_parameters(query_description)}"
 
       result = webrequest.execute(query_description[:timeout])
+      return unless result
 
       json = JSON.parse(result.body)
 

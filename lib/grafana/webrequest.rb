@@ -5,12 +5,6 @@ module Grafana
   class WebRequest
     attr_accessor :relative_url, :options
 
-    @ssl_cert = nil
-
-    class << self
-      attr_accessor :ssl_cert
-    end
-
     # Initializes a specific HTTP request.
     #
     # Default (can be overridden, by specifying the options Hash):
@@ -27,6 +21,7 @@ module Grafana
       @relative_url = options[:relative_url]
       @logger = options[:logger] || Logger.new(nil)
       @ssl_disable_verify = options[:ssl_disable_verify] || false
+      @ssl_cert = options[:ssl_cert]
     end
 
     # Executes the HTTP request
@@ -49,7 +44,12 @@ module Grafana
       request.body = @options[:body]
 
       @logger.debug("Requesting #{uri} with '#{@options[:body]}' and timeout '#{timeout}'")
-      response = @http.request(request)
+      begin
+        response = @http.request(request)
+      rescue OpenSSL::SSL::SSLError => e
+        @logger.error(e.message)
+        return nil
+      end
       @logger.debug("Received response #{response}")
       @logger.debug("HTTP response body: #{response.body}") unless response.code =~ /^2.*/
 
@@ -68,12 +68,13 @@ module Grafana
         @http.verify_mode = OpenSSL::SSL::VERIFY_PEER
       end
 
-      if self.class.ssl_cert && !File.file?(self.class.ssl_cert)
-        @logger.warn('SSL certificate file does not exist.')
-      elsif self.class.ssl_cert
+      if @ssl_cert && !File.file?(@ssl_cert)
+        @logger.warn("SSL certificate file '#{@ssl_cert}' does not exist.")
+      elsif @ssl_cert
+        @logger.debug("Using ssl certificate '#{@ssl_cert}'.")
         @http.cert_store = OpenSSL::X509::Store.new
         @http.cert_store.set_default_paths
-        @http.cert_store.add_file(self.class.ssl_cert)
+        @http.cert_store.add_file(@ssl_cert)
       end
     end
   end

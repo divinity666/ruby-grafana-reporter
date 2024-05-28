@@ -39,7 +39,7 @@ module Grafana
     end
 
     def initialize(model)
-      @model = model
+      @model = model || {}
     end
 
     # @return [String] category of the datasource, e.g. +tsdb+ or +sql+

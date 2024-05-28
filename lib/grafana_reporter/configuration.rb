@@ -97,6 +97,12 @@ module GrafanaReporter
     end
 
     # @param instance [String] grafana instance name, for which the value shall be retrieved.
+    # @return [String] configured 'ssl-cert' for the requested grafana instance.
+    def grafana_ssl_cert(instance = 'default')
+      get_config("grafana:#{instance}:ssl-cert")
+    end
+
+    # @param instance [String] grafana instance name, for which the value shall be retrieved.
     # @return [String] configured 'ssl-disable-verify' for the requested grafana instance.
     def grafana_ssl_disable_verify(instance = 'default')
       get_config("grafana:#{instance}:ssl-disable-verify") || false
@@ -248,7 +254,6 @@ module GrafanaReporter
       @logger.level = Object.const_get("::Logger::Severity::#{debug_level}") if debug_level =~ /DEBUG|INFO|WARN|
                                                                                                 ERROR|FATAL|UNKNOWN/x
       self.report_class = Object.const_get(rep_class) if rep_class
-      ::Grafana::WebRequest.ssl_cert = get_config('grafana-reporter:ssl-cert')
 
       # register callbacks
       callbacks = get_config('grafana-reporter:callbacks')

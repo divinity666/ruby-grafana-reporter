@@ -20,15 +20,17 @@ module Grafana
       @base_uri = base_uri
       @key = key
       @dashboards = {}
+      @organization = {}
       @logger = opts[:logger] || ::Logger.new(nil)
       @ssl_disable_verify = opts[:ssl_disable_verify] || false
+      @ssl_cert = opts[:ssl_cert]
 
       initialize_datasources unless @base_uri.empty?
     end
 
     # @return [Hash] Information about the current organization
     def organization
-      return @organization if @organization
+      return @organization unless @organization.empty?
 
       response = prepare_request({ relative_url: '/api/org/' }).execute
       if response.is_a?(Net::HTTPOK)
@@ -165,7 +167,7 @@ module Grafana
     # @return [WebRequest] webrequest prepared for execution
     def prepare_request(options = {})
       auth = @key ? { authorization: "Bearer #{@key}" } : {}
-      WebRequest.new(@base_uri, auth.merge({ logger: @logger, ssl_disable_verify: @ssl_disable_verify }).merge(options))
+      WebRequest.new(@base_uri, auth.merge({ logger: @logger, ssl_disable_verify: @ssl_disable_verify, ssl_cert: @ssl_cert }).merge(options))
     end
 
     private
@@ -185,6 +187,9 @@ module Grafana
           @logger.error("Datasource with name '#{ds_name}' and configuration: '#{ds_value}' could not be initialized.")
           @datasources.delete(ds_name)
         end
+      rescue OpenSSL::SSL::SSLError => e
+        @logger.error(e.message)
+
       end
 
       @datasources['default'] = @datasources[json['defaultDatasource']] if not @datasources[json['defaultDatasource']].nil?

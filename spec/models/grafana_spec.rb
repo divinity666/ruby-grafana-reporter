@@ -62,14 +62,14 @@ describe Grafana do
     end
 
     it 'can use custom ssl cert' do
-      WebRequest.ssl_cert = 'spec/tests/cacert.pem'
+      subject.instance_variable_set(:@ssl_cert, 'spec/tests/cacert.pem')
       expect(logger).not_to receive(:warn)
       expect(subject.test_connection).to eq('NON-Admin')
     end
 
     it 'shows error, if ssl cert does not exist' do
-      WebRequest.ssl_cert = 'does_not_exist_ssl'
-      expect(logger).to receive(:warn).with(/SSL certificate file does not exist/).at_least(:once)
+      subject.instance_variable_set(:@ssl_cert, 'does_not_exist_ssl')
+      expect(logger).to receive(:warn).with(/SSL certificate file .* does not exist/).at_least(:once)
       expect(subject.test_connection).to eq('NON-Admin')
     end
   end
