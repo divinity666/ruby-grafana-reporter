@@ -15,12 +15,13 @@ module Grafana
     #   trailing slash, e.g. +https://localhost:3000+.
     # @param key [String] API key for the grafana instance, if required
     # @param opts [Hash] additional options.
-    #   Currently supporting +:logger+.
+    #   Currently supporting +:logger+ and +:ssl_disable_verify+.
     def initialize(base_uri, key = nil, opts = {})
       @base_uri = base_uri
       @key = key
       @dashboards = {}
       @logger = opts[:logger] || ::Logger.new(nil)
+      @ssl_disable_verify = opts[:ssl_disable_verify] || false
 
       initialize_datasources unless @base_uri.empty?
     end
@@ -56,6 +57,7 @@ module Grafana
     #
     # @return [String] +Admin+, +NON-Admin+ or +Failed+ is returned, depending on the test results
     def test_connection
+      @logger.warn('Reporter disabled the SSL verification for grafana. This is a potential security risk.') if @ssl_disable_verify
       if prepare_request({ relative_url: '/api/datasources' }).execute.is_a?(Net::HTTPOK)
         # we have admin rights
         @logger.warn('Reporter is running with Admin privileges on grafana. This is a potential security risk.')
@@ -163,7 +165,7 @@ module Grafana
     # @return [WebRequest] webrequest prepared for execution
     def prepare_request(options = {})
       auth = @key ? { authorization: "Bearer #{@key}" } : {}
-      WebRequest.new(@base_uri, auth.merge({ logger: @logger }).merge(options))
+      WebRequest.new(@base_uri, auth.merge({ logger: @logger, ssl_disable_verify: @ssl_disable_verify }).merge(options))
     end
 
     private

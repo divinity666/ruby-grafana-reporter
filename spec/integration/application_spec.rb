@@ -55,16 +55,6 @@ describe Application do
       expect { subject.configure_and_run(['-c', 'does_not_exist.config']) }.to output(/Config file.* does not exist/).to_stdout
     end
 
-    it 'shows error on non-existing ssl cert file' do
-      expect(subject.config.logger).to receive(:warn).with(/SSL certificate .* does not exist.*/)
-      expect(subject.config.logger).to receive(:warn)
-      expect { subject.configure_and_run(['-c', './spec/tests/demo_config.txt', '--test', 'default', '-d', 'WARN', '--ssl-cert', 'does_not_exist.cert']) }.to output("Admin\n").to_stdout
-    end
-
-    it 'runs properly with correct ssl cert file' do
-      expect(subject.config.logger).not_to receive(:warn).with(/SSL certificate .* does not exist.*/)
-      expect { subject.configure_and_run(['-c', './spec/tests/demo_config.txt', '--test', 'default', '-d', 'WARN', '--ssl-cert',  './spec/tests/cacert.pem']) }.to output("Admin\n").to_stdout
-    end
   end
 
   context 'command line single rendering' do

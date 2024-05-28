@@ -139,7 +139,7 @@ default-document-attributes:
         end
       end
 
-      grafana = ::Grafana::Grafana.new(config.grafana_host, config.grafana_api_key)
+      grafana = ::Grafana::Grafana.new(config.grafana_host, config.grafana_api_key, ssl_disable_verify: config.grafana_ssl_disable_verify)
       demo_report_content = DemoReportWizard.new(config.report_class.demo_report_classes).build(grafana)
 
       begin
@@ -157,13 +157,20 @@ default-document-attributes:
       valid = false
       url = nil
       api_key = nil
+      ssl_disable_verify = false
       until valid
         url ||= user_input('Specify grafana host', 'http://localhost:3000')
         print "Testing connection to '#{url}' #{api_key ? '_with_' : '_without_'} API key..."
         begin
           res = Grafana::Grafana.new(url,
                                      api_key,
+                                     ssl_disable_verify: ssl_disable_verify,
                                      logger: config.logger).test_connection
+
+        rescue OpenSSL::SSL::SSLError => e
+          print(e.message)
+          res = 'SSLError'
+
         rescue StandardError => e
           puts
           puts e.message
@@ -193,6 +200,24 @@ default-document-attributes:
           print 'Access to grafana is permitted as NON-Admin.'
           valid = true
 
+        when 'SSLError'
+          tmp = user_input('Could not connect to grafana, because of a SSL connection error. If you are aware of the risks, you can try'\
+                           ' to disable the SSL verification. Do you want to [d]isable the SSL verification, [r]e-enter the url or'\
+                           ' [i]gnore and proceed?', 'dRi')
+
+          case tmp
+          when /(?:i|I)$/
+            valid = true
+
+          when /(?:d|D)$/
+            ssl_disable_verify = true
+
+          else
+            url = nil
+            api_key = nil
+
+          end
+
         else
           tmp = user_input("Grafana could not be accessed at '#{url}'. Do you want to use an [a]pi key,"\
                 ' [r]e-enter url, or [i]gnore and proceed?', 'aRi')
@@ -215,7 +240,7 @@ default-document-attributes:
       end
       %(grafana:
   default:
-    host: #{url}#{api_key ? "\n    api_key: #{api_key}" : ''}
+    host: #{url}#{api_key ? "\n    api_key: #{api_key}" : ''}#{ssl_disable_verify ? "\n    ssl-disable-verify: #{ssl_disable_verify}" : ''}
 )
     end
 

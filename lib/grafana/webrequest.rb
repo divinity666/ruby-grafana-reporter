@@ -23,9 +23,10 @@ module Grafana
     def initialize(base_url, options = {})
       @base_url = base_url
       default_options = { accept: 'application/json', request: Net::HTTP::Get, content_type: 'application/json' }
-      @options = default_options.merge(options.reject { |k, _v| k == :logger && k == :relative_url })
+      @options = default_options.merge(options.reject { |k, _v| k == :logger && k == :relative_url && k == :ssl_disable_verify })
       @relative_url = options[:relative_url]
       @logger = options[:logger] || Logger.new(nil)
+      @ssl_disable_verify = options[:ssl_disable_verify] || false
     end
 
     # Executes the HTTP request
@@ -59,7 +60,14 @@ module Grafana
 
     def configure_ssl
       @http.use_ssl = true
-      @http.verify_mode = OpenSSL::SSL::VERIFY_PEER
+
+      # allow OpenSSL::SSL::VERIFY_NONE if explicitly specified
+      if @ssl_disable_verify
+        @http.verify_mode = OpenSSL::SSL::VERIFY_NONE
+      else
+        @http.verify_mode = OpenSSL::SSL::VERIFY_PEER
+      end
+
       if self.class.ssl_cert && !File.file?(self.class.ssl_cert)
         @logger.warn('SSL certificate file does not exist.')
       elsif self.class.ssl_cert

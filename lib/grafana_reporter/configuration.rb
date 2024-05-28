@@ -96,6 +96,12 @@ module GrafanaReporter
       get_config("grafana:#{instance}:api_key")
     end
 
+    # @param instance [String] grafana instance name, for which the value shall be retrieved.
+    # @return [String] configured 'ssl-disable-verify' for the requested grafana instance.
+    def grafana_ssl_disable_verify(instance = 'default')
+      get_config("grafana:#{instance}:ssl-disable-verify") || false
+    end
+
     # @return [String] configured folder, in which the report templates are stored including trailing slash.
     #   By default: current folder.
     def templates_folder
@@ -323,7 +329,9 @@ module GrafanaReporter
                 Hash, 1, nil,
                 {
                   'host' => [String, 1, %r{^http(s)?://.+}],
-                  'api_key' => [String, 0, %r{^(?:[\w]+[=]*)?$}]
+                  'api_key' => [String, 0, %r{^(?:[\w]+[=]*)?$}],
+                  'ssl-disable-verify' => [TrueClass, 0, nil],
+                  'ssl-cert' => [String, 0, nil]
                 }
               ]
            }
@@ -342,7 +350,6 @@ module GrafanaReporter
             'report-class' => [String, 1, nil],
             'reports-folder' => [String, explicit ? 1 : 0, nil],
             'report-retention' => [Integer, explicit ? 1 : 0, nil],
-            'ssl-cert' => [String, 0, nil],
             'webservice-port' => [Integer, explicit ? 1 : 0, nil],
             'callbacks' => [Hash, 0, nil, { nil => [String, 1, nil] }]
           }
