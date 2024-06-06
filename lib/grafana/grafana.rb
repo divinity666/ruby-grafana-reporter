@@ -33,10 +33,9 @@ module Grafana
       return @organization unless @organization.empty?
 
       response = prepare_request({ relative_url: '/api/org/' }).execute
-      if response.is_a?(Net::HTTPOK)
-        @organization = JSON.parse(response.body)
-      end
+      return @organization unless response.is_a?(Net::HTTPOK)
 
+      @organization = JSON.parse(response.body)
       @organization
     end
 
@@ -45,10 +44,9 @@ module Grafana
       return @version if @version
 
       response = prepare_request({ relative_url: '/api/health' }).execute
-      if response.is_a?(Net::HTTPOK)
-        @version = JSON.parse(response.body)['version']
-      end
+      return @version unless response.is_a?(Net::HTTPOK)
 
+      @version = JSON.parse(response.body)['version']
       @version
     end
 
@@ -57,16 +55,24 @@ module Grafana
     # Running this function also determines, if the API configured here has Admin or NON-Admin privileges,
     # or even fails on connecting to grafana.
     #
-    # @return [String] +Admin+, +NON-Admin+ or +Failed+ is returned, depending on the test results
+    # @return [String] +Admin+, +NON-Admin+, +SSLError+ or +Failed+ is returned, depending on the test results
     def test_connection
       @logger.warn('Reporter disabled the SSL verification for grafana. This is a potential security risk.') if @ssl_disable_verify
+
       if prepare_request({ relative_url: '/api/datasources' }).execute.is_a?(Net::HTTPOK)
         # we have admin rights
         @logger.warn('Reporter is running with Admin privileges on grafana. This is a potential security risk.')
         return 'Admin'
       end
-      # check if we have lower rights
-      return 'Failed' unless prepare_request({ relative_url: '/api/dashboards/home' }).execute.is_a?(Net::HTTPOK)
+
+      # check if we have lower rights or an SSL error occurs
+      case prepare_request({ relative_url: '/api/dashboards/home' }).execute(nil, true)
+      when Net::HTTPOK
+      when OpenSSL::SSL::SSLError
+        return 'SSLError'
+      else
+        return 'Failed'
+      end
 
       @logger.info('Reporter is running with NON-Admin privileges on grafana.')
       'NON-Admin'
@@ -145,7 +151,7 @@ module Grafana
     # @param dashboard_uid [String] UID of the searched {Dashboard}
     # @return [Dashboard] dashboard object, if it has been found
     def dashboard(dashboard_uid)
-      return @dashboards[dashboard_uid] unless @dashboards[dashboard_uid].nil?
+      return @dashboards[dashboard_uid] if @dashboards[dashboard_uid]
 
       response = prepare_request({ relative_url: "/api/dashboards/uid/#{dashboard_uid}" }).execute
       raise DashboardDoesNotExistError, dashboard_uid unless response.is_a?(Net::HTTPOK)

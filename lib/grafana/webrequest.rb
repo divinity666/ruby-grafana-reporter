@@ -27,8 +27,9 @@ module Grafana
     # Executes the HTTP request
     #
     # @param timeout [Integer] number of seconds to wait, before the http request is cancelled, defaults to 60 seconds
+    # @param return_ssl_error [Boolean] True, if the SSL error object shall be returned on SSL error
     # @return [Response] HTTP response object
-    def execute(timeout = nil)
+    def execute(timeout = nil, return_ssl_error = false)
       timeout ||= 60
 
       uri = URI.parse("#{@base_url}#{@relative_url}")
@@ -48,6 +49,7 @@ module Grafana
         response = @http.request(request)
       rescue OpenSSL::SSL::SSLError => e
         @logger.error(e.message)
+        return e if return_ssl_error
         return nil
       end
       @logger.debug("Received response #{response}")
