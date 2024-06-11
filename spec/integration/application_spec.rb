@@ -155,14 +155,20 @@ describe Application do
       expect(subject.config.logger).not_to receive(:error)
       expect { subject.configure_and_run(['-c', './spec/tests/erb.config', '-t', 'spec/tests/erb.template', '-o', "#{@result_folder}/result.txt", '-d', 'ERROR']) }.not_to output(/ERROR/).to_stderr
       expect(File.exist?("#{@result_folder}/result.txt")).to be true
-      expect(File.read("#{@result_folder}/result.txt")).to include('This is a test 1594308060000.')
+      Zip::File.foreach("#{@result_folder}/result.txt") do |entry|
+        expect(entry.name).to eq('result.txt')
+        expect(entry.get_input_stream.read).to include('This is a test 1594308060000.')
+      end
     end
 
     it 'can single render a template without destination configured' do
       expect(subject.config.logger).not_to receive(:error)
       expect { subject.configure_and_run(['-c', './spec/tests/erb.config', '-t', 'spec/tests/erb.template', '-d', 'ERROR']) }.not_to output(/ERROR/).to_stderr
       expect(File.exist?("#{@result_folder}/erb.template.txt")).to be true
-      expect(File.read("#{@result_folder}/erb.template.txt")).to include('This is a test 1594308060000.')
+      Zip::File.foreach("#{@result_folder}/erb.template.txt") do |entry|
+        expect(entry.name).to eq('erb.template.txt')
+        expect(entry.get_input_stream.read).to include('This is a test 1594308060000.')
+      end
     end
 
     it 'can build and render a demo report' do
@@ -182,7 +188,10 @@ describe Application do
       expect(subject.config.logger).not_to receive(:warn)
       expect { subject.configure_and_run(['-c', './spec/tests/erb.config', '-t', 'demo_report', '-o', "#{@result_folder}/result.txt"]) }.not_to output(/ERROR/).to_stderr
       expect(File.exist?("#{@result_folder}/result.txt")).to be true
-      expect(File.read("#{@result_folder}/result.txt")).to include('This is a test table for panel ')
+      Zip::File.foreach("#{@result_folder}/result.txt") do |entry|
+        expect(entry.name).to eq('result.txt')
+        expect(entry.get_input_stream.read).to include('This is a test table for panel ')
+      end
     end
   end
 

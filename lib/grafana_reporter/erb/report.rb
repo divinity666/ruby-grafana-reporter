@@ -7,7 +7,13 @@ module GrafanaReporter
     # Implementation of a specific {AbstractReport}. It is used to
     # build reports specifically for erb templates.
     class Report < ::GrafanaReporter::AbstractReport
-      # Starts to create an asciidoctor report. It utilizes all extensions in the {GrafanaReporter::Asciidoctor}
+      # @see AbstractReport#initialize
+      def initialize(config)
+        super
+        @image_files = []
+      end
+
+      # Starts to create an erb report. It utilizes all extensions in the {GrafanaReporter::ERB}
       # namespace to realize the conversion.
       # @see AbstractReport#build
       def build
@@ -15,6 +21,10 @@ module GrafanaReporter
         logger.debug("Document attributes: #{attrs}")
 
         File.write(path, ::ERB.new(File.read(@template)).result(ReportJail.new(self, attrs).bind))
+
+        zip_report(path, @config.reports_folder, @config.report_class.default_result_extension, @config.images_folder, @image_files)
+
+        clean_image_files
       end
 
       # @see AbstractReport#default_template_extension
