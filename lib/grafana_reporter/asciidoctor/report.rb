@@ -43,53 +43,10 @@ module GrafanaReporter
 
         # store report including als images as ZIP file, if the result is not a PDF
         if attrs['convert-backend'] != 'pdf'
-          # build zip file
-          zip_file = Tempfile.new('gf_zip')
-          buffer = Zip::OutputStream.write_buffer do |zipfile|
-            # add report file
-            zipfile.put_next_entry("#{path.gsub(@config.reports_folder, '')}.#{attrs['convert-backend']}")
-            zipfile.write File.read(path)
-
-            # add image files
-            @image_files.each do |file|
-              zipfile.put_next_entry(file.path.gsub(@config.images_folder, ''))
-              zipfile.write File.read(file.path)
-            end
-          end
-          File.open(zip_file, 'wb') do |f|
-            f.write buffer.string
-          end
-
-          # replace original file with zip file
-          zip_file.rewind
-          begin
-            File.write(path, zip_file.read)
-          rescue StandardError => e
-            logger.fatal("Could not overwrite report file '#{path}' with ZIP file. (#{e.message}).")
-          end
-
-          # cleanup temporary zip file
-          zip_file.close
-          zip_file.unlink
+          zip_report(path, @config.reports_folder, attrs['convert-backend'], @config.images_folder, @image_files)
         end
 
         clean_image_files
-      end
-
-      # Called to save a temporary image file. After the final generation of the
-      # report, these temporary files will automatically be removed.
-      # @param img_data [String] image file raw data, which shall be saved
-      # @return [String] path to the temporary file.
-      def save_image_file(img_data)
-        file = Tempfile.new(['gf_image_', '.png'], @config.images_folder.to_s)
-        file.binmode
-        file.write(img_data)
-        path = file.path.gsub(/#{@config.images_folder}/, '')
-
-        @image_files << file
-        file.close
-
-        path
       end
 
       # @see AbstractReport#default_template_extension
@@ -110,11 +67,6 @@ module GrafanaReporter
       end
 
       private
-
-      def clean_image_files
-        @image_files.each(&:unlink)
-        @image_files = []
-      end
 
       def initialize_step_counter
         @total_steps = 0
