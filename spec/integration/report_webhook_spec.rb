@@ -2,11 +2,11 @@ include GrafanaReporter
 
 describe ReportWebhook do
     before(:context) do
-      WebMock.disable_net_connect!(allow: ['http://localhost:8034'])
+      WebMock.disable_net_connect!(allow: ['http://localhost:8035'])
       config = Configuration.new
       yaml = "grafana-reporter:
   report-class: GrafanaReporter::Asciidoctor::Report
-  webservice-port: 8034
+  webservice-port: 8035
   templates-folder: ./spec/tests
   reports-folder: .
   callbacks:
@@ -42,7 +42,7 @@ default-document-attributes:
       AbstractReport.add_event_listener(:on_after_finish, evt)
 
       expect(@app.config.logger).not_to receive(:error)
-      url = URI('http://localhost:8034/render?var-template=demo_report')
+      url = URI('http://localhost:8035/render?var-template=demo_report')
       http = Net::HTTP.new(url.host, url.port)
       http.request_get(url.request_uri)
 
