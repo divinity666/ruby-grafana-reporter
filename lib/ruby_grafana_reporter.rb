@@ -2,6 +2,7 @@
 
 require 'rubygems'
 require 'rubygems/name_tuple'
+require 'rubygems/specification_policy'
 require 'rubygems/ext'
 require 'net/http'
 require 'fileutils'
