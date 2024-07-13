@@ -144,25 +144,54 @@ module GrafanaReporter
           attrs[k] = v.length == 1 ? v[0] : v
         end
 
-        case request.split("\r\n")[0]
-        when %r{^GET /render[? ]}
-          return render_report(attrs)
+        parsed_url = request.split("\r\n")[0].match(%r{(?<verb>GET|POST|DELETE) (?<subpath>/.*?)(?:api/v1/(?<api_action>render|status|cancel))?(?<html_action>render|overview|view_report|cancel_report|view_log)?[ ?]})
+        parsed_url = {} if not parsed_url
 
-        when %r{^GET /overview[? ]}
+        case parsed_url
+        # API calls
+        when -> (h) { h['verb'] == 'POST' && h['api_action'] == 'render' }
+          return render_report(attrs, parsed_url['subpath'], true)
+
+        when -> (h) { h['verb'] == 'GET' && h['api_action'] == 'status' }
+          return report_status(attrs)
+
+        when -> (h) { h['verb'] == 'DELETE' && h['api_action'] == 'cancel' }
+          return cancel_report(attrs, parsed_url['subpath'], true)
+
+        # HTML calls
+        when -> (h) { h['verb'] == 'GET' && h['html_action'] == 'render' }
+          return render_report(attrs, parsed_url['subpath'])
+
+        when -> (h) { h['verb'] == 'GET' && h['html_action'] == 'overview' }
           # show overview for current reports
-          return get_reports_status_as_html(@reports)
+          return get_reports_status_as_html(@reports, parsed_url['subpath'])
 
-        when %r{^GET /view_report[? ]}
-          return view_report(attrs)
+        when -> (h) { h['verb'] == 'GET' && h['html_action'] == 'view_report' }
+          return view_report(attrs, parsed_url['subpath'])
 
-        when %r{^GET /cancel_report[? ]}
-          return cancel_report(attrs)
+        when -> (h) { h['verb'] == 'GET' && h['html_action'] == 'cancel_report' }
+          return cancel_report(attrs, parsed_url['subpath'])
 
-        when %r{^GET /view_log[? ]}
+        when -> (h) { h['verb'] == 'GET' && h['html_action'] == 'view_log' }
           return view_log(attrs)
         end
 
         raise WebserviceUnknownPathError, request.split("\r\n")[0]
+      end
+
+      def report_status(attrs)
+        report = @reports.select { |r| r.object_id.to_s == attrs['report_id'].to_s }.first
+        raise WebserviceGeneralRenderingError, 'report_status has been called without valid id' if report.nil?
+
+        response = {
+          report_id: report.object_id,
+          progress: report.progress,
+          state: report.status,
+          done: report.done,
+          execution_time: report.execution_time
+        }
+
+        http_response(200, 'OK', JSON.generate(response), "Content-Type": "application/json")
       end
 
       def view_log(attrs)
@@ -175,7 +204,7 @@ module GrafanaReporter
         http_response(200, 'OK', content, "Content-Type": 'text/plain')
       end
 
-      def cancel_report(attrs)
+      def cancel_report(attrs, subpath, as_json=false)
         # view report if already available, or show status view
         report = @reports.select { |r| r.object_id.to_s == attrs['report_id'].to_s }.first
         raise WebserviceGeneralRenderingError, 'cancel_report has been called without valid id' if report.nil?
@@ -183,28 +212,34 @@ module GrafanaReporter
         report.cancel! unless report.done
 
         # redirect to view_report page
-        http_response(302, 'Found', nil, Location: "/view_report?report_id=#{report.object_id}")
+        return http_response(302, 'Found', nil, Location: "#{subpath}view_report?report_id=#{report.object_id}") if not as_json
+
+        http_response(200, 'OK', nil)
       end
 
-      def view_report(attrs)
+      def view_report(attrs, subpath)
         # view report if already available, or show status view
         report = @reports.select { |r| r.object_id.to_s == attrs['report_id'].to_s }.first
         raise WebserviceGeneralRenderingError, 'view_report has been called without valid id' if report.nil?
 
         # show report status
-        return get_reports_status_as_html([report]) if !report.done || !report.error.empty?
+        return get_reports_status_as_html([report], subpath) if !report.done || !report.error.empty?
 
         # provide report
-        @logger.debug("Returning PDF report at #{report.path}")
+        @logger.debug("Returning report file #{report.path}")
         content = File.read(report.path, mode: 'rb')
         return http_response(200, 'OK', content, "Content-Type": 'application/pdf') if content.start_with?('%PDF')
 
+        return http_response(200, 'OK', content, "Content-Type": 'application/octet-stream',
+                                                 "Content-Disposition": 'attachment; '\
+                                                 "filename=report_#{attrs['report_id']}.zip") if content.start_with?('PK')
+
         http_response(200, 'OK', content, "Content-Type": 'application/octet-stream',
                                           "Content-Disposition": 'attachment; '\
-                                                                 "filename=report_#{attrs['report_id']}.zip")
+                                          "filename=report_#{attrs['report_id']}.#{report.class.default_result_extension}")
       end
 
-      def render_report(attrs)
+      def render_report(attrs, subpath, as_json=false)
         # build report
         template_file = "#{@config.templates_folder}#{attrs['var-template']}"
 
@@ -222,10 +257,13 @@ module GrafanaReporter
         end
         @reports << report
 
-        http_response(302, 'Found', nil, Location: "/view_report?report_id=#{report.object_id}")
+        return http_response(302, 'Found', nil, Location: "#{subpath}view_report?report_id=#{report.object_id}") if not as_json
+
+        response = {report_id: report.object_id}
+        return http_response(200, 'OK', JSON.generate(response))
       end
 
-      def get_reports_status_as_html(reports)
+      def get_reports_status_as_html(reports, subpath)
         i = reports.length
 
         # TODO: make reporter HTML results customizable
@@ -245,14 +283,14 @@ module GrafanaReporter
               <td><%= report.status %> (<%= (report.progress * 100).to_i %>%)</td>
               <td><%= report.error.join('<br>') %></td>
               <td><% if !report.done && !report.cancel %>
-                <a href="/cancel_report?report_id=<%= report.object_id %>">Cancel</a>
+                <a href="<%= subpath %>cancel_report?report_id=<%= report.object_id %>">Cancel</a>
               <% end %>
               &nbsp;
               <% if (report.status == 'finished') || (report.status == 'cancelled') %>
-                <a href="/view_report?report_id=<%= report.object_id %>">View</a>
+                <a href="<%= subpath %>view_report?report_id=<%= report.object_id %>">View</a>
               <% end %>
               &nbsp;
-              <a href="/view_log?report_id=<%= report.object_id %>">Log</a></td></tr>
+              <a href="<%= subpath %>view_log?report_id=<%= report.object_id %>">Log</a></td></tr>
             <% end.join('') %>
             <tbody>
           </table>
@@ -267,8 +305,8 @@ module GrafanaReporter
       end
 
       def http_response(code, text, body, opts = {})
-        "HTTP/1.1 #{code} #{text}\r\n#{opts.map { |k, v| "#{k}: #{v}" }.join("\r\n")}"\
-        "#{body ? "\r\nContent-Length: #{body.to_s.bytesize}" : ''}\r\n\r\n#{body}"
+        "HTTP/1.1 #{code} #{text}\r\n#{opts.map { |k, v| "#{k}: #{v}" }.join("\r\n")}#{opts.length > 0 ? "\r\n" : ""}"\
+        "#{body ? "Content-Length: #{body.to_s.bytesize}" : ''}\r\n\r\n#{body}"
       end
     end
   end

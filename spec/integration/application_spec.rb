@@ -1,3 +1,5 @@
+include Grafana
+include GrafanaReporter
 include GrafanaReporter::Application
 
 class ReportEventHandler
@@ -327,6 +329,36 @@ default-document-attributes:
       expect(res['content-disposition']).to include('.zip')
     end
 
+    it 'can create demo html report if called with other top level domain' do
+      evt = ReportEventHandler.new
+      AbstractReport.add_event_listener(:on_before_create, evt)
+      AbstractReport.add_event_listener(:on_after_finish, evt)
+
+      expect(@app.config.logger).not_to receive(:error)
+      url = URI('http://localhost:8033/reporter_path/render?var-template=demo_report&convert-backend=html')
+      http = Net::HTTP.new(url.host, url.port)
+      res = http.request_get(url.request_uri)
+      expect(res.code).to eq("302")
+      expect(res['location']).to include("/reporter_path/view_report?report_id=")
+
+      id = res['location'].gsub(/.*report_id=([^\r\n]*).*/, '\1')
+      res = http.request_get("/reporter_path/view_report?report_id=#{id}")
+      expect(res.body).to include("not started")
+      res = http.request_get("/reporter_path/view_log?report_id=#{id}")
+      expect(res.body).not_to include("Cancelling report generation invoked.")
+      res = http.request_get('/reporter_path/overview')
+      expect(res.body).to include(id)
+
+      evt.unpause_thread
+      cur_time = Time.new
+      sleep 0.1 while !evt.done? && Time.new - cur_time < 10
+      expect(evt.done?).to be true
+
+      res = http.request_get("/reporter_path/view_report?report_id=#{id}")
+      expect(res['content-type']).to include('application/octet-stream')
+      expect(res['content-disposition']).to include('.zip')
+    end
+
     it 'returns grafana reporter error on view_log without report' do
       expect(@app.config.logger).to receive(:error).with(/has been called without valid id/)
       expect(Net::HTTP.get(URI('http://localhost:8033/view_log'))).to include('has been called without valid id')
@@ -351,5 +383,113 @@ default-document-attributes:
       cur_time = Time.new
       sleep 0.1 while !evt.done? && Time.new - cur_time < 10
     end
+  end
+
+  context 'API server' do
+    before(:context) do
+      WebMock.disable_net_connect!(allow: ['http://localhost:8034'])
+      config = Configuration.new
+      yaml = "grafana-reporter:
+  report-class: GrafanaReporter::Asciidoctor::Report
+  webservice-port: 8034
+  templates-folder: ./spec/tests
+  reports-folder: .
+
+grafana:
+  default:
+    host: http://localhost
+    api_key: #{STUBS[:key_admin]}
+
+default-document-attributes:
+  imagesdir: ."
+
+      config.config = YAML.load(yaml)
+      config.logger.level = ::Logger::Severity::WARN
+      app = GrafanaReporter::Application::Application.new
+      app.config = config
+      @webserver = Thread.new { app.run }
+      sleep 0.1 until app.webservice.running?
+      @app = app
+    end
+
+    before do
+      AbstractReport.clear_event_listeners
+    end
+
+    after(:context) do
+      WebMock.enable!
+      AbstractReport.clear_event_listeners
+      # kill webservice properly and release port again
+      @app.webservice.stop!
+      sleep 0.1 until @app.webservice.stopped?
+    end
+
+    it 'renders report properly' do
+      evt = ReportEventHandler.new
+
+      expect(@app.config.logger).not_to receive(:error)
+      res = Net::HTTP.post(URI('http://localhost:8034/api/v1/render?var-template=demo_report'), nil)
+      expect(res.code).to eq("200")
+      json = JSON.parse(res.body)
+
+      cur_time = Time.new
+      sleep 0.1 while !evt.done? && Time.new - cur_time < 10
+
+      url = URI("http://localhost:8034/api/v1/status?report_id=#{json['report_id']}")
+      http = Net::HTTP.new(url.host, url.port)
+      res = http.request_get(url)
+      expect(res.code).to eq("200")
+      json = JSON.parse(res.body)
+      expect(res['Content-Type']).to eq("application/json")
+      expect(json['state']).to eq("finished")
+      expect(json['progress']).to eq(1)
+      expect(json['done']).to eq(true)
+      expect(json['execution_time']).to be_a(Float)
+    end
+
+    it 'allows report creation, cancel and status' do
+      evt = ReportEventHandler.new
+      AbstractReport.add_event_listener(:on_before_create, evt)
+      AbstractReport.add_event_listener(:on_after_finish, evt)
+
+      expect(@app.config.logger).not_to receive(:error)
+      res = Net::HTTP.post(URI('http://localhost:8034/api/v1/render?var-template=demo_report'), nil)
+      expect(res.code).to eq("200")
+      json = JSON.parse(res.body)
+      expect(json['report_id']).to be_an(Integer)
+
+      url = URI("http://localhost:8034/api/v1/status?report_id=#{json['report_id']}")
+      http = Net::HTTP.new(url.host, url.port)
+      res = http.request_get(url)
+      expect(res.code).to eq("200")
+      json = JSON.parse(res.body)
+      expect(res['Content-Type']).to eq("application/json")
+      expect(json['report_id']).to be_an(Integer)
+      expect(json['state']).to eq("not started")
+      expect(json['progress']).to eq(0)
+      expect(json['done']).to eq(false)
+      expect(json['execution_time']).to eq(nil)
+
+      res = http.delete(URI("http://localhost:8034/api/v1/cancel?report_id=#{json['report_id']}"))
+      expect(res.code).to eq("200")
+
+      evt.unpause_thread
+      cur_time = Time.new
+      sleep 0.1 while !evt.done? && Time.new - cur_time < 10
+
+      url = URI("http://localhost:8034/api/v1/status?report_id=#{json['report_id']}")
+      http = Net::HTTP.new(url.host, url.port)
+      res = http.request_get(url)
+      expect(res.code).to eq("200")
+      json = JSON.parse(res.body)
+      expect(res['Content-Type']).to eq("application/json")
+      expect(json['state']).to eq("cancelled")
+      expect(json['progress']).to eq(0)
+      expect(json['done']).to eq(true)
+      expect(json['execution_time']).to be_a(Float)
+
+      expect(evt.done?).to be true
+    end
+
   end
 end
