@@ -17,25 +17,16 @@ Reporting Service for Grafana
   * [Installation](#installation)
   * [Grafana integration](#grafana-integration)
 * [Advanced information](#advanced-information)
-  * [Webservice](#webservice)
+  * [Use grafana variables in templates](#use-grafana-variables-in-templates)
+  * [Webservice endpoints](#webservice-endpoints)
+  * [API endpoints](#api-endpoints)
   * [Using ERB templates](#using-erb-templates)
   * [Using webhooks](#using-webhooks)
-  * [Developing your own plugin](#developing-your-own-plugin)
+  * [Developing your own datasource plugin](#developing-your-own-datasource-plugin)
 * [Roadmap](#roadmap)
 * [Contributing](#contributing)
 * [Licensing](#licensing)
 * [Acknowledgements](#acknowledgements)
-
-## Your support is appreciated!
-
-Hey there! I provide you this software free of charge. I have already
-spend a lot of my private time in developing, maintaining and supporting it.
-
-If you enjoy my work, feel free to
-
-[![buymeacoffee](https://az743702.vo.msecnd.net/cdn/kofi3.png?v=0)](https://ko-fi.com/divinity666)
-
-Thanks for your support and keeping this project alive!
 
 ## About the project
 
@@ -62,11 +53,12 @@ By default (an extended version of) Asciidoctor is enabled as template language.
 
 ### Features
 
-* Supports creation of reports for multiple [grafana](https://github.com/grafana/grafana)
-dashboards (and also multiple grafana installations!) in one resulting report
-* PDF (default), HTML and many other report formats are supported
-* Easy-to-use configuration wizard, including fully automated functionality to create a
-demo report for your dashboard
+* Use Asciidoctor or ERB template language for defining templates
+* Render your templates as PDF (default), HTML, CSV, text files and any other format
+you can think of
+* Create reports containing data from multiple [grafana](https://github.com/grafana/grafana)
+dashboards or even multiple grafana installations
+* Easy-to-use configuration wizard including automated demo report creation
 * Include dynamic content from grafana (find here a reference for all
 [asciidcotor reporter calls](FUNCTION_CALLS.md)):
   * panels as images
@@ -77,8 +69,7 @@ database queries
   * webservice to be called directly from grafana
   * standalone command line tool, e.g. to be automated with `cron` or `bash` scrips
   * microservice from standard asciidoctor docker container without any dependencies
-* Use webhook callbacks on before, on cancel and on finishing a report (see
-configuration file) to combine them with your services
+* Integrate it in your toolchain with webhooks and API calls
 * Solid as a rock - no matter if you do mistakes in your configuration or grafana does no
 longer match templates: the ruby-grafana-reporter webservice will always return properly.
 * Full [API documentation](https://rubydoc.info/gems/ruby-grafana-reporter) available
@@ -234,6 +225,21 @@ The main endpoint to call for report generation is configured in the previous ch
 
 However, if you would like to see, currently running report generations and previously generated reports, you may want to call the endpoint `/overview`.
 
+### API endpoints
+
+If you want to call the reporter programatically, you might want to get machine
+usable endpoints. Therefore the following API endpoints are available:
+
+    POST /api/v1/render
+    GET /api/v1/status
+    DELETE /api/v1/cancel
+
+Those endpoints have to be called with the same URL parameters, as the webservice
+endpoints.
+
+If you want to receive the report itself, you'll have to use the `/view_report`
+call from the webservice endpoints.
+
 ### Using ERB templates
 
 By default the configuration wizard will setup the reporter with the asciidoctor
@@ -280,6 +286,12 @@ grafana-reporter:
   callbacks:
     all:
       - http://<<your_callback_url>>
+    on_before_create:
+      - http://<<your_callback_url>>
+    on_after_cancel:
+      - http://<<your_callback_url>>
+    on_after_finish:
+      - http://<<your_callback_url>>
 ````
 
 Remember to restart the reporter, if it is running as a webservice.
@@ -288,7 +300,7 @@ After having done so, your callback url will be called for each event with
 a JSON body including all necessary information of the report. For details see
 [callback](https://rubydoc.info/gems/ruby-grafana-reporter/GrafanaReporter/ReportWebhook#callback-instance_method).
 
-### Developing your own plugin
+### Developing your own datasource plugin
 
 The reporter is designed to allow easy integration of your own plugins,
 without having to modify the reporter base source on github (or anywhere
@@ -371,6 +383,12 @@ This is just a collection of things, I am heading for in future, without a sched
 
 If you'd like to contribute, please fork the repository and use a feature
 branch. Pull requests are warmly welcome.
+
+If you enjoy my work, and can't support with code contributions, feel free to
+
+[![buymeacoffee](https://az743702.vo.msecnd.net/cdn/kofi3.png?v=0)](https://ko-fi.com/divinity666)
+
+Thanks for your support and keeping this project alive!
 
 ## Licensing
 
