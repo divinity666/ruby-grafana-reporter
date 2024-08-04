@@ -23,6 +23,7 @@ module Grafana
 
       result = webrequest.execute(query_description[:timeout])
       return unless result
+      return result.body unless result.code.to_s == "200"
 
       json = JSON.parse(result.body)
 
