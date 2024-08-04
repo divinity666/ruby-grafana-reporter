@@ -1362,16 +1362,6 @@
           "error": null,
           "hide": 2,
           "label": null,
-          "name": "unhandled variable type",
-          "query": "test,bla",
-          "skipUrlSync": false,
-          "type": "unknown_type"
-        },
-        {
-          "description": null,
-          "error": null,
-          "hide": 2,
-          "label": null,
           "name": "constantvariable",
           "query": "test,bla",
           "skipUrlSync": false,

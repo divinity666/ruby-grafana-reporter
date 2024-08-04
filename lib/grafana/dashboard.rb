@@ -62,8 +62,7 @@ module Grafana
         begin
           @variables << Variable.new(item, self)
         rescue => e
-          # TODO: show this message as a warning - needs test cleanup
-          @grafana.logger.debug(e.message)
+          @grafana.logger.warn(e.message)
         end
       end
     end

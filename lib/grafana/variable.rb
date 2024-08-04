@@ -240,7 +240,7 @@ module Grafana
         if !@config['current'].nil?
           self.raw_value = @config['current']['value']
         else
-          raise GrafanaError.new("Grafana variable with type '#{@config['type']}' and name '#{@config['name']}' cannot be handled properly by the reporter. Check your results and raise a ticket on github.")
+          raise GrafanaError.new("Dashboard variable with type '#{@config['type']}' and name '#{@config['name']}' cannot be handled properly by the reporter in queries. Check your resulting report and raise a ticket on github if you face issues.")
         end
       end
     end
