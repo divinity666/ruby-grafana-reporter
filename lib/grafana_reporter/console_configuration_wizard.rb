@@ -319,8 +319,10 @@ default-document-attributes:
     end
 
     def user_input(text, default)
+      $stdout.sync = true
       print "#{text} [#{default}]: "
-      input = gets.gsub(/\n$/, '')
+      $stdout.sync = false
+      input = gets.gsub(/[\n\r]*$/, '')
       input = default if input.empty?
       input
     end
