@@ -89,6 +89,8 @@ module GrafanaReporter
           end
         end
         return nil unless ref_id
+        # FIXME this filters out e.g. prometheus in demo reports, as the query method returns a Hash instead of a string
+        return nil unless panel.query(ref_id).is_a?(String)
 
         "grafana_sql_value:#{panel.dashboard.grafana.datasource_by_model_entry(panel.model['datasource']).id}"\
         "[sql=\"#{panel.query(ref_id).gsub(/"/, '\"').gsub("\r\n", ' ').gsub("\n", ' ').gsub(/\\/, '\\\\')}\",from=\"now-1h\","\
