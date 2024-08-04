@@ -1,9 +1,9 @@
 # frozen_string_literal: true
 
-require 'rubygems'
-require 'rubygems/name_tuple'
-require 'rubygems/specification_policy'
-require 'rubygems/ext'
+require 'rubygems' # for OCRAN
+require 'rubygems/name_tuple' # for OCRAN
+require 'rubygems/specification_policy' # for OCRAN
+require 'rubygems/ext' # for OCRAN
 require 'net/http'
 require 'fileutils'
 require 'yaml'
@@ -17,7 +17,8 @@ require 'date'
 require 'time'
 require 'logger'
 require 'asciidoctor'
-require 'asciidoctor/extensions'
+require 'asciidoctor/extensions' # for OCRAN
+require 'asciidoctor/converter/html5' # for OCRAN
 require 'asciidoctor-pdf'
 require 'zip'
 require_relative 'VERSION'
