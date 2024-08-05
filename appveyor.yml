@@ -36,7 +36,7 @@ for:
         - bundle exec rake test
         - bundle exec rake testsingle
         - bundle exec rake testexe
-        - .\node_modules\@intuit\judo\dist\judo.js judo_tests
+        - node node_modules\@intuit\judo\dist\judo.js judo_tests
 
   -
       matrix:
