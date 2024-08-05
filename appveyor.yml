@@ -24,6 +24,7 @@ for:
         - tzutil /s "W. Europe Standard Time"
         - gem install bundler
         - bundle install
+        - npm config set prefix "./node_modules"
         - npm i -g @intuit/judo
         - npm i patch-package
         - npx patch-package
