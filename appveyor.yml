@@ -27,6 +27,8 @@ for:
         - npm config set prefix "./node_modules"
         - npm i -g @intuit/judo
         - npm i patch-package
+        - dir
+        - dir node_modules
         - npx patch-package
 
       build_script:
