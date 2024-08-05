@@ -65,7 +65,7 @@ module GrafanaReporter
           begin
             File.write(path, zip_file.read)
           rescue StandardError => e
-            logger.fatal("Could not overwrite report file '#{path}' with ZIP file. (#{e.message}).")
+            logger.fatal("Could not overwrite file '#{path}' with zipped file. (#{e.message}).")
           end
 
           # cleanup temporary zip file
