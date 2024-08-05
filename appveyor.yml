@@ -24,6 +24,9 @@ for:
         - tzutil /s "W. Europe Standard Time"
         - gem install bundler
         - bundle install
+        - npm i -g @intuit/judo
+        - npm i -g patch-package
+        - patch-package
 
       build_script:
         - bundle exec rake buildsingle
@@ -33,6 +36,7 @@ for:
         - bundle exec rake test
         - bundle exec rake testsingle
         - bundle exec rake testexe
+        - judo judo_tests
 
   -
       matrix:

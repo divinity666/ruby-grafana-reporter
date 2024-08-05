@@ -1,0 +1,16 @@
+diff --git a/node_modules/@intuit/judo/dist/executor.js b/node_modules/@intuit/judo/dist/executor.js
+index 6b55864..f313c80 100644
+--- a/node_modules/@intuit/judo/dist/executor.js
++++ b/node_modules/@intuit/judo/dist/executor.js
+@@ -87,7 +87,7 @@ const execute = (command, args = [], opts = {}) => {
+             {
+               whenStep.done = true;
+               // store response to send back to child stdin
+-              childInputWrite = whenStep.response + '\r';
++              childInputWrite = whenStep.response /* '\r'*/;
+             }
+           });
+         }
+diff --git a/node_modules/@intuit/judo/dist/judo.js b/node_modules/@intuit/judo/dist/judo.js
+old mode 100755
+new mode 100644

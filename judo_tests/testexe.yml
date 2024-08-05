@@ -1,0 +1,73 @@
+run:
+  beforeStuff:
+    command: "{{reporter_exe}} -h"
+    prerequisiteCwd: .
+    prerequisites:
+    - copy ruby-grafana-reporter*.exe {{reporter_exe}}
+    expectCode: 0
+    outputContains:
+    - 'Usage:'
+    - '--wizard'
+
+  wizard:
+    command: '{{reporter_exe}} -w'
+    prerequisiteCwd: .
+    prerequisites:
+    - del grafana_reporter.config
+    - del demo_report.adoc
+    when:
+    - 'Specify port on which reporter shall run [8815]:': "8815\n"
+    - 'Specify grafana host [http://localhost:3000]:': "https://play.grafana.org\n"
+    - 'Access to grafana is permitted as Admin, which is a potential security risk. Do you want to use another [a]pi key, [r]e-enter url key or [i]gnore? [R]:': "i\n"
+    - 'Specify path where templates shall be stored [./templates]:': ".\n"
+    - 'Specify path where created reports shall be stored [./reports]:': ".\n"
+    - 'Specify path where rendered images shall be stored (relative to templates folder) [./images]:': ".\n"
+    - 'Specify report retention duration in hours [24]:': "24\n"
+    - 'Shall I create a demo report for your new configuration file? Please note that this report might contain confidential information, depending on the confidentiality of the information stored in your dashboard. [yN]:': "y\n"
+    expectCode: 0
+    outputContains:
+    - 'Now everything is setup properly.'
+    outputDoesntContain:
+    - /demo_report_wizard.rb/
+
+  buildPlaygroundDemoReportPdf:
+    command: '{{reporter_exe}} -t demo_report_new -d DEBUG'
+    prerequisiteCwd: .
+    prerequisites:
+    # remove grafana_environment[] call from template, as this can cause long runs
+    - del demo_report_new.adoc
+    - del demo_report_new.pdf
+    - FINDSTR /I /V "include::grafana_environment" demo_report.adoc >> demo_report_new.adoc"
+    expectCode: 0
+    outputContains:
+    - "with status 'finished'"
+    outputDoesntContain:
+    - /failed with/
+
+  #TODO buildDemoReportErb:
+
+  buildPlaygroundDemoReportHtml:
+    # TODO by default the result should be a zip, not a pdf...
+    command: '{{reporter_exe}} -t demo_report_new -d DEBUG -s convert-backend,html5'
+    prerequisiteCwd: .
+    prerequisites:
+    # remove grafana_environment[] call from template, as this can cause long runs
+    - del demo_report_new.adoc
+    - del demo_report_new.zip
+    - FINDSTR /I /V "include::grafana_environment" demo_report.adoc >> demo_report_new.adoc"
+    expectCode: 0
+    outputContains:
+    - "with status 'finished'"
+    outputDoesntContain:
+    - /failed with/
+
+  testZipFile:
+    command: 'tar -tvf demo_report_new.pdf'
+    expectCode: 0
+    outputContains:
+    - //
+    outputDoesntContain:
+    - /^tar: Error/
+
+vars:
+  reporter_exe: 'ruby-grafana-reporter.exe'
