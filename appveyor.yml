@@ -24,11 +24,8 @@ for:
         - tzutil /s "W. Europe Standard Time"
         - gem install bundler
         - bundle install
-        - npm config set prefix "./node_modules"
         - npm i @intuit/judo
         - npm i patch-package
-        - dir
-        - dir node_modules
         - npx patch-package
 
       build_script:
@@ -39,7 +36,7 @@ for:
         - bundle exec rake test
         - bundle exec rake testsingle
         - bundle exec rake testexe
-        - judo judo_tests
+        - .\node_modules\@intuit\judo\dist\judo.js judo_tests
 
   -
       matrix:
