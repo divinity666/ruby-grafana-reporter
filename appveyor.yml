@@ -25,7 +25,7 @@ for:
         - gem install bundler
         - bundle install
         - npm config set prefix "./node_modules"
-        - npm i -g @intuit/judo
+        - npm i @intuit/judo
         - npm i patch-package
         - dir
         - dir node_modules
