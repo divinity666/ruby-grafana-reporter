@@ -1,9 +1,10 @@
 run:
   beforeStuff:
-    command: "{{reporter_exe}} -h"
+    command: '{{reporter_exe}} -h'
     prerequisiteCwd: .
     prerequisites:
     - copy ruby-grafana-reporter*.exe {{reporter_exe}}
+    - dir
     expectCode: 0
     outputContains:
     - 'Usage:'
