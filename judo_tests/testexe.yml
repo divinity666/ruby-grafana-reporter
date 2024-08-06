@@ -1,10 +1,10 @@
 run:
-  beforeStuff:
-    command: '{{reporter_exe}} -h'
+  beforeAll:
+    command: "{{reporter_exe}} -h"
     prerequisiteCwd: .
     prerequisites:
-    - copy ruby-grafana-reporter*.exe {{reporter_exe}}
-    - dir
+    # copy file to standard file name, so that tests have it easier for calling the right executable by name
+    - copy /B ruby-grafana-reporter*.exe {{reporter_exe}}
     expectCode: 0
     outputContains:
     - 'Usage:'
@@ -69,6 +69,8 @@ run:
     - //
     outputDoesntContain:
     - /^tar: Error/
+
+  # TODO testWebservice:
 
 vars:
   reporter_exe: 'ruby-grafana-reporter.exe'
