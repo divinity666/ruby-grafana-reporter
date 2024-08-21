@@ -63,10 +63,10 @@ run:
     - /failed with/
 
   testZipFile:
-    command: 'tar -tvf demo_report_new.pdf'
+    command: 'tar tvf demo_report_new.zip'
     expectCode: 0
     outputContains:
-    - //
+    - /demo_report_new.html5/
     outputDoesntContain:
     - /^tar: Error/
 
