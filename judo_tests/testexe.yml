@@ -62,7 +62,7 @@ run:
     - /failed with/
 
   testZipFile:
-    command: 'tar tfv demo_report_new.zip'
+    command: 'tar xfv demo_report_new.zip'
     outputContains:
     - /demo_report_new.html5/
     outputDoesntContain:
