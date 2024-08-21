@@ -62,11 +62,12 @@ run:
     - /failed with/
 
   testZipFile:
-    command: 'tar xfv demo_report_new.zip'
+    command: 'tar tfv demo_report_new.zip'
+    expectCode: 0
     outputContains:
-    - /demo_report_new.html5/
+    - demo_report_new.html5
     outputDoesntContain:
-    - /^tar: Error opening/
+    - 'tar: Error'
 
   # TODO testWebservice:
 
