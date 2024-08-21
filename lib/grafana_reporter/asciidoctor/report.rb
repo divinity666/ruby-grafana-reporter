@@ -44,7 +44,7 @@ module GrafanaReporter
         # store report including all images as ZIP file, if the result is not a PDF
         if attrs['convert-backend'] != 'pdf'
           # build zip file
-          zip_file = Tempfile.new('gf_zip')
+          zip_file = Tempfile.new('gf_zip').binmode
           buffer = Zip::OutputStream.write_buffer do |zipfile|
             # add report file
             zipfile.put_next_entry("#{path.gsub(@config.reports_folder, '').gsub(/\.[\w\d]+$/, '')}.#{attrs['convert-backend']}")
