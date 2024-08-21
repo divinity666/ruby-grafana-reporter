@@ -44,7 +44,7 @@ module GrafanaReporter
         # store report including all images as ZIP file, if the result is not a PDF
         if attrs['convert-backend'] != 'pdf'
           # build zip file
-          zip_file = Tempfile.new('gf_zip').binmode
+          zip_file = Tempfile.new('gf_zip')
           buffer = Zip::OutputStream.write_buffer do |zipfile|
             # add report file
             zipfile.put_next_entry("#{path.gsub(@config.reports_folder, '').gsub(/\.[\w\d]+$/, '')}.#{attrs['convert-backend']}")
@@ -63,7 +63,7 @@ module GrafanaReporter
           # replace original file with zip file
           zip_file.rewind
           begin
-            File.write(path, zip_file.read)
+            File.binwrite(path, zip_file.read)
           rescue StandardError => e
             logger.fatal("Could not overwrite file '#{path}' with zipped file. (#{e.message}).")
           end
