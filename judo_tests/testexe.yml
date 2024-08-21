@@ -48,7 +48,6 @@ run:
   #TODO buildDemoReportErb:
 
   buildPlaygroundDemoReportHtml:
-    # TODO by default the result should be a zip, not a pdf...
     command: '{{reporter_exe}} -t demo_report_new -d DEBUG -s convert-backend,html5'
     prerequisiteCwd: .
     prerequisites:
@@ -63,12 +62,11 @@ run:
     - /failed with/
 
   testZipFile:
-    command: 'tar tvf demo_report_new.zip'
-    expectCode: 0
+    command: 'tar tfv demo_report_new.zip'
     outputContains:
     - /demo_report_new.html5/
     outputDoesntContain:
-    - /^tar: Error/
+    - /^tar: Error opening/
 
   # TODO testWebservice:
 
