@@ -41,13 +41,13 @@ module GrafanaReporter
         ::Asciidoctor.convert_file(@template, extension_registry: registry, backend: attrs['convert-backend'],
                                               to_file: path, attributes: attrs, header_footer: true)
 
-        # store report including als images as ZIP file, if the result is not a PDF
+        # store report including all images as ZIP file, if the result is not a PDF
         if attrs['convert-backend'] != 'pdf'
           # build zip file
           zip_file = Tempfile.new('gf_zip')
           buffer = Zip::OutputStream.write_buffer do |zipfile|
             # add report file
-            zipfile.put_next_entry("#{path.gsub(@config.reports_folder, '')}.#{attrs['convert-backend']}")
+            zipfile.put_next_entry("#{path.gsub(@config.reports_folder, '').gsub(/\.[\w\d]+$/, '')}.#{attrs['convert-backend']}")
             zipfile.write File.read(path)
 
             # add image files

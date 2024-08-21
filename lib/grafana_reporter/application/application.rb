@@ -134,6 +134,7 @@ module GrafanaReporter
           begin
             template_ext = config.report_class.default_template_extension
             report_ext = config.report_class.default_result_extension
+            report_ext = 'zip' if config.default_document_attributes["convert-backend"] != "pdf" and not config.default_document_attributes["convert-backend"].nil?
             default_to_file = File.basename(config.template.to_s.gsub(/(?:\.#{template_ext})?$/, ".#{report_ext}"))
 
             to_file = config.to_file
