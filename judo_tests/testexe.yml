@@ -1,10 +1,6 @@
 run:
-  beforeAll:
+  showHelp:
     command: "{{reporter_exe}} -h"
-    prerequisiteCwd: .
-    prerequisites:
-    # copy file to standard file name, so that tests have it easier for calling the right executable by name
-    - copy /B ruby-grafana-reporter*.exe {{reporter_exe}}
     expectCode: 0
     outputContains:
     - 'Usage:'

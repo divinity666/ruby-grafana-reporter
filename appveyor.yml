@@ -36,7 +36,9 @@ for:
         - bundle exec rake test
         - bundle exec rake testsingle
         - bundle exec rake testexe
+        - copy /B ruby-grafana-reporter*.exe ruby-grafana-reporter.exe
         - node node_modules\@intuit\judo\dist\judo.js judo_tests
+        - del ruby-grafana-reporter.exe
 
   -
       matrix:
