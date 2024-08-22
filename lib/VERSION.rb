@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
 # Version information
-GRAFANA_REPORTER_VERSION = [0, 9, 3].freeze
+GRAFANA_REPORTER_VERSION = [0, 9, 4].freeze
 # Release date
-GRAFANA_REPORTER_RELEASE_DATE = '2024-07-13'
+GRAFANA_REPORTER_RELEASE_DATE = '2024-08-22'
